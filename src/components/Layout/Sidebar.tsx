@@ -33,6 +33,7 @@ const menuItems = [
   { name: 'Refunds & Reorders', icon: RotateCcw, path: '/refunds' },
   { name: 'Coupons & Promotions', icon: Ticket, path: '/coupons' },
   { name: 'Products', icon: Users, path: '/products' },
+  { name: 'Services', icon: Package, path: '/services' },
   { name: 'Inventory & Products', icon: Package, path: '/inventory' },
   { name: 'Payments & Settlements', icon: CreditCard, path: '/payments' },
   { name: 'Zonal Manager Panel', icon: MapPin, path: '/zones' },
