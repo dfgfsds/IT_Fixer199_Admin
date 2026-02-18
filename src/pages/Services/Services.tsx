@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import ServiceModal from "./ServiceModal";
-
+import Api from '../../api-endpoints/ApiUrls';
 const Services: React.FC = () => {
     const [services, setServices] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -18,7 +18,7 @@ const Services: React.FC = () => {
 
     const fetchServices = async () => {
         try {
-            const res = await axiosInstance.get("/api/services/");
+            const res = await axiosInstance.get(`${Api?.services}/?include_categories=true&include_media=true&include_pricing=true&include_zones=true`);
             setServices(res?.data?.services || []);
         } catch (err) {
             console.error(err);
@@ -30,7 +30,7 @@ const Services: React.FC = () => {
     const handleDelete = async () => {
         if (!deleteId) return;
 
-        await axiosInstance.delete(`/api/services/${deleteId}/`);
+        await axiosInstance.delete(`${Api?.services}/${deleteId}/`);
         setDeleteId(null);
         fetchServices();
     };
@@ -89,16 +89,25 @@ const Services: React.FC = () => {
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                        S.No
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                         Service
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Parent
+                                        Categories
                                     </th>
+                                    {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                        Pricing
+                                    </th> */}
+                                    {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                        Zone & Hub
+                                    </th> */}
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                         ETA
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        OTP Required
+                                        OTP
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                         Status
@@ -109,58 +118,125 @@ const Services: React.FC = () => {
                                 </tr>
                             </thead>
 
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {services.map(service => (
-                                    <tr key={service.id} className="hover:bg-gray-50">
+                            <tbody className="divide-y divide-gray-200">
 
+                                {services.map((service: any, index: number) => (
+                                    <tr key={service.id} className="hover:bg-gray-50 transition">
                                         <td className="px-6 py-4">
-                                            <div className="text-sm font-medium text-gray-900">
-                                                {service.name}
-                                            </div>
-                                            <div className="text-xs text-gray-500">
-                                                {service.description}
+                                            {index + 1}
+                                        </td>
+                                        {/* SERVICE INFO */}
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-start gap-3">
+
+                                                {/* Avatar */}
+                                                {/* <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                                    <span className="text-orange-600 font-semibold">
+                                                        {service.name?.charAt(0)}
+                                                    </span>
+                                                </div> */}
+
+                                                <div>
+                                                    <div className="text-sm font-semibold text-gray-900">
+                                                        {service.name}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500 line-clamp-2 mt-1">
+                                                        {service.description?.slice(0, 30)}
+                                                    </div>
+
+                                                    {/* Media Preview */}
+                                                    {/* {service.media_files?.length > 0 && (
+                                                        <img
+                                                            src={service.media_files[0].image_url}
+                                                            alt=""
+                                                            className="w-16 h-10 object-cover rounded mt-2 border"
+                                                        />
+                                                    )} */}
+                                                </div>
                                             </div>
                                         </td>
 
-                                        <td className="px-6 py-4 text-sm">
-                                            {service.parent_name || "-"}
+                                        {/* CATEGORIES */}
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-wrap gap-1">
+                                                {service.categories?.length > 0 ? (
+                                                    service.categories.map((cat: any) => (
+                                                        <span
+                                                            key={cat.id}
+                                                            className="px-2 py-0.5 text-xs rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100"
+                                                        >
+                                                            {cat.category_name}
+                                                        </span>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">
+                                                        No Categories
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
 
+                                        {/* PRICING */}
+                                        {/* <td className="px-6 py-4 text-sm">
+                                            <span className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded-full">
+                                                {service.pricing_models?.length || 0} Pricing
+                                            </span>
+                                        </td> */}
+
+                                        {/* ZONE HUB */}
+                                        {/* <td className="px-6 py-4 text-sm">
+                                            <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
+                                                {service.zone_hub_mappings?.length || 0} Mappings
+                                            </span>
+                                        </td> */}
+
+                                        {/* ETA */}
                                         <td className="px-6 py-4 text-sm">
                                             {service.eta} mins
                                         </td>
 
-                                        <td className="px-6 py-4 text-sm">
-                                            {service.is_otp_required ? "Yes" : "No"}
+                                        {/* OTP */}
+                                        <td className="px-6 py-4">
+                                            {service.is_otp_required ? (
+                                                <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">
+                                                    Required
+                                                </span>
+                                            ) : (
+                                                <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-500">
+                                                    No
+                                                </span>
+                                            )}
                                         </td>
 
+                                        {/* STATUS */}
                                         <td className="px-6 py-4">
                                             <span
                                                 className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${service.status === "ACTIVE"
-                                                        ? "bg-green-100 text-green-800"
-                                                        : "bg-red-100 text-red-800"
+                                                    ? "bg-green-100 text-green-800"
+                                                    : "bg-red-100 text-red-800"
                                                     }`}
                                             >
                                                 {service.status}
                                             </span>
                                         </td>
 
+                                        {/* ACTIONS */}
                                         <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end space-x-2">
+                                            <div className="flex justify-end gap-3">
 
                                                 <button
                                                     onClick={() => {
                                                         setEditService(service);
                                                         setShowModal(true);
                                                     }}
-                                                    className="text-orange-600 hover:text-orange-900 p-1"
+                                                    className="text-orange-600 hover:text-orange-900"
                                                 >
                                                     <Edit className="w-4 h-4" />
                                                 </button>
 
                                                 <button
                                                     onClick={() => setDeleteId(service.id)}
-                                                    className="text-red-600 hover:text-red-900 p-1"
+                                                    className="text-red-600 hover:text-red-900"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
@@ -170,8 +246,8 @@ const Services: React.FC = () => {
 
                                     </tr>
                                 ))}
-                            </tbody>
 
+                            </tbody>
                         </table>
                     </div>
                 </div>
