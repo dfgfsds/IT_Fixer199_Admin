@@ -267,50 +267,51 @@ const ZoneModal: React.FC<Props> = ({
     // ---------------- LOAD POLYGON IN EDIT MODE ----------------
     useEffect(() => {
         if (!show) return;
-        if (!editZone?.coordinates?.length) return;
-        if (!featureGroupRef.current) return;
+        if (!form.coordinates?.length) return;
+        if (!featureGroupRef?.current) return;
 
-        const layerGroup = featureGroupRef.current;
-        layerGroup.clearLayers();
+        const layerGroup = featureGroupRef?.current;
+        layerGroup?.clearLayers();
 
-        const latLngs = editZone.coordinates.map((point: any) => [
-            point.lat,
-            point.lng,
+        const latLngs = form?.coordinates?.map((point: any) => [
+            point?.lat,
+            point?.lng,
         ]);
 
-        const polygon = L.polygon(latLngs, {
+        const polygon = L?.polygon(latLngs, {
             color: "#f97316",
             fillColor: "#fdba74",
             fillOpacity: 0.4,
             weight: 3,
         });
 
-        layerGroup.addLayer(polygon);
+        layerGroup?.addLayer(polygon);
 
-        const map = layerGroup._map;
+        const map = layerGroup?._map;
         if (map) {
-            map.fitBounds(polygon.getBounds(), {
+            map?.fitBounds(polygon?.getBounds(), {
                 padding: [40, 40],
             });
         }
-    }, [editZone, show]);
+    }, [form?.coordinates, show]);
+
 
     // ---------------- DRAW POLYGON ----------------
     const handleCreated = (e: any) => {
-        const layerGroup = featureGroupRef.current;
+        const layerGroup = featureGroupRef?.current;
 
         // Only allow ONE polygon
         layerGroup.clearLayers();
 
-        const layer = e.layer;
-        const latlngs = layer.getLatLngs()[0];
+        const layer = e?.layer;
+        const latlngs = layer?.getLatLngs()[0];
 
-        const formattedCoords = latlngs.map((point: any) => ({
-            lat: point.lat,
-            lng: point.lng,
+        const formattedCoords = latlngs?.map((point: any) => ({
+            lat: point?.lat,
+            lng: point?.lng,
         }));
 
-        layerGroup.addLayer(layer);
+        layerGroup?.addLayer(layer);
 
         setForm((prev: any) => ({
             ...prev,
@@ -441,28 +442,24 @@ const ZoneModal: React.FC<Props> = ({
                             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
                             <FeatureGroup ref={featureGroupRef}>
-                                {featureGroupRef.current && (
-                                    <EditControl
-                                        position="topright"
-                                        onCreated={handleCreated}
-                                        // onEdited={handleEdited}
-                                        onDeleted={handleDeleted}
-                                        draw={{
-                                            rectangle: false,
-                                            circle: false,
-                                            marker: false,
-                                            circlemarker: false,
-                                            polyline: false,
-                                        }}
-                                        edit={{
-                                            featureGroup: featureGroupRef.current,
-                                            remove: true,
-                                        }}
-                                    />
-                                )}
+                                <EditControl
+                                    position="topright"
+                                    onCreated={handleCreated}
+                                    onDeleted={handleDeleted}
+                                    draw={{
+                                        rectangle: false,
+                                        circle: false,
+                                        marker: false,
+                                        circlemarker: false,
+                                        polyline: false,
+                                    }}
+                                    edit={{
+                                        remove: true,
+                                    }}
+                                />
                             </FeatureGroup>
-
                         </MapContainer>
+
                     </div>
 
                     {/* FOOTER */}
