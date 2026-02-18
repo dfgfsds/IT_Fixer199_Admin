@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, Download, Plus } from 'lucide-react';
 import OrdersTable from '../components/Orders/OrdersTable';
 import { Order, PaginationData } from '../types';
+import Api from '../api-endpoints/ApiUrls';
+import axiosInstance from '../configs/axios-middleware';
 
 const Orders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -15,23 +17,25 @@ const Orders: React.FC = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, [filters]);
+  }, []);
 
   const fetchOrders = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const params = new URLSearchParams({
-        page: filters.page.toString(),
-        limit: '20',
-        ...(filters.status !== 'all' && { status: filters.status }),
-        ...(filters.search && { search: filters.search })
-      });
+      // const token = localStorage.getItem('token');
+      // const params = new URLSearchParams({
+      //   page: filters.page.toString(),
+      //   limit: '20',
+      //   ...(filters.status !== 'all' && { status: filters.status }),
+      //   ...(filters.search && { search: filters.search })
+      // });
 
-      const response = await fetch(`/api/orders?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      // const response = await fetch(`/api/orders?${params}`, {
+      //   headers: {
+      //     'Authorization': `Bearer ${token}`,
+      //   },
+      // });
+
+      const response = await axiosInstance.get(Api?.orders);
 
       if (response.ok) {
         const data = await response.json();
