@@ -27,8 +27,8 @@ const ZonalManager: React.FC = () => {
   const [deleteZoneId, setDeleteZoneId] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showFormModal, setShowFormModal] = useState(false);
-  const [editZone, setEditZone] = useState<Zone | null>(null);
-
+  const [editZone, setEditZone] = useState<any>('');
+  console.log(editZone)
   useEffect(() => {
     fetchZones();
   }, []);
@@ -392,13 +392,16 @@ const ZonalManager: React.FC = () => {
           </div>
         </div>
       )}
+      {showFormModal && (
+        <ZoneModal
+          show={showFormModal}
+          onClose={() => { setShowFormModal(false), setEditZone('') }}
+          onSuccess={fetchZones}
+          editZone={editZone}
+          setEditZone={setEditZone}
+        />
+      )}
 
-      <ZoneModal
-        show={showFormModal}
-        onClose={() => setShowFormModal(false)}
-        onSuccess={fetchZones}
-        editZone={editZone}
-      />
 
 
 

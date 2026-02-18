@@ -25,6 +25,13 @@ const allBrands=`${baseUrl}/api/brand/all`;
 // Agents
 const agents=`${baseUrl}/api/agents/`;
 
+// pricing/types
+const pricingType =`${baseUrl}/api/pricing/types`;
+// Services
+const services=`${baseUrl}/api/services`;
+
+
+
 export default {
   login,
   allUsers,
@@ -43,4 +50,6 @@ export default {
   Brands,
   allBrands,
   agents,
+  pricingType,
+  services,
 };
