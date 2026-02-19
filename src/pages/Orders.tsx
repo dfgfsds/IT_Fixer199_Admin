@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, Plus } from 'lucide-react';
+import { Search, Filter, ListRestart } from 'lucide-react';
 import OrdersTable from '../components/Orders/OrdersTable';
 import { Order, PaginationData } from '../types';
 import Api from '../api-endpoints/ApiUrls';
@@ -10,44 +10,108 @@ const Orders: React.FC = () => {
   const [pagination, setPagination] = useState<PaginationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    status: 'all',
+    status: '',
     search: '',
     page: 1
   });
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
 
+  // useEffect(() => {
+  //   fetchOrders();
+  // }, []);
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [filters]);
 
   const fetchOrders = async () => {
     try {
-      // const token = localStorage.getItem('token');
-      // const params = new URLSearchParams({
-      //   page: filters.page.toString(),
-      //   limit: '20',
-      //   ...(filters.status !== 'all' && { status: filters.status }),
-      //   ...(filters.search && { search: filters.search })
-      // });
+      setLoading(true);
 
-      // const response = await fetch(`/api/orders?${params}`, {
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`,
-      //   },
-      // });
+      const params: any = {
+        page: filters.page,
+        limit: 20,
+      };
 
-      const response = await axiosInstance.get(Api?.orders);
-
-      if (response.ok) {
-        const data = await response.json();
-        setOrders(data.orders);
-        setPagination(data.pagination);
+      if (filters?.status) {
+        params.order_status = filters?.status;
       }
+
+      if (filters?.search) {
+        params.search = filters?.search;
+      }
+
+      const response: any = await axiosInstance?.get(
+        Api?.orders,
+        { params }   // 👈 THIS WAS MISSING
+      );
+      if (response) {
+        setOrders(response?.data?.orders);
+        // setFilteredOrders(response?.data?.orders || []);
+        setPagination(response?.data?.pagination || null);
+      }
+
+
     } catch (error) {
-      console.error('Failed to fetch orders:', error);
+      console.error("Failed to fetch orders:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let data = [...orders];
+
+    // 🔍 SEARCH FILTER
+    if (filters?.search.trim() !== '') {
+      const searchValue = filters?.search?.toLowerCase();
+
+      data = data?.filter((order: any) =>
+        order?.customer_name?.toLowerCase()?.includes(searchValue) ||
+        order?.customer_number?.includes(searchValue) ||
+        order?.id?.toLowerCase().includes(searchValue)
+      );
+    }
+
+    // 📂 STATUS FILTER
+    if (filters.status !== '') {
+      data = data.filter(
+        (order: any) => order.order_status === filters.status
+      );
+    }
+
+    setFilteredOrders(data);
+
+  }, [filters, orders]);
+
+  // const fetchOrders = async () => {
+  //   try {
+  //     const token = localStorage.getItem('token');
+  //     const params = new URLSearchParams({
+  //       page: filters.page.toString(),
+  //       limit: '20',
+  //       ...(filters.status !== 'all' && { status: filters.status }),
+  //       ...(filters.search && { search: filters.search })
+  //     });
+
+  //     // const response = await fetch(`/api/orders?${params}`, {
+  //     //   headers: {
+  //     //     'Authorization': `Bearer ${token}`,
+  //     //   },
+  //     // });
+
+  //     const response: any = await axiosInstance.get(Api?.orders);
+  //     console.log(response?.data?.orders)
+  //     if (response) {
+  //       // const data = await response.json();
+  //       setOrders(response?.data?.orders);
+  //       // setPagination(data.pagination);
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to fetch orders:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleViewOrder = (order: Order) => {
     console.log('View order:', order);
@@ -65,13 +129,13 @@ const Orders: React.FC = () => {
   };
 
   const statusOptions = [
-    { value: 'all', label: 'All Orders' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'assigned', label: 'Assigned' },
-    { value: 'in_progress', label: 'In Progress' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'cancelled', label: 'Cancelled' },
-    { value: 'refunded', label: 'Refunded' },
+    { value: '', label: 'All Orders' },
+    { value: 'PENDING', label: 'Pending' },
+    { value: 'ASSIGNED', label: 'Assigned' },
+    { value: 'IN_PROGRESS', label: 'In Progress' },
+    { value: 'COMPLETED', label: 'Completed' },
+    { value: 'CANCELLED', label: 'Cancelled' },
+    // { value: 'refunded', label: 'Refunded' },
   ];
 
   return (
@@ -82,7 +146,7 @@ const Orders: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Orders Management</h1>
           <p className="text-gray-600">Manage and track all service orders</p>
         </div>
-        <div className="flex items-center space-x-3">
+        {/* <div className="flex items-center space-x-3">
           <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
             <Download className="w-4 h-4 mr-2" />
             Export
@@ -91,7 +155,7 @@ const Orders: React.FC = () => {
             <Plus className="w-4 h-4 mr-2" />
             New Order
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Filters */}
@@ -122,10 +186,23 @@ const Orders: React.FC = () => {
               ))}
             </select>
           </div>
-          <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+          <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            onClick={() =>
+              setFilters({
+                status: '',
+                search: '',
+                page: 1
+              })
+            }
+
+          >
+            <ListRestart className="w-4 h-4 mr-2" />
+            Rest
+          </button>
+          {/* <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
             <Filter className="w-4 h-4 mr-2" />
             More Filters
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -136,7 +213,7 @@ const Orders: React.FC = () => {
         </div>
       ) : (
         <OrdersTable
-          orders={orders}
+          orders={filteredOrders}
           onViewOrder={handleViewOrder}
           onEditOrder={handleEditOrder}
           onAssignAgent={handleAssignAgent}
