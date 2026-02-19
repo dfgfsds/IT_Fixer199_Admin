@@ -25,6 +25,7 @@ import Brands from './pages/Brands/Brands';
 import Attribute from './pages/Attribute/Attribute';
 import Products from './pages/Products/Products';
 import Services from './pages/Services/Services';
+import Agents360 from './components/Agent/Agent360';
 
 const queryClient = new QueryClient();
 
@@ -79,6 +80,8 @@ const AppRoutes: React.FC = () => {
         <Route path='attribute' element={<Attribute />} />
         <Route path='products' element={<Products />} />
         <Route path='services' element={<Services />} />
+        <Route path='agents/:id' element={<Agents360 />} />
+
 
       </Route>
     </Routes>
