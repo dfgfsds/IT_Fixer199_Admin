@@ -57,12 +57,12 @@ const Sidebar: React.FC = () => {
       {/* 🔥 Scrollable Menu Only */}
       <nav className="flex-1 overflow-y-auto no-scrollbar px-4 py-4">
         <ul className="space-y-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
+          {menuItems?.map((item) => {
+            const Icon = item?.icon;
             return (
-              <li key={item.name}>
+              <li key={item?.name}>
                 <NavLink
-                  to={item.path}
+                  to={item?.path}
                   className={({ isActive }) =>
                     `flex items-center px-4 py-3 text-sm rounded-lg transition-colors duration-200 ${isActive
                       ? 'bg-orange-600 text-white'
@@ -71,7 +71,7 @@ const Sidebar: React.FC = () => {
                   }
                 >
                   <Icon className="w-5 h-5 mr-3" />
-                  {item.name}
+                  {item?.name}
                 </NavLink>
               </li>
             );
