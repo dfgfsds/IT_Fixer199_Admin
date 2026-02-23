@@ -31,7 +31,7 @@ const queryClient = new QueryClient();
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
-  console.log(user)
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

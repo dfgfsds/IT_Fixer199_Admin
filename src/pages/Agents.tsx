@@ -567,6 +567,9 @@ const Agents: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  S.No
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Agent
                 </th>
@@ -576,9 +579,9 @@ const Agents: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Zone
                 </th>
-                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">                    
-                                   Performance
-                  </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Performance
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Status
                 </th>
@@ -596,9 +599,13 @@ const Agents: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredAgents?.map(agent => (
+                filteredAgents?.map((agent:any,index:number) => (
                   <tr key={agent.id} className="hover:bg-gray-50">
                     {/* Agent */}
+                     <td className="px-6 py-4 text-sm text-gray-700">
+                      {index + 1}
+                    </td>
+
                     <td className="px-6 py-4 flex items-center space-x-3">
                       {agent.profile_image_url ? (
                         <img
@@ -607,11 +614,11 @@ const Agents: React.FC = () => {
                           className="w-10 h-10 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-semibold">
+                        <div className="w-10 h-10  rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-semibold">
                           {agent.user_name?.charAt(0)}
                         </div>
                       )}
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm capitalize font-medium text-gray-900">
                         {agent.user_name}
                       </span>
                     </td>
@@ -626,18 +633,18 @@ const Agents: React.FC = () => {
                       {agent.hub_name}
                     </td>
 
-                     <td className="px-6 py-4 whitespace-nowrap">
-                       <div className="text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
                         <div className="flex items-center">
-                           <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                           {agent?.cumulative_rating}
-                            {/* ({agent?.total_reviews}) */}
-                         </div>
-                         {/* <div className="text-xs text-gray-500">
+                          <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                          {agent?.cumulative_rating}
+                          {/* ({agent?.total_reviews}) */}
+                        </div>
+                        {/* <div className="text-xs text-gray-500">
                            {agent.total_orders} orders completed
                          </div> */}
-                       </div>
-                     </td>
+                      </div>
+                    </td>
 
                     {/* Status */}
                     <td className="px-6 py-4">
