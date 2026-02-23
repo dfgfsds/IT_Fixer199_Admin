@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
-import Select from 'react-select'
+import Select from 'react-select';
+import Api from '../../api-endpoints/ApiUrls';
+
 interface Props {
     show: boolean;
     onClose: () => void;
@@ -49,17 +51,17 @@ const ProductModal: React.FC<Props> = ({
     }, []);
 
     const fetchBrands = async () => {
-        const res = await axiosInstance.get("/api/brand/all");
+        const res = await axiosInstance.get(Api?.allBrands);
         setBrands(res?.data?.brands || []);
     };
 
     const fetchCategories = async () => {
-        const res = await axiosInstance.get("/api/category");
+        const res = await axiosInstance.get(Api?.categories);
         setCategories(res?.data?.data || []);
     };
 
     const fetchAttributes = async () => {
-        const res = await axiosInstance.get("/api/attribute");
+        const res = await axiosInstance.get(Api?.attribute);
         setAttributesList(res?.data?.data || []);
     };
 
@@ -254,9 +256,9 @@ const ProductModal: React.FC<Props> = ({
         );
 
         if (isEdit) {
-            await axiosInstance.put(`/api/product/${editProduct.id}`, formData);
+            await axiosInstance.put(`${Api?.products}/${editProduct.id}`, formData);
         } else {
-            await axiosInstance.post("/api/product", formData);
+            await axiosInstance.post(Api?.products, formData);
         }
 
         onSuccess();

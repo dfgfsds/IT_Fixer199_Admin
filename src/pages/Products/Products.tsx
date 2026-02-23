@@ -3,6 +3,7 @@ import axiosInstance from "../../configs/axios-middleware";
 import { Plus, Edit, CheckCircle, XCircle, DollarSign, Trash2 } from "lucide-react";
 import ProductModal from "./ProductModal";
 import PricingModal from "./PricingModal";
+import Api from '../../api-endpoints/ApiUrls';
 
 const Products: React.FC = () => {
     const [products, setProducts] = useState<any[]>([]);
@@ -25,7 +26,7 @@ const Products: React.FC = () => {
     const confirmDelete = async () => {
         if (!deleteId) return;
 
-        await axiosInstance.delete(`/api/product/${deleteId}`);
+        await axiosInstance.delete(`${Api?.products}/${deleteId}`);
         setShowDeleteModal(false);
         setDeleteId(null);
         fetchProducts();
@@ -37,7 +38,7 @@ const Products: React.FC = () => {
 
     const fetchProducts = async () => {
         try {
-            const res = await axiosInstance.get("/api/product");
+            const res = await axiosInstance.get(Api?.products);
             setProducts(res?.data?.data || []);
         } catch (err) {
             console.error(err);
@@ -48,7 +49,7 @@ const Products: React.FC = () => {
 
     const handleDelete = async (id: string) => {
         if (!window.confirm("Delete this product?")) return;
-        await axiosInstance.delete(`/api/product/${id}`);
+        await axiosInstance.delete(`${Api?.products}/${id}`);
         fetchProducts();
     };
 
