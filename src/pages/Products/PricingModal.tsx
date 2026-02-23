@@ -77,7 +77,7 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
             price: item.price,
         }));
 
-        await axiosInstance.post("/api/pricing", payload);
+        await axiosInstance.post(Api?.pricing, payload);
 
         onClose();
     };

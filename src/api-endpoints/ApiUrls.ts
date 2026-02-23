@@ -25,17 +25,24 @@ const allBrands = `${baseUrl}/api/brand/all`;
 // Agents
 const agents = `${baseUrl}/api/agents/`;
 
-// pricing/types
+// pricing
 const pricingType = `${baseUrl}/api/pricing/types`;
+const pricing = `${baseUrl}/api/pricing`;
+
 // Services
 const services = `${baseUrl}/api/services`;
-const createService=`${baseUrl}/api/services/create/`;
+const createService = `${baseUrl}/api/services/create/`;
 
 // Orders
 const orders = `${baseUrl}/api/order/orders/all/`;
 // Agent Product
 const agentProductStock = `${baseUrl}/api/product-inventory/agent-stocks/`;
 
+// Products
+const products = `${baseUrl}/api/product`;
+
+// Attribute
+const attribute = `${baseUrl}/api/attribute`;
 
 export default {
   login,
@@ -60,4 +67,7 @@ export default {
   orders,
   agentProductStock,
   createService,
+  products,
+  attribute,
+  pricing,
 };

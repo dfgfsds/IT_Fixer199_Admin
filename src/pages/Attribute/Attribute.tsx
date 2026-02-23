@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import AttributeModal from "./AttributeModal";
+import Api from '../../api-endpoints/ApiUrls';
 
 
 interface AttributeType {
@@ -25,7 +26,7 @@ const Attribute: React.FC = () => {
 
     const fetchAttributes = async () => {
         try {
-            const res = await axiosInstance.get("/api/attribute");
+            const res = await axiosInstance.get(Api?.attribute);
             console.log(res)
             setAttributes(res?.data?.data);
         } catch (error) {
@@ -40,7 +41,7 @@ const Attribute: React.FC = () => {
 
         try {
             await axiosInstance.delete(
-                `/api/attribute/${deleteItem.attribute_id}`
+                `${Api?.attribute}/${deleteItem.attribute_id}`
             );
             setDeleteItem(null);
             fetchAttributes();
