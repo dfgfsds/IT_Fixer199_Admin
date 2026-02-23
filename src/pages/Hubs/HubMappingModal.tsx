@@ -49,7 +49,7 @@ const HubMappingModal: React.FC<Props> = ({ show, onClose, hub }) => {
         try {
             setLoading(true);
 
-            await axiosInstance.post("/api/hub/mapping", {
+            await axiosInstance.post(Api?.hubMapping, {
                 hub: hub.id,
                 zone: zoneId,
             });
