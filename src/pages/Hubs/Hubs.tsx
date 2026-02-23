@@ -7,6 +7,7 @@ import Api from '../../api-endpoints/ApiUrls';
 import HubMappingModal from "./HubMappingModal";
 import HubModal from "./HubModal";
 
+
 interface HubType {
     id: string;
     name: string;
@@ -47,7 +48,7 @@ const Hubs: React.FC = () => {
     const handleDelete = async () => {
         if (!deleteHubId) return;
 
-        await axiosInstance.delete(`/api/hub/${deleteHubId}`);
+        await axiosInstance.delete(`${Api?.hub}/${deleteHubId}`);
         setDeleteHubId(null);
         fetchHubs();
     };
