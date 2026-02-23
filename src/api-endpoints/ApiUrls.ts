@@ -1,5 +1,5 @@
 const baseUrl =
-  import.meta.env.VITE_API_BASE_URL ??
+  import.meta.env.VITE_API_BASE_URL ||
   "https://api.itfixer199.com";
 
 const login = `${baseUrl}/api/login`;
@@ -32,7 +32,7 @@ const services = `${baseUrl}/api/services`;
 // Orders
 const orders = `${baseUrl}/api/order/orders/all/`;
 // Agent Product
-const agentProductStock=`${baseUrl}/api/product-inventory/agent-stocks/`;
+const agentProductStock = `${baseUrl}/api/product-inventory/agent-stocks/`;
 
 
 export default {
