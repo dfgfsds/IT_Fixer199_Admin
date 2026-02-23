@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import Select from 'react-select'
 import Api from '../../api-endpoints/ApiUrls';
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 interface Props {
     show: boolean;
     onClose: () => void;
@@ -26,6 +27,7 @@ const ServiceModal: React.FC<Props> = ({
     const [newMedia, setNewMedia] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [deletedMediaIds, setDeletedMediaIds] = useState<string[]>([]);
+    const [apiErrors, setApiErrors] = useState<string>("");
 
 
     const [form, setForm] = useState<any>({
@@ -235,50 +237,59 @@ const ServiceModal: React.FC<Props> = ({
     // ---------------- SUBMIT ----------------
     const handleSubmit = async (e: any) => {
         e.preventDefault();
+        try {
+            const formData = new FormData();
 
-        const formData = new FormData();
+            const serviceObject = {
+                name: form.name,
+                description: form.description,
+                parent: form.parent,
+                is_otp_required: form.is_otp_required,
+                eta: form.eta,
+                status: form.status,
+            };
 
-        const serviceObject = {
-            name: form.name,
-            description: form.description,
-            parent: form.parent,
-            is_otp_required: form.is_otp_required,
-            eta: form.eta,
-            status: form.status,
-        };
+            formData.append("service", JSON.stringify(serviceObject));
 
-        formData.append("service", JSON.stringify(serviceObject));
-
-        form.categories.forEach((id: string) =>
-            formData.append("categories", id)
-        );
-
-        form.pricing_models.forEach((p: any) =>
-            formData.append("pricing_models", JSON.stringify(p))
-        );
-
-        form.zone_hub_mappings.forEach((z: any) =>
-            formData.append("zone_hub_mappings", JSON.stringify(z))
-        );
-
-        newMedia.forEach((file: any) =>
-            formData.append("media_files", file)
-        );
-
-        if (isEdit) {
-            await axiosInstance.put(
-                `/api/services/${editService.id}/`,
-                formData
+            form.categories.forEach((id: string) =>
+                formData.append("categories", id)
             );
-        } else {
-            await axiosInstance.post(
-                "/api/services/create/",
-                formData
+
+            form.pricing_models.forEach((p: any) =>
+                formData.append("pricing_models", JSON.stringify(p))
             );
+
+            form.zone_hub_mappings.forEach((z: any) =>
+                formData.append("zone_hub_mappings", JSON.stringify(z))
+            );
+
+            newMedia.forEach((file: any) =>
+                formData.append("media_files", file)
+            );
+
+            if (isEdit) {
+                const updateApi = await axiosInstance.put(
+                    `${Api?.services}/${editService.id}/`,
+                    formData
+                );
+                if (updateApi) {
+                    onSuccess();
+                    onClose();
+                }
+            } else {
+                const updateApi = await axiosInstance.post(
+                    `${Api?.createService}`,
+                    formData
+                );
+                if (updateApi) {
+                    onSuccess();
+                    onClose();
+                }
+            }
+
+        } catch (error) {
+            setApiErrors(extractErrorMessage(error));
         }
-
-        onSuccess();
-        onClose();
     };
 
     if (!show) return null;
@@ -589,6 +600,12 @@ const ServiceModal: React.FC<Props> = ({
                             )}
                         </div>
 
+                        {apiErrors && (
+                            <p className="text-red-500 mt-2 text-end px-6">
+                                {apiErrors}
+                            </p>
+
+                        )}
                         {/* Footer */}
                         <div className="flex justify-end gap-4 pt-6 border-t">
                             <button
