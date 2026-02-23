@@ -105,7 +105,7 @@ const HubMappingModal: React.FC<Props> = ({ show, onClose, hub }) => {
                             Hub Mapping
                         </h2>
                         <p className="text-sm text-gray-500">
-                            {hub.name}
+                            {hub?.name}
                         </p>
                     </div>
 
@@ -126,19 +126,19 @@ const HubMappingModal: React.FC<Props> = ({ show, onClose, hub }) => {
                             Mapped Zones
                         </h3>
 
-                        {mappings.length === 0 ? (
+                        {mappings?.length === 0 ? (
                             <p className="text-sm text-gray-400">
                                 No zones mapped yet.
                             </p>
                         ) : (
                             <div className="space-y-2">
-                                {mappings.map((map) => (
+                                {mappings?.map((map) => (
                                     <div
-                                        key={map.id}
+                                        key={map?.id}
                                         className="flex justify-between items-center border rounded-lg px-3 py-2 bg-gray-50"
                                     >
                                         <span className="text-sm font-medium">
-                                            {map.zone_name}
+                                            {map?.zone_name}
                                         </span>
 
                                         <button
@@ -162,19 +162,18 @@ const HubMappingModal: React.FC<Props> = ({ show, onClose, hub }) => {
 
                         <select
                             value={zoneId}
-                            onChange={(e) => setZoneId(e.target.value)}
+                            onChange={(e) => setZoneId(e?.target?.value)}
                             className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500"
                         >
                             <option value="">Select Zone</option>
-
                             {zones
-                                .filter(
+                                ?.filter(
                                     (zone) =>
-                                        !mappings.some((m) => m.zone === zone.id)
+                                        !mappings?.some((m) => m?.zone === zone?.id)
                                 )
-                                .map((zone) => (
-                                    <option key={zone.id} value={zone.id}>
-                                        {zone.name}
+                                ?.map((zone) => (
+                                    <option key={zone?.id} value={zone?.id}>
+                                        {zone?.name}
                                     </option>
                                 ))}
                         </select>
