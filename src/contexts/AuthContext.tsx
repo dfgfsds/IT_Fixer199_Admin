@@ -93,6 +93,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log(response)
       const user = response.data?.data?.user;
       const token = response.data?.data?.tokens?.access;
+      const refresh = response.data?.data?.tokens?.refresh;
 
       if (!token) {
         throw new Error("Token not received");
@@ -102,6 +103,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(user);
 
       localStorage.setItem("token", token);
+      localStorage.setItem("refresh", refresh);
+
       localStorage.setItem("user", JSON.stringify(user));
 
     } catch (error: any) {
