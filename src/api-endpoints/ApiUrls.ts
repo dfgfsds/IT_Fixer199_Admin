@@ -28,6 +28,7 @@ const agents = `${baseUrl}/api/agents/`;
 // pricing
 const pricingType = `${baseUrl}/api/pricing/types`;
 const pricing = `${baseUrl}/api/pricing`;
+const pricingBulk=`${baseUrl}/api/pricing/bulk`
 
 // Services
 const services = `${baseUrl}/api/services`;
@@ -70,4 +71,5 @@ export default {
   products,
   attribute,
   pricing,
+  pricingBulk,
 };

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
-import { Plus, Trash2 } from "lucide-react";
+import { Loader, Plus, Trash2 } from "lucide-react";
 import Api from '../../api-endpoints/ApiUrls';
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 interface Props {
     show: boolean;
@@ -10,11 +11,13 @@ interface Props {
 }
 
 const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
-    const [pricingTypes, setPricingTypes] = useState<any[]>([]);
+    const [priceTypes, setPriceTypes] = useState<any[]>([]);
     const [hubs, setHubs] = useState<any[]>([]);
-
+    const [loading, setLoading] = useState(false);
+    const [apiErrors, setApiErrors] = useState<string>("");
     const [pricingList, setPricingList] = useState<any[]>([
         {
+            pricing_type: "",
             hub: "",
             start_time: "",
             end_time: "",
@@ -22,11 +25,12 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
             price: "",
         },
     ]);
-
+    console.log(product)
     // ---------------- Fetch Dropdown Data ----------------
     useEffect(() => {
         if (show) {
             fetchHubs();
+            fetchPriceTypes()
         }
     }, [show]);
 
@@ -42,11 +46,18 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
         setPricingList(updated);
     };
 
+
+    const fetchPriceTypes = async () => {
+        const res = await axiosInstance.get(Api?.pricingType);
+        setPriceTypes(res?.data?.data || []);
+    };
+
     // ---------------- Add Pricing Row ----------------
     const addPricingRow = () => {
         setPricingList([
             ...pricingList,
             {
+                pricing_type: "",
                 hub: "",
                 start_time: "",
                 end_time: "",
@@ -62,24 +73,37 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
         updated.splice(index, 1);
         setPricingList(updated);
     };
-
+    console.log(product)
     // ---------------- Submit ----------------
     const handleSubmit = async (e: any) => {
         e.preventDefault();
-
+        setApiErrors("");
+        setLoading(true);
         const payload = pricingList.map((item) => ({
-            product: product.id,
-            pricing_type: product.type,
-            hub: item.hub,
-            start_time: item.start_time,
-            end_time: item.end_time,
-            max_quantity: item.max_quantity,
-            price: item.price,
+            // product: product.id,
+            pricing_type: item?.pricing_type,
+            hub: item?.hub,
+            start_time: item?.start_time,
+            end_time: item?.end_time,
+            max_quantity: item?.max_quantity,
+            price: item?.price,
         }));
+        const pricingPayload = {
+            product: product.id,
+            pricing: payload
+        }
+        try {
+            const updateApi = await axiosInstance.post(Api?.pricingBulk, pricingPayload);
+            if (updateApi) {
+                onClose();
+                setLoading(false);
+            }
+        } catch (error) {
+            setLoading(false);
+            setApiErrors(extractErrorMessage(error));
 
-        await axiosInstance.post(Api?.pricing, payload);
+        }
 
-        onClose();
     };
 
     if (!show || !product) return null;
@@ -107,6 +131,28 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
                                     <Trash2 size={16} />
                                 </button>
                             )}
+
+                            {/* Type */}
+                            <div>
+                                <label className="block text-sm font-medium mb-1">
+                                    Product Type *
+                                </label>
+                                <select
+                                    value={item.pricing_type}
+                                    onChange={(e) =>
+                                        handleChange(index, "pricing_type", e.target.value)
+                                    }
+                                    className="w-full border rounded-lg px-3 py-2"
+                                    required
+                                >
+                                    <option value="">Select Pricing type</option>
+                                    {priceTypes?.map((p) => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
 
                             {/* Hub Select */}
                             <div>
@@ -209,6 +255,13 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
                         Add Another Pricing
                     </button>
 
+                    {/* Error */}
+                    {apiErrors && (
+                        <p className="text-red-500 mt-2 text-end px-6">
+                            {apiErrors}
+                        </p>
+                    )}
+
                     {/* Footer */}
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <button
@@ -221,9 +274,13 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
 
                         <button
                             type="submit"
+                            disabled={loading}
                             className="px-4 py-2 bg-green-600 text-white rounded-lg"
                         >
-                            Save Pricing
+
+                            {loading ? (
+                                <div className="flex gap-2 items-center "> <Loader size={16} className="animate-spin" />Creating... </div>) : "Save Pricing"}
+
                         </button>
                     </div>
 
