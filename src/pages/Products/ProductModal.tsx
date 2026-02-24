@@ -105,9 +105,9 @@ const ProductModal: React.FC<Props> = ({
                 : [],
         });
     };
-
+    console.log(form)
     const selectedAttributeOptions = attributeOptions.filter((option) =>
-        form.attributes.some((a: any) => a.id === option.value)
+        form?.attributes?.some((a: any) => a?.id === option?.value)
     );
 
 
@@ -153,7 +153,10 @@ const ProductModal: React.FC<Props> = ({
             status: editProduct.status || "ACTIVE",
             category_ids:
                 editProduct.categories?.map((c: any) => c.id) || [],
-            attributes: editProduct?.attributes?.map((a: any) => a?.value_id),
+            // attributes: editProduct?.attributes?.map((a: any) => {id:a?.value_id}),
+            attributes: editProduct?.attributes?.map((a: any) => ({
+                id: a?.value_id
+            })) || [],
             // attributes: editProduct.attributes || [],
             specification: parsedSpecification,
         });
@@ -240,7 +243,7 @@ const ProductModal: React.FC<Props> = ({
             });
 
             // ✅ Attributes
-            const attributesPayload = form.attributes.map((attr: any) => ({
+            const attributesPayload = form?.attributes.map((attr: any) => ({
                 value_id: attr?.id,
             }));
 
