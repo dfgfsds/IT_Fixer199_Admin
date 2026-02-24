@@ -50,7 +50,7 @@ const Products: React.FC = () => {
             product.sku?.toLowerCase().includes(search.toLowerCase());
 
         const matchesBrand =
-            selectedBrand === "" || product?.brand === selectedBrand;
+            selectedBrand === "" || product?.brand_details?.id === selectedBrand;
 
         const matchesCategory =
             selectedCategory === "" ||
@@ -81,7 +81,7 @@ const Products: React.FC = () => {
 
     const fetchProducts = async () => {
         try {
-            const res = await axiosInstance.get(`${Api?.products}?include_attribute=true&include_category=true&include_media=true`);
+            const res = await axiosInstance.get(`${Api?.products}?include_attribute=true&include_category=true&include_media=true&include_brand=true`);
             setProducts(res?.data?.data || []);
         } catch (err) {
             console.error(err);
@@ -271,7 +271,7 @@ const Products: React.FC = () => {
                                                 </td>
 
                                                 <td className="px-6 py-4 text-sm text-gray-900">
-                                                    {product.brand_name}
+                                                    {product.brand_details?.name}
                                                 </td>
 
                                                 <td className="px-6 py-4 text-sm text-gray-900">
