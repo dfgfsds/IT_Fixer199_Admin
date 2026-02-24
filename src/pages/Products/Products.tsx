@@ -18,6 +18,49 @@ const Products: React.FC = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
+
+    const [search, setSearch] = useState("");
+    const [selectedBrand, setSelectedBrand] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState("");
+
+    const [brands, setBrands] = useState<any[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
+
+
+    useEffect(() => {
+        fetchProducts();
+        fetchBrands();
+        fetchCategories();
+    }, []);
+
+    const fetchBrands = async () => {
+        const res = await axiosInstance.get(Api?.allBrands);
+        setBrands(res?.data?.brands || []);
+    };
+
+    const fetchCategories = async () => {
+        const res = await axiosInstance.get(Api?.categories);
+        setCategories(res?.data?.data || []);
+    };
+
+
+    const filteredProducts = products.filter((product) => {
+        const matchesSearch =
+            product.name?.toLowerCase().includes(search.toLowerCase()) ||
+            product.sku?.toLowerCase().includes(search.toLowerCase());
+
+        const matchesBrand =
+            selectedBrand === "" || product?.brand === selectedBrand;
+
+        const matchesCategory =
+            selectedCategory === "" ||
+            product.categories?.some(
+                (cat: any) => cat?.id === selectedCategory
+            );
+
+        return matchesSearch && matchesBrand && matchesCategory;
+    });
+
     const openDeleteModal = (id: string) => {
         setDeleteId(id);
         setShowDeleteModal(true);
@@ -38,7 +81,7 @@ const Products: React.FC = () => {
 
     const fetchProducts = async () => {
         try {
-            const res = await axiosInstance.get(Api?.products);
+            const res = await axiosInstance.get(`${Api?.products}?include_attribute=true&include_category=true&include_media=true`);
             setProducts(res?.data?.data || []);
         } catch (err) {
             console.error(err);
@@ -106,10 +149,65 @@ const Products: React.FC = () => {
 
             </div>
 
+            {/* Filters */}
+            <div className="bg-white p-4 rounded-lg border border-gray-200 flex flex-col md:flex-row gap-4">
+
+                {/* Search */}
+                <input
+                    type="text"
+                    placeholder="Search by name or SKU..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full md:w-1/3 border rounded-lg px-3 py-2 text-sm"
+                />
+
+                {/* Brand Filter */}
+                <select
+                    value={selectedBrand}
+                    onChange={(e) => setSelectedBrand(e.target.value)}
+                    className="w-full md:w-1/4 border rounded-lg px-3 py-2 text-sm"
+                >
+                    <option value="">All Brands</option>
+                    {brands?.map((b) => (
+                        <option key={b.id} value={b.id}>
+                            {b.name}
+                        </option>
+                    ))}
+                </select>
+
+                {/* Category Filter */}
+                <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full md:w-1/4 border rounded-lg px-3 py-2 text-sm"
+                >
+                    <option value="">All Categories</option>
+                    {categories?.map((c) => (
+                        <option key={c.id} value={c.id}>
+                            {c.name}
+                        </option>
+                    ))}
+                </select>
+
+                {/* Clear Button */}
+                <button
+                    onClick={() => {
+                        setSearch("");
+                        setSelectedBrand("");
+                        setSelectedCategory("");
+                    }}
+                    className="px-4 py-2 bg-gray-100 text-sm rounded-lg hover:bg-gray-200"
+                >
+                    Clear
+                </button>
+
+            </div>
+
+
             {/* Table */}
             {loading ? (
-                <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+                <div className="flex items-center justify-center h-64 gap-5 text-lg font-bold text-orange-600">
+                    Loading <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
                 </div>
             ) : (
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -128,66 +226,88 @@ const Products: React.FC = () => {
                             </thead>
 
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {products.map((product) => (
-                                    <tr key={product.id} className="hover:bg-gray-50">
+                                {filteredProducts.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="px-6 py-12 text-center">
+                                            <div className="flex flex-col items-center justify-center text-gray-500">
 
-                                        {/* Product */}
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                                                    <span className="text-orange-600 font-medium">
-                                                        {product.name?.charAt(0)}
-                                                    </span>
+                                                {/* Icon */}
+                                                <div className="bg-gray-100 rounded-full p-4 mb-4">
+                                                    <XCircle className="w-8 h-8 text-gray-400" />
                                                 </div>
-                                                <div className="ml-4">
-                                                    <div className="text-sm font-medium text-gray-900">
-                                                        {product.name}
-                                                    </div>
-                                                    <div className="text-sm text-gray-500">
-                                                        {product.model_name}
-                                                    </div>
-                                                </div>
+
+                                                {/* Message */}
+                                                <p className="text-lg font-medium text-gray-700">
+                                                    No Products Found
+                                                </p>
+                                                <p className="text-sm text-gray-500 mt-1">
+                                                    Try adjusting your search or filter criteria.
+                                                </p>
                                             </div>
                                         </td>
+                                    </tr>
+                                ) : (
+                                    <>
+                                        {filteredProducts?.map((product) => (
+                                            <tr key={product.id} className="hover:bg-gray-50">
 
-                                        <td className="px-6 py-4 text-sm text-gray-900">
-                                            {product.brand_name}
-                                        </td>
+                                                {/* Product */}
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex items-center">
+                                                        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                                            <span className="text-orange-600 font-medium">
+                                                                {product.name?.charAt(0)}
+                                                            </span>
+                                                        </div>
+                                                        <div className="ml-4">
+                                                            <div className="text-sm font-medium text-gray-900">
+                                                                {product.name}
+                                                            </div>
+                                                            <div className="text-sm text-gray-500">
+                                                                {product.model_name}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
 
-                                        <td className="px-6 py-4 text-sm text-gray-900">
-                                            {product.sku}
-                                        </td>
+                                                <td className="px-6 py-4 text-sm text-gray-900">
+                                                    {product.brand_name}
+                                                </td>
 
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-wrap gap-1">
-                                                {product.categories?.map((cat: any) => (
+                                                <td className="px-6 py-4 text-sm text-gray-900">
+                                                    {product.sku}
+                                                </td>
+
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {product.categories?.map((cat: any) => (
+                                                            <span
+                                                                key={cat.id}
+                                                                className="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800"
+                                                            >
+                                                                {cat.name}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </td>
+
+                                                <td className="px-6 py-4">
                                                     <span
-                                                        key={cat.id}
-                                                        className="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800"
+                                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.status === "ACTIVE"
+                                                            ? "bg-green-100 text-green-800"
+                                                            : "bg-red-100 text-red-800"
+                                                            }`}
                                                     >
-                                                        {cat.name}
+                                                        {product.status === "ACTIVE" ? (
+                                                            <CheckCircle className="w-3 h-3 mr-1" />
+                                                        ) : (
+                                                            <XCircle className="w-3 h-3 mr-1" />
+                                                        )}
+                                                        {product.status}
                                                     </span>
-                                                ))}
-                                            </div>
-                                        </td>
+                                                </td>
 
-                                        <td className="px-6 py-4">
-                                            <span
-                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.status === "ACTIVE"
-                                                    ? "bg-green-100 text-green-800"
-                                                    : "bg-red-100 text-red-800"
-                                                    }`}
-                                            >
-                                                {product.status === "ACTIVE" ? (
-                                                    <CheckCircle className="w-3 h-3 mr-1" />
-                                                ) : (
-                                                    <XCircle className="w-3 h-3 mr-1" />
-                                                )}
-                                                {product.status}
-                                            </span>
-                                        </td>
-
-                                        {/* <button
+                                                {/* <button
                                             onClick={() => {
                                                 setSelectedProduct(product);
                                                 setShowPricing(true);
@@ -199,48 +319,49 @@ const Products: React.FC = () => {
                                             Pricing
                                         </button> */}
 
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end space-x-2">
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex items-center justify-end space-x-2">
 
-                                                {/* Pricing Button */}
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedProduct(product);
-                                                        setShowPricing(true);
-                                                    }}
-                                                    className="inline-flex items-center px-3 py-1.5 bg-green-50 text-green-700 text-xs font-medium rounded-lg hover:bg-green-100"
-                                                >
-                                                    <DollarSign className="w-3 h-3 mr-1" />
-                                                    Pricing
-                                                </button>
+                                                        {/* Pricing Button */}
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedProduct(product);
+                                                                setShowPricing(true);
+                                                            }}
+                                                            className="inline-flex items-center px-3 py-1.5 bg-green-50 text-green-700 text-xs font-medium rounded-lg hover:bg-green-100"
+                                                        >
+                                                            <DollarSign className="w-3 h-3 mr-1" />
+                                                            Pricing
+                                                        </button>
 
-                                                {/* Edit */}
-                                                <button
-                                                    onClick={() => {
-                                                        setEditProduct(product);
-                                                        setShowCreateModal(true);
-                                                    }}
-                                                    className="inline-flex items-center px-3 py-1.5 bg-orange-50 text-orange-700 text-xs font-medium rounded-lg hover:bg-orange-100"
-                                                >
-                                                    <Edit className="w-3 h-3 mr-1" />
-                                                    Edit
-                                                </button>
+                                                        {/* Edit */}
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditProduct(product);
+                                                                setShowCreateModal(true);
+                                                            }}
+                                                            className="inline-flex items-center px-3 py-1.5 bg-orange-50 text-orange-700 text-xs font-medium rounded-lg hover:bg-orange-100"
+                                                        >
+                                                            <Edit className="w-3 h-3 mr-1" />
+                                                            Edit
+                                                        </button>
 
-                                                {/* Delete */}
-                                                <button
-                                                    onClick={() => openDeleteModal(product.id)}
-                                                    className="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100"
-                                                >
-                                                    <Trash2 className="w-3 h-3 mr-1" />
-                                                    Delete
-                                                </button>
+                                                        {/* Delete */}
+                                                        <button
+                                                            onClick={() => openDeleteModal(product.id)}
+                                                            className="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100"
+                                                        >
+                                                            <Trash2 className="w-3 h-3 mr-1" />
+                                                            Delete
+                                                        </button>
 
-                                            </div>
-                                        </td>
+                                                    </div>
+                                                </td>
 
 
-                                    </tr>
-                                ))}
+                                            </tr>
+                                        ))}
+                                    </>)}
                             </tbody>
                         </table>
                     </div>
@@ -262,7 +383,6 @@ const Products: React.FC = () => {
                 product={selectedProduct}
             // onSuccess={fetchProducts}
             />
-
 
             {showDeleteModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -295,8 +415,6 @@ const Products: React.FC = () => {
                     </div>
                 </div>
             )}
-
-
 
         </div>
     );

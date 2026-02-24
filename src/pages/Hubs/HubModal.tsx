@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import Api from '../../api-endpoints/ApiUrls';
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import { Loader } from "lucide-react";
 
 interface Props {
     show: boolean;
@@ -18,6 +20,8 @@ const HubModal: React.FC<Props> = ({
     const isEdit = !!editHub;
     const [users, setUsers] = useState<any[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
+    const [apiErrors, setApiErrors] = useState<string>("");
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         fetchUsers();
@@ -63,20 +67,27 @@ const HubModal: React.FC<Props> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (isEdit) {
-            const response = await axiosInstance.put(`${Api?.hub}/${editHub.id}`, form);
-            if (response) {
-                onSuccess();
-                onClose();
+        setLoading(true);
+        try {
+            if (isEdit) {
+                const response = await axiosInstance.put(`${Api?.hub}/${editHub.id}`, form);
+                if (response) {
+                    onSuccess();
+                    onClose();
+                }
+            } else {
+                const response = await axiosInstance.post(Api?.createHub, form);
+                if (response) {
+                    onSuccess();
+                    onClose();
+                    setLoading(false);
+                }
             }
-        } else {
-            const response = await axiosInstance.post(Api?.createHub, form);
-            if (response) {
-                onSuccess();
-                onClose();
-            }
+        } catch (error) {
+            setApiErrors(extractErrorMessage(error));
+            setLoading(false);
         }
+
 
 
     };
@@ -84,8 +95,8 @@ const HubModal: React.FC<Props> = ({
     if (!show) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] no-scrollbar overflow-y-auto">
 
                 {/* Header */}
                 <div className="flex justify-between items-center px-6 py-4 border-b bg-gray-50">
@@ -195,11 +206,19 @@ const HubModal: React.FC<Props> = ({
                         </select>
                     </div>
 
+                    {/* Error */}
+                    {apiErrors && (
+                        <p className="text-red-500 mt-2 text-end px-6">
+                            {apiErrors}
+                        </p>
+                    )}
+
                     {/* Footer */}
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <button
                             type="button"
                             onClick={onClose}
+                            disabled={loading}
                             className="px-4 py-2 border rounded-lg"
                         >
                             Cancel
@@ -209,7 +228,14 @@ const HubModal: React.FC<Props> = ({
                             type="submit"
                             className="px-4 py-2 bg-orange-600 text-white rounded-lg"
                         >
-                            {isEdit ? "Update Hub" : "Create Hub"}
+                            {/* {isEdit ? "Update Hub" : "Create Hub"} */}
+                            {isEdit ? "Edit User" :
+
+                                (<>
+                                    {loading ? (
+                                        <div className="flex gap-2 items-center "> <Loader size={16} className="animate-spin" />Creating... </div>) : "Create Hub"}
+                                </>)}
+
                         </button>
                     </div>
 

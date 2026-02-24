@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import Api from '../../api-endpoints/ApiUrls';
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import { Loader } from "lucide-react";
 interface Props {
     show: boolean;
     onClose: () => void;
@@ -26,6 +28,8 @@ const BrandModal: React.FC<Props> = ({
 
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string>("");
+    const [apiErrors, setApiErrors] = useState<string>("");
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (editBrand) {
@@ -41,43 +45,56 @@ const BrandModal: React.FC<Props> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setLoading(true);
+        try {
 
-        const formData = new FormData();
+            const formData = new FormData();
 
-        formData.append("name", form.name);
-        formData.append("status", form.status);
-        formData.append("type", form.type);
-        formData.append("is_featured", String(form.is_featured));
+            formData.append("name", form.name);
+            formData.append("status", form.status);
+            formData.append("type", form.type);
+            formData.append("is_featured", String(form.is_featured));
 
-        if (logoFile) {
-            formData.append("logo", logoFile);
+            if (logoFile) {
+                formData.append("logo", logoFile);
+            }
+
+            if (isEdit) {
+                const updateApi = await axiosInstance.put(
+                    `${Api?.Brands}/${editBrand.id}`,
+                    formData
+                );
+                if (updateApi) {
+                    onSuccess();
+                    onClose();
+                }
+            } else {
+                const updateApi = await axiosInstance.post(Api?.Brands, formData);
+                if (updateApi) {
+                    onSuccess();
+                    onClose();
+                    setLoading(false);
+                }
+            }
+        } catch (error) {
+            setLoading(false);
+            setApiErrors(extractErrorMessage(error));
+
         }
-
-        if (isEdit) {
-            await axiosInstance.put(
-                `${Api?.Brands}/${editBrand.id}`,
-                formData
-            );
-        } else {
-            await axiosInstance.post(Api?.Brands, formData);
-        }
-
-        onSuccess();
-        onClose();
     };
 
     if (!show) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] no-scrollbar overflow-y-auto">
 
                 {/* Header */}
                 <div className="flex justify-between items-center px-6 py-4 border-b bg-gray-50">
                     <h2 className="text-lg font-semibold">
                         {isEdit ? "Edit Brand" : "Create Brand"}
                     </h2>
-                    <button onClick={onClose} className="text-xl">×</button>
+                    <button onClick={() => { onClose(), setApiErrors('') }} className="text-xl">×</button>
                 </div>
 
                 {/* Body */}
@@ -162,11 +179,17 @@ const BrandModal: React.FC<Props> = ({
                         )}
                     </div>
 
+                    {apiErrors && (
+                        <p className="text-red-500 mt-2 text-end px-6">
+                            {apiErrors}
+                        </p>
+                    )}
+
                     {/* Footer */}
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={() => { onClose(), setApiErrors('') }}
                             className="px-4 py-2 border rounded-lg"
                         >
                             Cancel
@@ -174,9 +197,16 @@ const BrandModal: React.FC<Props> = ({
 
                         <button
                             type="submit"
+                            disabled={loading}
                             className="px-4 py-2 bg-orange-600 text-white rounded-lg"
                         >
-                            {isEdit ? "Update" : "Create"}
+                            {/* {isEdit ? "Update" : "Create"} */}
+                            {isEdit ? "Update" :
+
+                                (<>
+                                    {loading ? (
+                                        <div className="flex gap-2 items-center "> <Loader size={16} className="animate-spin" />Creating... </div>) : "Create"}
+                                </>)}
                         </button>
                     </div>
 

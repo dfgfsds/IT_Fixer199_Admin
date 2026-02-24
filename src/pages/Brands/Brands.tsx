@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Search } from "lucide-react";
 import BrandModal from "./BrandModal";
-import Api from '../../api-endpoints/ApiUrls';
-
+import Api from "../../api-endpoints/ApiUrls";
 
 interface Brand {
     id: string;
@@ -18,8 +17,9 @@ const Brands: React.FC = () => {
     const [brands, setBrands] = useState<Brand[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const [editBrand, setEditBrand] = useState<Brand | null>(null);
+    const [editBrand, setEditBrand] = useState<any>('');
     const [deleteBrand, setDeleteBrand] = useState<Brand | null>(null);
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
         fetchBrands();
@@ -28,8 +28,7 @@ const Brands: React.FC = () => {
     const fetchBrands = async () => {
         try {
             const res = await axiosInstance.get(Api?.allBrands);
-            console.log(res)
-            setBrands(res?.data?.brands);
+            setBrands(res?.data?.brands || []);
         } catch (err) {
             console.error("Brand fetch failed:", err);
         } finally {
@@ -49,103 +48,169 @@ const Brands: React.FC = () => {
         }
     };
 
+    // 🔥 Search Filter
+    const filteredBrands = brands.filter(
+        (brand) =>
+            brand.name.toLowerCase().includes(search.toLowerCase()) ||
+            brand.type.toLowerCase().includes(search.toLowerCase())
+    );
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full">
 
             {/* Header */}
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold">Brand Management</h1>
+            <div className="flex justify-between flex-wrap gap-3 items-center">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                        Brand Management
+                    </h1>
+                    <p className="text-gray-500 text-sm">
+                        Manage product brands
+                    </p>
+                </div>
 
                 <button
                     onClick={() => {
                         setEditBrand(null);
                         setShowModal(true);
                     }}
-                    className="flex items-center bg-orange-600 text-white px-4 py-2 rounded-lg"
+                    className="flex items-center bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
                 >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Brand
                 </button>
             </div>
 
+            {/* 🔥 Search Box */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                        type="text"
+                        placeholder="Search by brand name or type..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                </div>
+            </div>
+
             {/* Table */}
-            <div className="bg-white rounded-xl shadow border overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="min-w-[800px] w-full">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="w-full overflow-x-auto">
+
+                    <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="p-4 text-left">S.No</th>
-                                <th className="p-4 text-left">Logo</th>
-                                <th className="p-4 text-left">Name</th>
-                                <th className="p-4 text-left">Type</th>
-                                <th className="p-4 text-left">Status</th>
-                                {/* <th className="p-4 text-left">Featured</th> */}
-                                <th className="p-4 text-right">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    S.No
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Logo
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Name
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Type
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Status
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
 
-                        <tbody>
-                            {brands.map((brand: any, index: number) => (
-                                <tr key={brand.id} className="border-t hover:bg-gray-50">
-                                    <td className="p-4 font-medium">{index + 1}</td>
-
-                                    <td className="p-4">
-                                        {brand.logo_url && (
-                                            <img
-                                                src={brand.logo_url}
-                                                alt="logo"
-                                                className="w-12 h-12 object-contain"
-                                            />
-                                        )}
-                                    </td>
-
-                                    <td className="p-4 font-medium">{brand.name}</td>
-
-                                    <td className="p-4">{brand.type}</td>
-
-                                    <td className="p-4">
-                                        <span
-                                            className={`px-2 py-1 text-xs rounded-full ${brand.status === "ACTIVE"
-                                                ? "bg-green-100 text-green-700"
-                                                : "bg-red-100 text-red-700"
-                                                }`}
-                                        >
-                                            {brand.status}
-                                        </span>
-                                    </td>
-
-                                    {/* <td className="p-4">
-                    {brand.is_featured ? "Yes" : "No"}
-                  </td> */}
-
-                                    <td className="p-4 text-right space-x-2">
-                                        <button
-                                            onClick={() => {
-                                                setEditBrand(brand);
-                                                setShowModal(true);
-                                            }}
-                                        >
-                                            <Edit className="w-4 h-4 text-orange-600" />
-                                        </button>
-
-                                        <button
-                                            onClick={() => setDeleteBrand(brand)}
-                                        >
-                                            <Trash2 className="w-4 h-4 text-red-600" />
-                                        </button>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-6 text-center">
+                                        Loading...
                                     </td>
                                 </tr>
-                            ))}
+                            ) : filteredBrands.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-6 text-center text-gray-500">
+                                        No brands found
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredBrands.map((brand, index) => (
+                                    <tr key={brand.id} className="hover:bg-gray-50">
+
+                                        <td className="px-6 py-4 text-sm font-medium">
+                                            {index + 1}
+                                        </td>
+
+                                        <td className="px-6 py-4">
+                                            {brand.logo_url ? (
+                                                <img
+                                                    src={brand.logo_url}
+                                                    alt="logo"
+                                                    className="w-12 h-12 object-contain rounded-md border"
+                                                />
+                                            ) : (
+                                                <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center text-xs text-gray-400">
+                                                    No Logo
+                                                </div>
+                                            )}
+                                        </td>
+
+                                        <td className="px-6 py-4 text-sm font-semibold">
+                                            {brand.name}
+                                        </td>
+
+                                        <td className="px-6 py-4 text-sm">
+                                            {brand.type}
+                                        </td>
+
+                                        <td className="px-6 py-4 text-sm">
+                                            <span
+                                                className={`px-2 py-1 rounded-full text-xs font-medium ${brand.status === "ACTIVE"
+                                                        ? "bg-green-100 text-green-700"
+                                                        : "bg-red-100 text-red-700"
+                                                    }`}
+                                            >
+                                                {brand.status}
+                                            </span>
+                                        </td>
+
+                                        <td className="px-6 py-4 text-right text-sm">
+                                            <div className="flex justify-end space-x-2">
+                                                <button
+                                                    onClick={() => {
+                                                        setEditBrand(brand);
+                                                        setShowModal(true);
+                                                    }}
+                                                    className="text-orange-600 hover:text-orange-800 p-1"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+
+                                                <button
+                                                    onClick={() => setDeleteBrand(brand)}
+                                                    className="text-red-600 hover:text-red-800 p-1"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
 
                     </table>
                 </div>
             </div>
 
-            {/* Create/Edit Modal */}
+            {/* Modal */}
             <BrandModal
                 show={showModal}
-                onClose={() => setShowModal(false)}
+                onClose={() => { setShowModal(false), setEditBrand('') }}
                 onSuccess={fetchBrands}
                 editBrand={editBrand}
             />
