@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Search } from "lucide-react";
 import axiosInstance from "../../configs/axios-middleware";
 import CategoryModal from "./CategoryModal";
-import Api from '../../api-endpoints/ApiUrls';
+import Api from "../../api-endpoints/ApiUrls";
 
 interface Category {
     id: string;
@@ -21,6 +21,7 @@ const Categories: React.FC = () => {
     const [showModal, setShowModal] = useState(false);
     const [editCategory, setEditCategory] = useState<Category | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
         fetchCategories();
@@ -29,8 +30,7 @@ const Categories: React.FC = () => {
     const fetchCategories = async () => {
         try {
             const res = await axiosInstance.get(Api?.categories);
-            console.log(res)
-            setCategories(res?.data?.data);
+            setCategories(res?.data?.data || []);
         } catch (err) {
             console.error("Fetch error:", err);
         } finally {
@@ -50,13 +50,22 @@ const Categories: React.FC = () => {
         }
     };
 
+    // 🔥 Search Filter
+    const filteredCategories = categories.filter(
+        (cat) =>
+            cat.name.toLowerCase().includes(search.toLowerCase()) ||
+            cat.type.toLowerCase().includes(search.toLowerCase())
+    );
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full">
 
             {/* Header */}
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between flex-wrap gap-3 items-center">
                 <div>
-                    <h1 className="text-2xl font-bold">Category Management</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                        Categories Management
+                    </h1>
                     <p className="text-gray-500 text-sm">
                         Manage service categories
                     </p>
@@ -67,44 +76,87 @@ const Categories: React.FC = () => {
                         setEditCategory(null);
                         setShowModal(true);
                     }}
-                    className="flex items-center bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
+                    className="flex items-center bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
                 >
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Category
+                    Add Categorie
                 </button>
             </div>
 
+            {/* 🔥 Search Box */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                        type="text"
+                        placeholder="Search by category name or type..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                </div>
+            </div>
+
             {/* Table */}
-            <div className="bg-white rounded-xl shadow border overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="min-w-[900px] w-full">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="w-full overflow-x-auto">
+
+                    <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="p-4 text-left">S.No</th>
-                                <th className="p-4 text-left">Name</th>
-                                <th className="p-4 text-left">Type</th>
-                                <th className="p-4 text-left">Status</th>
-                                <th className="p-4 text-right">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    S.No
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Name
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Type
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Status
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Created
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
 
-                        <tbody>
+                        <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="p-6 text-center">
+                                    <td colSpan={6} className="px-6 py-6 text-center">
                                         Loading...
                                     </td>
                                 </tr>
+                            ) : filteredCategories.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-6 text-center text-gray-500">
+                                        No categories found
+                                    </td>
+                                </tr>
                             ) : (
-                                categories.map((cat: any, index: number) => (
-                                    <tr key={cat.id} className="border-t hover:bg-gray-50">
-                                        <td className="p-4 font-medium">{index + 1}</td>
+                                filteredCategories.map((cat, index) => (
+                                    <tr key={cat.id} className="hover:bg-gray-50">
 
-                                        <td className="p-4 font-medium">{cat.name}</td>
-                                        <td className="p-4">{cat.type}</td>
-                                        <td className="p-4">
+                                        <td className="px-6 py-4 text-sm font-medium">
+                                            {index + 1}
+                                        </td>
+
+                                        <td className="px-6 py-4 text-sm font-semibold">
+                                            {cat.name}
+                                        </td>
+
+                                        <td className="px-6 py-4 text-sm">
+                                            {cat.type}
+                                        </td>
+
+                                        <td className="px-6 py-4 text-sm">
                                             <span
-                                                className={`px-2 py-1 text-xs rounded-full ${cat.status === "ACTIVE"
+                                                className={`px-2 py-1 rounded-full text-xs font-medium ${cat.status === "ACTIVE"
                                                     ? "bg-green-100 text-green-700"
                                                     : "bg-red-100 text-red-700"
                                                     }`}
@@ -112,32 +164,42 @@ const Categories: React.FC = () => {
                                                 {cat.status}
                                             </span>
                                         </td>
-                                        <td className="p-4 text-sm text-gray-500">
+
+                                        <td className="px-6 py-4 text-sm text-gray-500">
                                             {new Date(cat.created_at).toLocaleDateString()}
                                         </td>
-                                        <td className="p-4 text-right space-x-2">
-                                            <button
-                                                onClick={() => {
-                                                    setEditCategory(cat);
-                                                    setShowModal(true);
-                                                }}
-                                            >
-                                                <Edit className="w-4 h-4 text-orange-600" />
-                                            </button>
 
-                                            <button onClick={() => setDeleteId(cat.id)}>
-                                                <Trash2 className="w-4 h-4 text-red-600" />
-                                            </button>
+                                        <td className="px-6 py-4 text-right text-sm">
+                                            <div className="flex justify-end space-x-2">
+                                                <button
+                                                    onClick={() => {
+                                                        setEditCategory(cat);
+                                                        setShowModal(true);
+                                                    }}
+                                                    className="text-orange-600 hover:text-orange-800 p-1"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+
+                                                <button
+                                                    onClick={() => setDeleteId(cat.id)}
+                                                    className="text-red-600 hover:text-red-800 p-1"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </td>
+
                                     </tr>
                                 ))
                             )}
                         </tbody>
+
                     </table>
                 </div>
             </div>
 
-            {/* Add / Edit Modal */}
+            {/* Modal */}
             <CategoryModal
                 show={showModal}
                 onClose={() => setShowModal(false)}
@@ -145,7 +207,7 @@ const Categories: React.FC = () => {
                 editCategory={editCategory}
             />
 
-            {/* Delete Confirm Modal */}
+            {/* Delete Confirm */}
             {deleteId && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-xl p-6 w-full max-w-md">
@@ -174,6 +236,7 @@ const Categories: React.FC = () => {
                     </div>
                 </div>
             )}
+
         </div>
     );
 };

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import Api from "../../api-endpoints/ApiUrls";
-import { Trash2 } from "lucide-react";
+import { Loader, Trash2 } from "lucide-react";
 
 interface Props {
     show: boolean;
@@ -184,7 +184,9 @@ const HubMappingModal: React.FC<Props> = ({ show, onClose, hub }) => {
                             disabled={!zoneId || loading}
                             className="w-full bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 disabled:bg-gray-300"
                         >
-                            {loading ? "Adding..." : "Add Mapping"}
+                            {/* {loading ? "Adding..." : "Add Mapping"} */}
+                            {loading ? (
+                                <div className="flex gap-2 items-center "> <Loader size={16} className="animate-spin" />Adding... </div>) : "Add Mapping"}
                         </button>
                     </div>
 

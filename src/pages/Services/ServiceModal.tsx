@@ -3,6 +3,7 @@ import axiosInstance from "../../configs/axios-middleware";
 import Select from 'react-select'
 import Api from '../../api-endpoints/ApiUrls';
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import { Loader } from "lucide-react";
 interface Props {
     show: boolean;
     onClose: () => void;
@@ -27,8 +28,10 @@ const ServiceModal: React.FC<Props> = ({
     const [newMedia, setNewMedia] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [deletedMediaIds, setDeletedMediaIds] = useState<string[]>([]);
-    const [apiErrors, setApiErrors] = useState<string>("");
 
+
+    const [loading, setLoading] = useState(false);
+    const [apiErrors, setApiErrors] = useState<string>("");
 
     const [form, setForm] = useState<any>({
         name: "",
@@ -237,6 +240,7 @@ const ServiceModal: React.FC<Props> = ({
     // ---------------- SUBMIT ----------------
     const handleSubmit = async (e: any) => {
         e.preventDefault();
+        setLoading(true);
         try {
             const formData = new FormData();
 
@@ -275,6 +279,8 @@ const ServiceModal: React.FC<Props> = ({
                 if (updateApi) {
                     onSuccess();
                     onClose();
+                    setLoading(false);
+
                 }
             } else {
                 const updateApi = await axiosInstance.post(
@@ -284,11 +290,13 @@ const ServiceModal: React.FC<Props> = ({
                 if (updateApi) {
                     onSuccess();
                     onClose();
+                    setLoading(false);
                 }
             }
 
         } catch (error) {
             setApiErrors(extractErrorMessage(error));
+            setLoading(false);
         }
     };
 
@@ -618,9 +626,15 @@ const ServiceModal: React.FC<Props> = ({
 
                             <button
                                 type="submit"
+                                disabled={loading}
                                 className="px-6 py-2 bg-orange-600 text-white rounded-lg shadow hover:bg-orange-700"
                             >
-                                Save Service
+                                {isEdit ? "Edit Service" :
+
+                                    (<>
+                                        {loading ? (
+                                            <div className="flex gap-2 items-center "> <Loader size={16} className="animate-spin" />Creating... </div>) : "Add Service"}
+                                    </>)}
                             </button>
                         </div>
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import Api from '../../api-endpoints/ApiUrls';
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import { Loader } from "lucide-react";
 
 interface Props {
     show: boolean;
@@ -29,6 +30,20 @@ const SlotModal: React.FC<Props> = ({
         status: "ACTIVE",
         zone: "",
     });
+    const [zones, setZones] = useState<any[]>([]);
+
+    const fetchZones = async () => {
+        try {
+            const response = await axiosInstance.get(Api?.allZone);
+            setZones(response?.data?.zones || response?.data || []);
+        } catch (error) {
+            console.error("Failed to fetch zones:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchZones();
+    }, []);
 
     useEffect(() => {
         if (editSlot) {
@@ -120,17 +135,22 @@ const SlotModal: React.FC<Props> = ({
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Zone ID
                             </label>
-                            <input
-                                type="text"
-                                required
+                            <select
                                 value={form.zone}
                                 onChange={(e) =>
                                     setForm({ ...form, zone: e.target.value })
                                 }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                placeholder="Zone UUID"
-                            />
+                                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500"
+                            >
+                                <option value="">Select Zone</option>
+                                {zones?.map((zone) => (
+                                    <option key={zone?.id} value={zone?.id}>
+                                        {zone?.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
+
                     </div>
 
                     {/* Description */}
@@ -236,13 +256,13 @@ const SlotModal: React.FC<Props> = ({
                             disabled={loading}
                             className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700"
                         >
-                            {loading
-                                ? isEdit
-                                    ? "Updating..."
-                                    : "Creating..."
-                                : isEdit
-                                    ? "Update Slot"
-                                    : "Add Slot"}
+                            {isEdit ? "Updating" :
+
+                                (<>
+                                    {loading ? (
+                                        <div className="flex gap-2 items-center "> <Loader size={16} className="animate-spin" />Creating... </div>) : "Add Slot"}
+                                </>)}
+
                         </button>
                     </div>
 

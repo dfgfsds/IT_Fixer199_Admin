@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import Api from '../../api-endpoints/ApiUrls';
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import { Loader } from "lucide-react";
 
 interface AddUserModalProps {
     show: boolean;
@@ -90,7 +91,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] no-scrollbar overflow-y-auto">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-gray-900">
                         {editUser ? "Edit User" : "Add New User"}
@@ -231,7 +232,13 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                             disabled={loading}
                             className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700"
                         >
-                            {loading ? "Creating..." : "Add User"}
+                            {editUser ? "Edit User" :
+
+                                (<>
+                                    {loading ? (
+                                        <div className="flex gap-2 items-center "> <Loader size={16} className="animate-spin" />Creating... </div>) : "Add User"}
+                                </>)}
+
                         </button>
                     </div>
                 </form>

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import { Loader } from "lucide-react";
 
 interface Props {
     show: boolean;
@@ -16,6 +18,8 @@ const AttributeModal: React.FC<Props> = ({
 }) => {
 
     const isEdit = !!editAttribute;
+    const [loading, setLoading] = useState(false);
+    const [apiErrors, setApiErrors] = useState<string>("");
 
     const [form, setForm] = useState({
         name: "",
@@ -35,21 +39,30 @@ const AttributeModal: React.FC<Props> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
+        setLoading(true);
         try {
             if (isEdit) {
-                await axiosInstance.put(
+                const updateApi = await axiosInstance.put(
                     `/api/attribute/${editAttribute.attribute_id}`,
                     form
                 );
-            } else {
-                await axiosInstance.post("/api/attribute", form);
-            }
+                if (updateApi) {
+                    onSuccess();
+                    onClose();
+                    setLoading(false);
 
-            onSuccess();
-            onClose();
+                }
+            } else {
+                const updateApi = await axiosInstance.post("/api/attribute", form);
+                if (updateApi) {
+                    onSuccess();
+                    onClose();
+                    setLoading(false);
+                }
+            }
         } catch (error) {
-            console.error("Save failed:", error);
+            setLoading(false);
+            setApiErrors(extractErrorMessage(error));
         }
     };
 
@@ -93,6 +106,11 @@ const AttributeModal: React.FC<Props> = ({
                             className="w-full border rounded-lg px-3 py-2"
                         />
                     </div>
+                    {apiErrors && (
+                        <p className="text-red-500 mt-2 text-end px-6">
+                            {apiErrors}
+                        </p>
+                    )}
 
                     {/* Footer */}
                     <div className="flex justify-end gap-3 pt-4 border-t">
@@ -106,9 +124,15 @@ const AttributeModal: React.FC<Props> = ({
 
                         <button
                             type="submit"
+                            disabled={loading}
                             className="px-4 py-2 bg-orange-600 text-white rounded-lg"
                         >
-                            {isEdit ? "Update" : "Create"}
+                            {isEdit ? "Update" :
+
+                                (<>
+                                    {loading ? (
+                                        <div className="flex gap-2 items-center "> <Loader size={16} className="animate-spin" />Creating... </div>) : "Create"}
+                                </>)}
                         </button>
                     </div>
 
