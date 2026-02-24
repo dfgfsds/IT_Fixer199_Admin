@@ -107,67 +107,105 @@ const Slots: React.FC = () => {
           <table className="min-w-[900px] w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="p-4 text-left">S.No</th>
-                <th className="p-4 text-left">Zone</th>
-                <th className="p-4 text-left">Name</th>
-                <th className="p-4 text-left">Time</th>
-                <th className="p-4 text-left">Max Orders</th>
-                <th className="p-4 text-left">Status</th>
-                <th className="p-4 text-right">Actions</th>
+                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  S.No</th>
+                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Zone</th>
+                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Max Orders</th>
+                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
 
             <tbody>
-              {filteredSlots.map((slot: any, index: number) => (
-                <tr key={slot.id} className="border-t hover:bg-gray-50">
-                  <td className="p-4">{index + 1}</td>
-                  <td className="p-4">{slot.zone_name}</td>
-                  <td className="p-4">{slot.name}</td>
-                  <td className="p-4">
-                    {slot.start_time} - {slot.end_time}
-                  </td>
-                  <td className="p-4">{slot.max_orders}</td>
-                  <td className="p-4">
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${slot.status === "ACTIVE"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                        }`}
-                    >
-                      {slot.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-right space-x-2">
-                    <button
-                      onClick={() => {
-                        setSelectedSlot(slot);
-                        setShowModal(true);
-                      }}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
+              {filteredSlots.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-16">
+                    <div className="flex flex-col items-center justify-center text-center">
 
-                    <button
-                      onClick={() => {
-                        setEditSlot(slot);
-                        setShowFormModal(true);
-                      }}
-                    >
-                      <Edit className="w-4 h-4 text-orange-600" />
-                    </button>
+                      {/* Icon */}
+                      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                        <Search className="w-7 h-7 text-gray-400" />
+                      </div>
 
-                    <button
-                      onClick={() => {
-                        setDeleteSlotId(slot.id);
-                        setShowDeleteModal(true);
-                      }}
-                    >
+                      {/* Message */}
+                      {slots.length === 0 ? (
+                        <>
+                          <h3 className="text-lg font-semibold text-gray-800">
+                            No Slots Created Yet
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Click <span className="font-medium text-orange-600">Add Slot</span> to create your first slot.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <h3 className="text-lg font-semibold text-gray-800">
+                            No Matching Slots Found
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Try adjusting your search keyword.
+                          </p>
+                        </>
+                      )}
 
-                      <Trash2 className="w-4 h-4 text-red-600" />
-                    </button>
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                <>
+                  {filteredSlots.map((slot: any, index: number) => (
+                    <tr key={slot.id} className="border-t hover:bg-gray-50">
+                      <td className="p-4">{index + 1}</td>
+                      <td className="p-4">{slot.zone_name}</td>
+                      <td className="p-4">{slot.name}</td>
+                      <td className="p-4">
+                        {slot.start_time} - {slot.end_time}
+                      </td>
+                      <td className="p-4">{slot.max_orders}</td>
+                      <td className="p-4">
+                        <span
+                          className={`px-2 py-1 text-xs rounded-full ${slot.status === "ACTIVE"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                            }`}
+                        >
+                          {slot.status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right space-x-2">
+                        <button
+                          onClick={() => {
+                            setSelectedSlot(slot);
+                            setShowModal(true);
+                          }}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setEditSlot(slot);
+                            setShowFormModal(true);
+                          }}
+                        >
+                          <Edit className="w-4 h-4 text-orange-600" />
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setDeleteSlotId(slot.id);
+                            setShowDeleteModal(true);
+                          }}
+                        >
+
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </>)}
             </tbody>
           </table>
         </div>

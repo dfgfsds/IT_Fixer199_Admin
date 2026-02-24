@@ -209,6 +209,8 @@ import L from "leaflet";
 
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import { Loader } from "lucide-react";
 
 interface Props {
     show: boolean;
@@ -230,6 +232,7 @@ const ZoneModal: React.FC<Props> = ({
     const isEdit = !!editZone;
     const [loading, setLoading] = useState(false);
     const featureGroupRef = useRef<any>(null);
+    const [apiErrors, setApiErrors] = useState<string>("");
 
     const [form, setForm] = useState<any>({
         name: "",
@@ -343,9 +346,11 @@ const ZoneModal: React.FC<Props> = ({
 
             onSuccess();
             setEditZone(null);
+            setLoading(false);
             onClose();
         } catch (error) {
-            console.error("Zone save failed:", error);
+            setLoading(false);
+            setApiErrors(extractErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -462,6 +467,13 @@ const ZoneModal: React.FC<Props> = ({
 
                     </div>
 
+                    {/* Error */}
+                    {apiErrors && (
+                        <p className="text-red-500 mt-2 text-end px-6">
+                            {apiErrors}
+                        </p>
+                    )}
+
                     {/* FOOTER */}
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <button
@@ -480,7 +492,13 @@ const ZoneModal: React.FC<Props> = ({
                             disabled={loading}
                             className="px-4 py-2 bg-orange-600 text-white rounded-lg"
                         >
-                            {loading ? "Saving..." : "Save Zone"}
+                            {isEdit ? "Edit Zone" :
+
+                                (<>
+                                    {loading ? (
+                                        <div className="flex gap-2 items-center "> <Loader size={16} className="animate-spin" />Saving... </div>) : "Add Zone"}
+                                </>)}
+
                         </button>
                     </div>
 

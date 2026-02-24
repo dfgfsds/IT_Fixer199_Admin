@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import Select from 'react-select';
 import Api from '../../api-endpoints/ApiUrls';
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import { Loader } from "lucide-react";
 
 interface Props {
     show: boolean;
@@ -26,6 +28,8 @@ const ProductModal: React.FC<Props> = ({
     const [newImages, setNewImages] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
+    const [loading, setLoading] = useState(false);
+    const [apiErrors, setApiErrors] = useState<string>("");
 
 
     const [form, setForm] = useState<any>({
@@ -83,7 +87,7 @@ const ProductModal: React.FC<Props> = ({
 
 
     const attributeOptions = attributesList.map((attr) => ({
-        value: attr.attribute_id,
+        value: attr?.value_id,
         label: `${attr.name} - ${attr.value}`,
         full: attr,
     }));
@@ -94,7 +98,7 @@ const ProductModal: React.FC<Props> = ({
             ...form,
             attributes: selected
                 ? selected.map((s: any) => ({
-                    id: s.full.attribute_id,
+                    id: s.full.value_id,
                     attribute_name: s.full.name,
                     value: s.full.value,
                 }))
@@ -149,7 +153,8 @@ const ProductModal: React.FC<Props> = ({
             status: editProduct.status || "ACTIVE",
             category_ids:
                 editProduct.categories?.map((c: any) => c.id) || [],
-            attributes: editProduct.attributes || [],
+            attributes: editProduct?.attributes?.map((a: any) => a?.value_id),
+            // attributes: editProduct.attributes || [],
             specification: parsedSpecification,
         });
 
@@ -216,53 +221,75 @@ const ProductModal: React.FC<Props> = ({
     // ---------------- Submit ----------------
     const handleSubmit = async (e: any) => {
         e.preventDefault();
+        setLoading(true);
+        try {
+            const formData = new FormData();
 
-        const formData = new FormData();
+            Object.keys(form).forEach((key) => {
+                if (
+                    key !== "category_ids" &&
+                    key !== "attributes" &&
+                    key !== "specification"
+                ) {
+                    formData.append(key, form[key]);
+                }
+            });
 
-        Object.keys(form).forEach((key) => {
-            if (
-                key !== "category_ids" &&
-                key !== "attributes" &&
-                key !== "specification"
-            ) {
-                formData.append(key, form[key]);
-            }
-        });
+            form.category_ids.forEach((id: string) => {
+                formData.append("category_ids", id);
+            });
 
-        form.category_ids.forEach((id: string) => {
-            formData.append("category_ids", id);
-        });
-
-        form.attributes.forEach((attr: any) => {
-            formData.append("attributes", JSON.stringify(attr?.id));
-        });
-
-        // Send only new images
-        newImages.forEach((file) => {
-            formData.append("media_files", file);
-        });
-
-
-        // 🔥 Convert to required format
-        const formattedSpecification = form.specification
-            .filter((item: any) => item.key && item.value) // remove empty rows
-            .map((item: any) => ({
-                [item.key]: item.value,
+            // ✅ Attributes
+            const attributesPayload = form.attributes.map((attr: any) => ({
+                value_id: attr?.id,
             }));
 
-        formData.append(
-            "specification",
-            JSON.stringify(formattedSpecification)
-        );
+            formData.append("attributes", JSON.stringify(attributesPayload));
+            // form.attributes.forEach((attr: any) => {
+            //     formData.append("attributes", JSON.stringify(attr?.id));
+            // });
 
-        if (isEdit) {
-            await axiosInstance.put(`${Api?.products}/${editProduct.id}`, formData);
-        } else {
-            await axiosInstance.post(Api?.products, formData);
+            // Send only new images
+            newImages.forEach((file) => {
+                formData.append("media_files", file);
+            });
+
+
+            // 🔥 Convert to required format
+            const formattedSpecification = form.specification
+                .filter((item: any) => item.key && item.value) // remove empty rows
+                .map((item: any) => ({
+                    [item.key]: item.value,
+                }));
+
+            formData.append(
+                "specification",
+                JSON.stringify(formattedSpecification)
+            );
+
+            if (isEdit) {
+                const updateApi = await axiosInstance.put(`${Api?.products}/${editProduct.id}`, formData);
+                if (updateApi) {
+                    onSuccess();
+                    onClose();
+                    setLoading(false);
+                }
+            } else {
+                const updateApi = await axiosInstance.post(Api?.products, formData);
+                if (updateApi) {
+                    onSuccess();
+                    onClose();
+                    setLoading(false);
+                }
+            }
+
+
+        } catch (error) {
+            setLoading(false);
+            setApiErrors(extractErrorMessage(error));
+
         }
 
-        onSuccess();
-        onClose();
     };
 
 
@@ -517,6 +544,14 @@ const ProductModal: React.FC<Props> = ({
                         </select>
                     </div>
 
+
+                    {/* Error */}
+                    {apiErrors && (
+                        <p className="text-red-500 mt-2 text-end px-6">
+                            {apiErrors}
+                        </p>
+                    )}
+
                     {/* Buttons */}
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <button
@@ -529,9 +564,15 @@ const ProductModal: React.FC<Props> = ({
 
                         <button
                             type="submit"
+                            disabled={loading}
                             className="px-4 py-2 bg-orange-600 text-white rounded-lg"
                         >
-                            {isEdit ? "Update" : "Create"}
+
+                            {isEdit ? "Update" :
+                                (<>
+                                    {loading ? (
+                                        <div className="flex gap-2 items-center "> <Loader size={16} className="animate-spin" />Creating... </div>) : "Create"}
+                                </>)}
                         </button>
                     </div>
 

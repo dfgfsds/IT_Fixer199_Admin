@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import Api from '../../api-endpoints/ApiUrls';
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import { Loader } from "lucide-react";
 
 interface Props {
     show: boolean;
@@ -28,8 +30,8 @@ const CategoryModal: React.FC<Props> = ({
     const [newImages, setNewImages] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
+    const [apiErrors, setApiErrors] = useState<string>("");
 
-    console.log(previewUrls)
     // 🔥 Load Edit Data
     useEffect(() => {
         if (editCategory) {
@@ -127,7 +129,7 @@ const CategoryModal: React.FC<Props> = ({
             resetForm();
 
         } catch (error) {
-            console.error("Save failed:", error);
+            setApiErrors(extractErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -137,7 +139,7 @@ const CategoryModal: React.FC<Props> = ({
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] no-scrollbar overflow-y-auto">
 
                 {/* Header */}
                 <div className="flex justify-between items-center px-6 py-4 border-b bg-gray-50">
@@ -255,6 +257,14 @@ const CategoryModal: React.FC<Props> = ({
                         )}
                     </div>
 
+                    {/* Error */}
+                    {apiErrors && (
+                        <p className="text-red-500 mt-2 text-end px-6">
+                            {apiErrors}
+                        </p>
+                    )}
+
+
                     {/* Footer */}
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <button
@@ -270,11 +280,12 @@ const CategoryModal: React.FC<Props> = ({
                             disabled={loading}
                             className="px-4 py-2 bg-orange-600 text-white rounded-lg"
                         >
-                            {loading
-                                ? "Saving..."
-                                : isEdit
-                                    ? "Update"
-                                    : "Create"}
+                            {isEdit ? "Update" :
+
+                                (<>
+                                    {loading ? (
+                                        <div className="flex gap-2 items-center "> <Loader size={16} className="animate-spin" />Saving... </div>) : "Create"}
+                                </>)}
                         </button>
                     </div>
 
