@@ -22,13 +22,23 @@ const categories = `${baseUrl}/api/category`;
 // Brands
 const Brands = `${baseUrl}/api/brand`;
 const allBrands = `${baseUrl}/api/brand/all`;
+
 // Agents
 const agents = `${baseUrl}/api/agents/`;
+// Agent Product
+const agentProductStock = `${baseUrl}/api/product-inventory/agent-stocks/`;
+// Agent Tools Stocks
+const agentToolsStock = `${baseUrl}/api/tools/agent-stocks`;
+// Agent zones
+const agentZones = `${baseUrl}/api/agent-zones/agent`;
+const addAgentZone = `${baseUrl}/api/agent-zones/`;
+// Agent Tracking
+const agentTracking = `${baseUrl}/api/tracking/fetch/logs`;
 
 // pricing
 const pricingType = `${baseUrl}/api/pricing/types`;
 const pricing = `${baseUrl}/api/pricing`;
-const pricingBulk=`${baseUrl}/api/pricing/bulk`
+const pricingBulk = `${baseUrl}/api/pricing/bulk`
 
 // Services
 const services = `${baseUrl}/api/services`;
@@ -36,14 +46,22 @@ const createService = `${baseUrl}/api/services/create/`;
 
 // Orders
 const orders = `${baseUrl}/api/order/orders/all/`;
-// Agent Product
-const agentProductStock = `${baseUrl}/api/product-inventory/agent-stocks/`;
 
 // Products
 const products = `${baseUrl}/api/product`;
 
 // Attribute
 const attribute = `${baseUrl}/api/attribute`;
+
+// Tools
+const tools = `${baseUrl}/api/tools`;
+
+// allocations
+const allocations = `${baseUrl}/api/allocations/`;
+
+// Support Tickets
+const supportTickets = `${baseUrl}/api/support-ticket/`;
+
 
 export default {
   login,
@@ -72,4 +90,11 @@ export default {
   attribute,
   pricing,
   pricingBulk,
+  tools,
+  agentToolsStock,
+  allocations,
+  agentZones,
+  addAgentZone,
+  agentTracking,
+  supportTickets,
 };

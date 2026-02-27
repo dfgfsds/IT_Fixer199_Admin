@@ -1,17 +1,3 @@
-// import { useParams } from "react-router-dom";
-
-// const Agents360: React.FC = () => {
-//     const { id } = useParams();
-//     console.log(id)
-
-//     return (
-//         <>
-//             <h1>Hello</h1>
-//         </>
-//     )
-// }
-// export default Agents360;
-
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Api from '../../api-endpoints/ApiUrls';
@@ -41,7 +27,7 @@ const Agents360: React.FC = () => {
     const [toolStocks, setToolStocks] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const navigate = useNavigate();
-
+    console.log(productStocks)
     useEffect(() => {
         fetchAgent()
     }, [id])
@@ -56,16 +42,15 @@ const Agents360: React.FC = () => {
             setAgent(res?.data?.agent)
 
             // Product Stocks
-            const productRes = await fetch(
+            const productRes = await axiosInstance.get(
                 `${Api?.agentProductStock}?agent_id=${id}`
             )
-            const productData = await productRes.json()
-            setProductStocks(Array.isArray(productData) ? productData : [productData])
-
+            setProductStocks(productRes?.data?.data)
             // Tool Stocks
-            const toolRes = await fetch(`/api/tools/agent-stocks/?agent_id=${id}`)
-            const toolData = await toolRes.json()
-            setToolStocks(Array.isArray(toolData) ? toolData : [toolData])
+            const toolRes = await axiosInstance.get(`${Api?.agentToolsStock}/?agent_id=${id}`);
+            setToolStocks(toolRes?.data?.data)
+            // const toolData = await toolRes.json()
+            // setToolStocks(Array.isArray(toolData) ? toolData : [toolData])
 
         } catch (err) {
             console.log(err)
@@ -353,25 +338,116 @@ const Agents360: React.FC = () => {
 
                     {/* PRODUCT STOCK TAB */}
                     {activeTab === 'product' && (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full border">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-4 py-2 text-left text-xs">Product ID</th>
-                                        <th className="px-4 py-2 text-left text-xs">Stock</th>
-                                        <th className="px-4 py-2 text-left text-xs">Comment</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {productStocks.map((item, i) => (
-                                        <tr key={i} className="border-t">
-                                            <td className="px-4 py-2">{item.product}</td>
-                                            <td className="px-4 py-2">{item.stock}</td>
-                                            <td className="px-4 py-2">{item.comment}</td>
+                        <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
+
+                            {/* Header */}
+                            <div className="px-6 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
+                                <h2 className="text-lg font-semibold text-gray-800">
+                                    Product Stock Overview
+                                </h2>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Manage and monitor available product inventory
+                                </p>
+                            </div>
+
+                            {/* Table */}
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full text-sm">
+                                    <thead className="bg-gray-100 text-gray-600 uppercase text-xs tracking-wider">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left">S.No</th>
+                                            <th className="px-6 py-3 text-left">Product</th>
+                                            <th className="px-6 py-3 text-left">Stock</th>
+                                            <th className="px-6 py-3 text-left">Comment</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+
+                                    <tbody className="divide-y">
+                                        {productStocks.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={4} className="text-center py-10 text-gray-400">
+                                                    No Stock Records Found
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            productStocks.map((item, i) => (
+                                                <tr
+                                                    key={i}
+                                                    className="hover:bg-orange-50 transition duration-150"
+                                                >
+                                                    {/* S.No */}
+                                                    <td className="px-6 py-4 font-medium text-gray-600">
+                                                        {i + 1}
+                                                    </td>
+
+                                                    {/* Product */}
+                                                    {/* <td className="px-6 py-4">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-semibold text-gray-900 capitalize">
+                                                                {item?.product?.name}
+                                                            </span>
+                                                            <span className="text-xs text-gray-500 capitalize">
+                                                                {item?.product?.brand_name}
+                                                            </span>
+                                                        </div>
+                                                    </td> */}
+
+                                                    {/* Product */}
+                                                    <td className="px-6 py-4">
+                                                        <div className="space-y-1 text-sm">
+
+                                                            <div>
+                                                                <span className="font-medium text-gray-500">Name :</span>{' '}
+                                                                <span className="font-semibold text-gray-900 capitalize">
+                                                                    {item?.product?.name || '-'}
+                                                                </span>
+                                                            </div>
+
+                                                            <div>
+                                                                <span className="font-medium text-gray-500">Brand :</span>{' '}
+                                                                <span className="text-gray-800 capitalize">
+                                                                    {item?.product?.brand_name || '-'}
+                                                                </span>
+                                                            </div>
+
+                                                            <div>
+                                                                <span className="font-medium text-gray-500">Model :</span>{' '}
+                                                                <span className="text-gray-800 capitalize">
+                                                                    {item?.product?.model_name || '-'}
+                                                                </span>
+                                                            </div>
+
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Stock */}
+                                                    <td className="px-6 py-4">
+                                                        <span
+                                                            className={`px-3 py-1 rounded-full text-xs font-semibold ${item?.stock > 10
+                                                                ? 'bg-green-100 text-green-700'
+                                                                : item?.stock > 0
+                                                                    ? 'bg-yellow-100 text-yellow-700'
+                                                                    : 'bg-red-100 text-red-700'
+                                                                }`}
+                                                        >
+                                                            {item?.stock} Units
+                                                        </span>
+                                                    </td>
+
+                                                    {/* Comment */}
+                                                    <td className="px-6 py-4 text-gray-600">
+                                                        {item?.comment || (
+                                                            <span className="italic text-gray-400">
+                                                                No comment added
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
 
@@ -447,10 +523,10 @@ const DocumentCard = ({ title, url, verified }: any) => (
             <h4 className="font-medium text-gray-900">{title}</h4>
 
             <span className={`px-2 py-1 text-xs rounded-full ${verified === "VERIFIED"
-                    ? "bg-green-100 text-green-700"
-                    : verified === "PENDING"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-red-100 text-red-600"
+                ? "bg-green-100 text-green-700"
+                : verified === "PENDING"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-red-100 text-red-600"
                 }`}>
                 {verified}
             </span>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -26,6 +26,8 @@ import Attribute from './pages/Attribute/Attribute';
 import Products from './pages/Products/Products';
 import Services from './pages/Services/Services';
 import Agents360 from './components/Agent/Agent360';
+import Tools from './pages/Tools/Tools';
+
 
 const queryClient = new QueryClient();
 
@@ -81,7 +83,7 @@ const AppRoutes: React.FC = () => {
         <Route path='products' element={<Products />} />
         <Route path='services' element={<Services />} />
         <Route path='agents/:id' element={<Agents360 />} />
-
+        <Route path='tools' element={<Tools />} />
 
       </Route>
     </Routes>
