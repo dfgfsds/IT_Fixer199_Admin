@@ -372,7 +372,7 @@ const Inventory: React.FC = () => {
                 ×
               </button>
             </div>
-            
+
             <form onSubmit={handleCreateProduct} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -532,7 +532,7 @@ const Inventory: React.FC = () => {
                 ×
               </button>
             </div>
-            
+
             <div className="space-y-6">
               <div className="flex items-start space-x-4">
                 <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">

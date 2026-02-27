@@ -17,6 +17,7 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
     const [apiErrors, setApiErrors] = useState<string>("");
     const [pricingList, setPricingList] = useState<any[]>([
         {
+            id: '',
             pricing_type: "",
             hub: "",
             start_time: "",
@@ -25,14 +26,73 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
             price: "",
         },
     ]);
-    console.log(product)
-    // ---------------- Fetch Dropdown Data ----------------
+    const [editData, setEditData] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (editData && editData.length > 0) {
+            setPricingList(
+                editData.map((item: any) => ({
+                    pricing_type: item?.pricing_type || "",
+                    hub: item?.hub || "",
+                    start_time: item?.start_time
+                        ? item.start_time.slice(0, 5) // 👈 HH:mm only
+                        : "",
+                    end_time: item?.end_time
+                        ? item.end_time.slice(0, 5) // 👈 HH:mm only
+                        : "",
+                    max_quantity: item?.max_quantity || 1,
+                    price: item?.price || "",
+                    id: item?.id,
+                }))
+            );
+        } else {
+            setPricingList([
+                {
+                    pricing_type: "",
+                    hub: "",
+                    start_time: "",
+                    end_time: "",
+                    max_quantity: 1,
+                    price: "",
+                },
+            ]);
+        }
+    }, [editData]);
+
     useEffect(() => {
         if (show) {
             fetchHubs();
-            fetchPriceTypes()
+            fetchPriceTypes();
+            getproductPricing();
+        } else {
+            // Reset when modal close
+            setPricingList([
+                {
+                    pricing_type: "",
+                    hub: "",
+                    start_time: "",
+                    end_time: "",
+                    max_quantity: 1,
+                    price: "",
+                },
+            ]);
+            setEditData([]);
         }
     }, [show]);
+
+
+    // useEffect(() => {
+    //     if (show) {
+    //         fetchHubs();
+    //         fetchPriceTypes();
+    //         getproductPricing();
+    //     }
+    // }, [show]);
+
+    const getproductPricing = async () => {
+        const res = await axiosInstance.get(`${Api?.products}/${product?.id}/pricing`);
+        setEditData(res?.data?.data?.pricing)
+    };
 
     const fetchHubs = async () => {
         const res = await axiosInstance.get(Api?.allHubs);
@@ -87,6 +147,7 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
             end_time: item?.end_time,
             max_quantity: item?.max_quantity,
             price: item?.price,
+            ...(editData && item?.id ? { id: item.id } : {}),
         }));
         const pricingPayload = {
             product: product.id,

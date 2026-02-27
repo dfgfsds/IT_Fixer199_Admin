@@ -47,7 +47,6 @@ const Users: React.FC = () => {
 
     const fetchUsers = async () => {
         try {
-            const token = localStorage.getItem("token");
 
             const response = await axiosInstance.get(`${api.allUsers}`,
             );
@@ -77,8 +76,8 @@ const Users: React.FC = () => {
 
     const filteredUsers = users.filter(
         (user) =>
-            user.name.toLowerCase().includes(search.toLowerCase()) ||
-            user.email.toLowerCase().includes(search.toLowerCase())
+            user?.name?.toLowerCase()?.includes(search?.toLowerCase()) ||
+            user?.email?.toLowerCase()?.includes(search?.toLowerCase())
     );
 
     return (
