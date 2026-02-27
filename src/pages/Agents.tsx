@@ -455,10 +455,13 @@
 // export default Agents;
 
 import React, { useEffect, useState } from 'react'
-import { Search, Eye, Star } from 'lucide-react'
+import { Search, Eye, Star, Loader, TrashIcon, Trash2Icon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import axiosInstance from '../configs/axios-middleware'
 import Api from '../api-endpoints/ApiUrls';
+import { useAuth } from '../contexts/AuthContext';
+import { extractErrorMessage } from '../utils/extractErrorMessage ';
+import AgentTrackingModal from '../components/Modals/AgentTrackingModal';
 interface AgentResponse {
   id: string
   user_name: string
@@ -478,6 +481,105 @@ const Agents: React.FC = () => {
     search: '',
     status: 'all'
   })
+  const { user }: any = useAuth();
+
+  // Agent Manager Allocation
+
+  const [managerModal, setManagerModal] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<any>(null);
+  const [selectedManager, setSelectedManager] = useState('');
+  const [users, setUsers] = useState<any[]>([]);
+  const [apiErrors, setApiErrors] = useState<string>("");
+
+
+  const [zoneModal, setZoneModal] = useState(false)
+  const [agentZones, setAgentZones] = useState<any>([])
+  const [allZones, setAllZones] = useState<any[]>([])
+  const [selectedZone, setSelectedZone] = useState('')
+  const [zoneApiErrors, setzoneApiErrors] = useState<string>("");
+  const [trackingModal, setTrackingModal] = useState(false);
+
+  const fetchUsers = async () => {
+    try {
+
+      const response = await axiosInstance.get(`${Api.allUsers}`,
+      );
+      console.log(response)
+      setUsers(response.data?.users);
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleOpenManagerModal = (agent: any) => {
+    setSelectedAgent(agent);
+    setManagerModal(true);
+    fetchUsers();
+  }
+
+  const handleAssignManager = async () => {
+    setLoading(true);
+
+    try {
+      const updatedApi = await axiosInstance.post(Api?.allocations, {
+        agent: selectedAgent.id,
+        manager: selectedManager
+      })
+      if (updatedApi) {
+
+      }
+      setLoading(false);
+      setManagerModal(false);
+      fetchAgents();
+    } catch (error) {
+      setLoading(false);
+      setApiErrors(extractErrorMessage(error));
+    }
+  }
+
+
+  // Zones
+  const openZoneModal = async (agent: any) => {
+    setSelectedAgent(agent)
+    setZoneModal(true)
+
+    const res = await axiosInstance.get(`${Api?.agentZones}/${agent?.id}`)
+    setAgentZones(res?.data?.data)
+
+    const zonesRes = await axiosInstance.get(Api?.allZone);
+    console.log(zonesRes)
+    setAllZones(zonesRes?.data?.zones)
+
+  }
+
+  const handleAddZone = async () => {
+    setLoading(true);
+    setzoneApiErrors('');
+    try {
+      const updateAPi = await axiosInstance.post(Api?.addAgentZone, {
+        agent: selectedAgent.id,
+        zone: selectedZone
+      })
+      if (updateAPi) {
+        setLoading(false);
+        openZoneModal(selectedAgent)
+      }
+
+    } catch (error) {
+      setLoading(false);
+      setzoneApiErrors(extractErrorMessage(error));
+    }
+
+  }
+
+  const handleDeleteZone = async (id: string) => {
+    await axiosInstance.delete(`${Api?.addAgentZone}${selectedAgent.id}/${id}/`)
+    openZoneModal(selectedAgent)
+  }
+
 
   useEffect(() => {
     fetchAgents()
@@ -486,17 +588,14 @@ const Agents: React.FC = () => {
   const fetchAgents = async () => {
     try {
       const token = localStorage.getItem('token')
-
       const params = new URLSearchParams({
         ...(filters.search && { search: filters.search }),
         ...(filters.status !== 'all' && { status: filters.status })
       })
-
       // const res = await fetch(`/api/agents?${params}`, {
       //   headers: { Authorization: `Bearer ${token}` }
       // })
       const res: any = await axiosInstance.get(Api?.agents);
-      console.log(res?.data?.agents)
       if (res) {
         // const data = await res.json()
         setAgents(res?.data?.agents)
@@ -567,7 +666,7 @@ const Agents: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   S.No
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -577,10 +676,18 @@ const Agents: React.FC = () => {
                   Mobile
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Zone
+                  Hub
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Performance
+                </th>
+                {user?.role !== 'HUB_MANAGER' && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Manager
+                  </th>
+                )}
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Zones
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Status
@@ -599,10 +706,10 @@ const Agents: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredAgents?.map((agent:any,index:number) => (
+                filteredAgents?.map((agent: any, index: number) => (
                   <tr key={agent.id} className="hover:bg-gray-50">
                     {/* Agent */}
-                     <td className="px-6 py-4 text-sm text-gray-700">
+                    <td className="px-6 py-4 text-sm text-gray-700">
                       {index + 1}
                     </td>
 
@@ -646,6 +753,54 @@ const Agents: React.FC = () => {
                       </div>
                     </td>
 
+                    {user?.role !== 'HUB_MANAGER' && (
+                      <td className="px-6 py-4">
+                        {agent?.manager_details ? (
+                          <div className="space-y-1 text-sm">
+
+                            <div>
+                              <span className="font-medium text-gray-500">Name :</span>{' '}
+                              <span className="font-semibold text-gray-900 capitalize">
+                                {agent.manager_details?.name || '-'}
+                              </span>
+                            </div>
+
+                            <div>
+                              <span className="font-medium text-gray-500">Email :</span>{' '}
+                              <span className="text-gray-800 break-all">
+                                {agent.manager_details?.email || '-'}
+                              </span>
+                            </div>
+
+                            <div>
+                              <span className="font-medium text-gray-500">Mobile :</span>{' '}
+                              <span className="text-gray-800">
+                                {agent.manager_details?.mobile_number || '-'}
+                              </span>
+                            </div>
+
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleOpenManagerModal(agent)}
+                            className="px-3 py-1.5 text-sm bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition font-medium"
+                          >
+                            + Add Manager
+                          </button>
+                        )}
+                      </td>
+                    )}
+
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => openZoneModal(agent)}
+                        className="text-blue-600 hover:underline"
+                      >
+                        View Zones ({agent.zone_details?.length || 0})
+                      </button>
+                    </td>
+
+
                     {/* Status */}
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${agent.user_details?.status === 'ACTIVE'
@@ -659,13 +814,26 @@ const Agents: React.FC = () => {
                     </td>
 
                     {/* Actions */}
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right space-x-3 flex">
+                      <button
+                        onClick={() => {
+                          setSelectedAgent(agent);
+                          setTrackingModal(true);
+                        }}
+                        className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-lg"
+                      >
+                        Tracking
+                      </button>
+
                       <button
                         onClick={() => navigate(`/agents/${agent.id}`)}
                         className="text-gray-600 hover:text-orange-600"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
+
+
+
                     </td>
                   </tr>
                 ))
@@ -674,6 +842,206 @@ const Agents: React.FC = () => {
           </table>
         </div>
       )}
+
+      {managerModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-4 w-full max-w-md max-h-[90vh] no-scrollbar overflow-y-auto">
+            <h2 className="text-lg font-semibold mb-5">Assign Manager</h2>
+
+            <select
+              value={selectedManager}
+              onChange={(e) => setSelectedManager(e.target.value)}
+              className="w-full border px-3 py-2 rounded-lg"
+            >
+              <option value="">Select Manager</option>
+              {users.filter((item: any) => item?.role === 'MANAGER')?.map((mgr) => (
+                <option key={mgr.id} value={mgr.id}>
+                  {mgr.name}
+                </option>
+              ))}
+            </select>
+            {/* Error */}
+            {apiErrors && (
+              <p className="text-red-500 mt-2 text-end px-6">
+                {apiErrors}
+              </p>
+            )}
+            <div className="flex justify-end gap-3 mt-5">
+              <button
+                onClick={() => { setManagerModal(false), setApiErrors('') }}
+                className="px-4 py-2 border rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAssignManager}
+                disabled={loading}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg"
+              >
+                {loading ? (
+                  <div className="flex gap-2 items-center "> <Loader size={16} className="animate-spin" />Submitting... </div>) : "Submit"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {zoneModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn">
+
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-scaleIn">
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-orange-500 to-orange-600">
+              <h2 className="text-white font-semibold text-lg">
+                Manage Agent Zones
+              </h2>
+              <button
+                onClick={() => setZoneModal(false)}
+                className="text-white hover:opacity-80 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-6 max-h-[400px] overflow-y-auto">
+              {/* 🔵 Agent Info Card */}
+              <div className="bg-gradient-to-r from-orange-50 to-white border rounded-2xl p-4 shadow-sm">
+
+                <div className="flex items-center gap-4">
+
+                  {/* Avatar */}
+                  <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-semibold text-lg">
+                    {agentZones?.agent_details?.name?.charAt(0) || "A"}
+                  </div>
+
+                  {/* Details */}
+                  <div className="space-y-1 text-sm">
+                    <div>
+                      <span className="text-gray-500 font-medium">Name :</span>{" "}
+                      <span className="font-semibold text-gray-900 capitalize">
+                        {agentZones?.agent_details?.name || "-"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 font-medium">Mobile :</span>{" "}
+                      <span className="text-gray-800">
+                        {agentZones?.agent_details?.mobile_number || "-"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 font-medium">Email :</span>{" "}
+                      <span className="text-gray-800 break-all">
+                        {agentZones?.agent_details?.email || "-"}
+                      </span>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+              {/* Add Zone Section */}
+              <div className="border-t pt-6">
+                <h3 className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">
+                  Add New Zone
+                </h3>
+
+                <div className="flex gap-3">
+                  <select
+                    value={selectedZone}
+                    onChange={(e) => setSelectedZone(e.target.value)}
+                    className="flex-1 border rounded-xl px-3 py-2 focus:ring-2 focus:ring-orange-500 outline-none"
+                  >
+                    <option value="">Select Zone</option>
+                    {allZones
+                      .filter(
+                        (zone) =>
+                          !agentZones?.zone_details?.some((z: any) => z?.id === zone?.id)
+                      )
+                      .map((zone) => (
+                        <option key={zone.id} value={zone.id}>
+                          {zone.name}
+                        </option>
+                      ))}
+                  </select>
+
+                  <button
+                    onClick={handleAddZone}
+                    disabled={!selectedZone || loading}
+                    className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-medium disabled:opacity-50"
+                  >
+                    {loading ? (
+                      <div className="flex gap-2 items-center "> <Loader size={16} className="animate-spin" />Adding... </div>) : "Add"}
+                  </button>
+                </div>
+              </div>
+
+
+              {/* Existing Zones */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">
+                  Assigned Zones
+                </h3>
+
+                {agentZones?.zone_details?.length === 0 ? (
+                  <div className="text-sm text-gray-400 text-center py-6">
+                    No zones assigned yet
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {agentZones?.zone_details?.map((zone: any) => (
+                      <div
+                        key={zone?.id}
+                        className="flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition px-4 py-3 rounded-xl border"
+                      >
+                        <span className="capitalize font-medium text-gray-800">
+                          {zone?.name}
+                        </span>
+
+                        <button
+                          onClick={() => handleDeleteZone(zone?.id)}
+                          className="flex items-center gap-1 text-red-500 hover:text-red-600 text-sm font-medium"
+                        >
+                          <Trash2Icon size={16} />
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+
+            </div>
+            {/* Error */}
+            {zoneApiErrors && (
+              <p className="text-red-500 mt-2 text-end px-6">
+                {zoneApiErrors}
+              </p>
+            )}
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t bg-gray-50 flex justify-end">
+              <button
+                onClick={() => setZoneModal(false)}
+                className="px-5 py-2 rounded-xl border hover:bg-gray-100 transition"
+              >
+                Close
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      <AgentTrackingModal
+        isOpen={trackingModal}
+        onClose={() => setTrackingModal(false)}
+        agentId={selectedAgent?.id}
+        agentName={selectedAgent?.user_name}
+      />
     </div>
   )
 }

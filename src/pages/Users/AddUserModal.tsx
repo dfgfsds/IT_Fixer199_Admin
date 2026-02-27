@@ -19,6 +19,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
 }) => {
     const [loading, setLoading] = useState(false);
     const [apiErrors, setApiErrors] = useState<string>("");
+    const [hubs, setHubs] = useState<any[]>([]);
 
     const [newUser, setNewUser] = useState({
         name: "",
@@ -27,7 +28,20 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
         role: "SUPER_ADMIN",
         password: "",
         comments: "",
+        hub_id: "",
     });
+
+    // ---------------- FETCH MASTER DATA ----------------
+    useEffect(() => {
+        fetchHubsByZone();
+    }, []);
+
+    const fetchHubsByZone = async () => {
+        const res = await axiosInstance.get(Api?.allHubs);
+        console.log(res?.data)
+        setHubs(res?.data?.hubs || []);
+    };
+
 
     useEffect(() => {
         if (editUser) {
@@ -38,6 +52,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                 role: editUser.role || "ADMIN",
                 password: "",
                 comments: editUser.comments || "",
+                hub_id: editUser?.hub_id,
             });
         }
     }, [editUser]);
@@ -76,6 +91,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                     role: "ADMIN",
                     password: "",
                     comments: "",
+                    hub_id: "",
                 });
             }
 
@@ -169,29 +185,52 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                             >
                                 <option value="SUPER_ADMIN">SUPER ADMIN</option>
                                 <option value="ADMIN">ADMIN</option>
-                                <option value="HUB MANAGER">HUB MANAGER</option>
+                                <option value="MANAGER">MANAGER</option>
+                                <option value="HUB_MANAGER">HUB MANAGER</option>
                                 <option value="AGENT">AGENT</option>
                                 <option value="CUSTOMER">CUSTOMER</option>
 
                             </select>
                         </div>
                     </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {newUser.role === "MANAGER" && (
+                            <div>
+                                <label className="text-sm text-gray-600">Hub</label>
+                                <select
+                                    value={newUser.hub_id}
+                                    onChange={(e) =>
+                                        setNewUser({ ...newUser, hub_id: e.target.value })
+                                    }
+                                    className="mt-1 w-full border rounded-lg px-3 py-2"
+                                >
+                                    <option value="">Select Hub</option>
+                                    {hubs?.map((h: any) => (
+                                        <option key={h.id} value={h.id}>
+                                            {h.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
 
-                    {/* Password */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            required
-                            value={newUser.password}
-                            onChange={(e) =>
-                                setNewUser({ ...newUser, password: e.target.value })
-                            }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                            placeholder="Enter password"
-                        />
+
+                        {/* Password */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Password
+                            </label>
+                            <input
+                                type="password"
+                                required
+                                value={newUser.password}
+                                onChange={(e) =>
+                                    setNewUser({ ...newUser, password: e.target.value })
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                                placeholder="Enter password"
+                            />
+                        </div>
                     </div>
 
                     {/* Comments */}
