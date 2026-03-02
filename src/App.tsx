@@ -27,6 +27,7 @@ import Products from './pages/Products/Products';
 import Services from './pages/Services/Services';
 import Agents360 from './components/Agent/Agent360';
 import Tools from './pages/Tools/Tools';
+import ServicesRequest from './pages/Requests/ServicesRequest/ServicesRequest';
 
 
 const queryClient = new QueryClient();
@@ -84,6 +85,7 @@ const AppRoutes: React.FC = () => {
         <Route path='services' element={<Services />} />
         <Route path='agents/:id' element={<Agents360 />} />
         <Route path='tools' element={<Tools />} />
+        <Route path='servicesRequest' element={<ServicesRequest />} />
 
       </Route>
     </Routes>

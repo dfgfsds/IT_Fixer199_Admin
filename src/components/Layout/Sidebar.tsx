@@ -124,6 +124,13 @@ const Sidebar: React.FC = () => {
 
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
+    {
+      name: 'Requests',
+      icon: Users,
+      children: [
+        { name: 'Services', path: '/servicesRequest' },
+      ],
+    },
 
     {
       name: 'Users & Agents',
