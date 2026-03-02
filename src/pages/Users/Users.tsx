@@ -281,8 +281,8 @@ const Users: React.FC = () => {
 
                                     <span
                                         className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-full ${selectedUser.status === "ACTIVE"
-                                                ? "bg-green-100 text-green-700"
-                                                : "bg-red-100 text-red-600"
+                                            ? "bg-green-100 text-green-700"
+                                            : "bg-red-100 text-red-600"
                                             }`}
                                     >
                                         {selectedUser.status}
