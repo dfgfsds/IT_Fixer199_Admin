@@ -62,6 +62,8 @@ const allocations = `${baseUrl}/api/allocations/`;
 // Support Tickets
 const supportTickets = `${baseUrl}/api/support-ticket/`;
 
+// service-modification
+const serviceModification=`${baseUrl}/service-modification`;
 
 export default {
   login,
@@ -97,4 +99,5 @@ export default {
   addAgentZone,
   agentTracking,
   supportTickets,
+  serviceModification,
 };
