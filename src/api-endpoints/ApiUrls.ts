@@ -50,9 +50,6 @@ const orders = `${baseUrl}/api/order/orders/all/`;
 // Products
 const products = `${baseUrl}/api/product`;
 
-// product inventory
-const productInventory = `${baseUrl}/api/product/with-inventory`;
-
 // Attribute
 const attribute = `${baseUrl}/api/attribute`;
 
@@ -73,6 +70,8 @@ const requestApprovalOtp = `${baseUrl}/api/request/admin/refund/approve/request-
 const approvalOtpVerify=`${baseUrl}/api/request/admin/refund/approve/verify`;
 const adminRequestApproval = `${baseUrl}/api/request/admin/approve`;
 
+// product-inventory
+const productInventory = `${baseUrl}/api/product-inventory/inventory`;
 
 export default {
   login,

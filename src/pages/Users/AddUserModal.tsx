@@ -194,25 +194,25 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {newUser.role === "MANAGER" && (
-                            <div>
-                                <label className="text-sm text-gray-600">Hub</label>
-                                <select
-                                    value={newUser.hub_id}
-                                    onChange={(e) =>
-                                        setNewUser({ ...newUser, hub_id: e.target.value })
-                                    }
-                                    className="mt-1 w-full border rounded-lg px-3 py-2"
-                                >
-                                    <option value="">Select Hub</option>
-                                    {hubs?.map((h: any) => (
-                                        <option key={h.id} value={h.id}>
-                                            {h.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
+                        {/* {newUser.role === "MANAGER" && ( */}
+                        <div>
+                            <label className="text-sm text-gray-600">Hub</label>
+                            <select
+                                value={newUser.hub_id}
+                                onChange={(e) =>
+                                    setNewUser({ ...newUser, hub_id: e.target.value })
+                                }
+                                className="mt-1 w-full border rounded-lg px-3 py-2"
+                            >
+                                <option value="">Select Hub</option>
+                                {hubs?.map((h: any) => (
+                                    <option key={h.id} value={h.id}>
+                                        {h.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        {/* // )} */}
 
 
                         {/* Password */}
