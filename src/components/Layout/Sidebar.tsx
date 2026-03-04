@@ -129,6 +129,7 @@ const Sidebar: React.FC = () => {
       icon: Users,
       children: [
         { name: 'Services', path: '/servicesRequest' },
+        { name: 'Requests', path: '/requests' },
       ],
     },
 

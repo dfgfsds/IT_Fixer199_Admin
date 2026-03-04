@@ -50,6 +50,9 @@ const orders = `${baseUrl}/api/order/orders/all/`;
 // Products
 const products = `${baseUrl}/api/product`;
 
+// product inventory
+const productInventory = `${baseUrl}/api/product/with-inventory`;
+
 // Attribute
 const attribute = `${baseUrl}/api/attribute`;
 
@@ -64,6 +67,12 @@ const supportTickets = `${baseUrl}/api/support-ticket/`;
 
 // service-modification
 const serviceModification=`${baseUrl}/service-modification`;
+
+// RequestApprovalOtp
+const requestApprovalOtp = `${baseUrl}/api/request/admin/refund/approve/request-otp`;
+const approvalOtpVerify=`${baseUrl}/api/request/admin/refund/approve/verify`;
+const adminRequestApproval = `${baseUrl}/api/request/admin/approve`;
+
 
 export default {
   login,
@@ -100,4 +109,8 @@ export default {
   agentTracking,
   supportTickets,
   serviceModification,
+  requestApprovalOtp,
+  approvalOtpVerify,
+  adminRequestApproval,
+  productInventory,
 };

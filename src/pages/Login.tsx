@@ -9,7 +9,8 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { user, login } = useAuth();
-console.log(user)
+  const [role, setRole] = useState("ADMIN");
+
   if (user) {
     return <Navigate to="/" replace />;
   }
@@ -20,7 +21,7 @@ console.log(user)
     setError('');
 
     try {
-      await login(email, password);
+      await login(email, password, role);
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {
@@ -47,6 +48,21 @@ console.log(user)
               </div>
             )}
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Role
+              </label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="SUPER_ADMIN">SUPER ADMIN</option>
+                <option value="ADMIN">ADMIN</option>
+                <option value="MANAGER">MANAGER</option>
+                <option value="HUB_MANAGER">HUB MANAGER</option>
+              </select>
+            </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
