@@ -5,7 +5,7 @@ import Api from '../api-endpoints/ApiUrls'
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, role: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -77,13 +77,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   //   }
   // };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, role: string) => {
     try {
       setIsLoading(true);
 
       const response = await axios.post(Api.login, {
         username: email,
         password,
+        role,
         login_type: "PASSWORD",
         device_type: "ANDROID",
         device_id: "web",
