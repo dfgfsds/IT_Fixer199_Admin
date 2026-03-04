@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Api from '../../api-endpoints/ApiUrls';
 import axiosInstance from '../../configs/axios-middleware';
-import { ArrowLeft, ArrowLeftIcon, Calendar, CheckCircle, Mail, MapPin, Phone, Star, User, XCircle } from 'lucide-react';
+import { ArrowLeft, ArrowLeftIcon, Bike, Calendar, CheckCircle, CreditCard, Mail, MapPin, Palette, Phone, ServerCog, Star, User, XCircle } from 'lucide-react';
 
 interface AgentDetails {
     id: string
@@ -194,6 +194,7 @@ const Agents360: React.FC = () => {
                             </div>
                         </div>
 
+
                         {/* RATING */}
                         <div>
                             <p className="text-xs text-gray-500 uppercase tracking-wide">Cumulative Rating</p>
@@ -202,6 +203,51 @@ const Agents360: React.FC = () => {
                                 {agent?.cumulative_rating || "0"}
                             </div>
                         </div>
+
+                        {/* vehicle_type */}
+                        {agent?.vehicle_type && (
+                            <div>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide">Vehicle Type</p>
+                                <div className="flex items-center gap-2 mt-1 text-gray-800 font-medium">
+                                    <Bike size={16} />
+                                    {agent?.vehicle_type}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* vehicle_number */}
+                        {agent?.vehicle_number && (
+                            <div>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide">Vehicle Number</p>
+                                <div className="flex items-center gap-2 mt-1 text-gray-800 font-medium">
+                                    <Palette size={16} />
+                                    {agent?.vehicle_number}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* account_number */}
+                        {agent?.account_number && (
+                            <div>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide">Account Number</p>
+                                <div className="flex items-center gap-2 mt-1 text-gray-800 font-medium">
+                                    <CreditCard size={16} />
+                                    {agent?.account_number}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ifsc_code */}
+                        {agent?.ifsc_code && (
+                            <div>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide">IFSC Code</p>
+                                <div className="flex items-center gap-2 mt-1 text-gray-800 font-medium">
+                                    <ServerCog size={16} />
+                                    {agent?.ifsc_code}
+                                </div>
+                            </div>
+                        )}
+
 
                     </div>
                 </div>
