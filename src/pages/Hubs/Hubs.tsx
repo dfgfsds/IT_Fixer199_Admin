@@ -79,7 +79,7 @@ const Hubs: React.FC = () => {
             hub.primary_address.toLowerCase().includes(search.toLowerCase()) ||
             hub.contact_info.toLowerCase().includes(search.toLowerCase())
     );
-
+console.log(filteredHubs)
 
 
     // const handleDelete = async (id: string) => {
@@ -149,7 +149,7 @@ const Hubs: React.FC = () => {
                         </thead>
 
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredHubs?.map((hub, index) => (
+                            {filteredHubs?.map((hub:any, index:number) => (
                                 <tr key={hub.id} className="hover:bg-gray-50">
 
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -157,29 +157,29 @@ const Hubs: React.FC = () => {
                                     </td>
 
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
-                                        {hub.name}
+                                        {hub?.name}
                                     </td>
 
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        {hub.head?.name || "-"}
+                                        {hub?.head?.name || "-"}
                                     </td>
 
                                     <td className="px-6 py-4 text-sm text-gray-600">
-                                        {hub.primary_address}
+                                        {hub?.primary_address}
                                     </td>
 
                                     <td className="px-6 py-4 text-sm">
-                                        {hub.contact_info}
+                                        {hub?.contact_info?.name}
                                     </td>
-
+                                
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                         <span
-                                            className={`px-2 py-1 rounded-full text-xs font-medium ${hub.status === "ACTIVE"
+                                            className={`px-2 py-1 rounded-full text-xs font-medium ${hub?.status === "ACTIVE"
                                                 ? "bg-green-100 text-green-700"
                                                 : "bg-red-100 text-red-700"
                                                 }`}
                                         >
-                                            {hub.status}
+                                            {hub?.status}
                                         </span>
                                     </td>
 
