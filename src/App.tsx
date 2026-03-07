@@ -30,6 +30,8 @@ import Tools from './pages/Tools/Tools';
 import ServicesRequest from './pages/Requests/ServicesRequest/ServicesRequest';
 import Requests from './pages/Requests/Requests.tsx/Requests';
 import ProductsInventory from './pages/ProductsInventory/ProductsInventory';
+import ToolsInventoryMovement from './pages/Requests/ToolsInventoryMovement/ToolsInventoryMovement';
+import ProductInventoryMovement from './pages/Requests/productInventoryMovement/productInventoryMovement';
 
 
 const queryClient = new QueryClient();
@@ -90,7 +92,9 @@ const AppRoutes: React.FC = () => {
         <Route path='servicesRequest' element={<ServicesRequest />} />
         <Route path='requests' element={<Requests />} />
         <Route path='productsInventory' element={<ProductsInventory />} />
-
+        <Route path='toolsInventoryMovement' element={<ToolsInventoryMovement />} />
+        <Route path='productInventoryMovement' element={<ProductInventoryMovement />} />
+        
       </Route>
     </Routes>
   );

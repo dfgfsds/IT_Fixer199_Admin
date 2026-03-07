@@ -74,11 +74,14 @@ const Users: React.FC = () => {
     };
 
 
-    const filteredUsers = users.filter(
-        (user) =>
-            user?.name?.toLowerCase()?.includes(search?.toLowerCase()) ||
-            user?.email?.toLowerCase()?.includes(search?.toLowerCase())
-    );
+    const filteredUsers = users?.filter((user) => {
+        if (!search) return true;
+
+        return (
+            user?.name?.toLowerCase()?.includes(search.toLowerCase()) ||
+            user?.email?.toLowerCase()?.includes(search.toLowerCase())
+        );
+    }); 
 
     return (
         // <div className="space-y-6">
@@ -136,6 +139,9 @@ const Users: React.FC = () => {
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                        S.No
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                         User
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -154,22 +160,25 @@ const Users: React.FC = () => {
                             </thead>
 
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {filteredUsers.map((user) => (
+                                {filteredUsers?.map((user: any, index: number) => (
                                     <tr key={user.id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                            {index + 1}
+                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 <div className="w-10 h-10 bg-orange-100  rounded-full flex items-center justify-center">
                                                     <span className="text-orange-600 font-medium ">
-                                                        {user.name.charAt(0)}
+                                                        {user?.name?.charAt(0)}
                                                     </span>
                                                 </div>
                                                 <div className="ml-4">
                                                     <div className="text-sm font-medium text-gray-900">
-                                                        {user.name}
+                                                        {user?.name}
                                                     </div>
                                                     <div className="text-sm text-gray-500">
                                                         Joined:{" "}
-                                                        {new Date(user.date_joined).toLocaleDateString()}
+                                                        {new Date(user?.date_joined).toLocaleDateString()}
                                                     </div>
                                                 </div>
                                             </div>
@@ -178,18 +187,18 @@ const Users: React.FC = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <div className="flex items-center">
                                                 <Mail className="w-4 h-4 mr-2 text-gray-400" />
-                                                {user.email}
+                                                {user?.email}
                                             </div>
                                             <div className="flex items-center mt-1">
                                                 <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                                                {user.mobile_number}
+                                                {user?.mobile_number}
                                             </div>
                                         </td>
 
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <div className="flex items-center">
                                                 <Shield className="w-4 h-4 mr-2 text-gray-400" />
-                                                {user.role}
+                                                {user?.role}
                                             </div>
                                         </td>
 
@@ -200,7 +209,7 @@ const Users: React.FC = () => {
                                                     : "bg-red-100 text-red-700"
                                                     }`}
                                             >
-                                                {user.status}
+                                                {user?.status}
                                             </span>
                                         </td>
 
