@@ -73,6 +73,12 @@ const adminRequestApproval = `${baseUrl}/api/request/admin/approve`;
 // product-inventory
 const productInventory = `${baseUrl}/api/product-inventory/inventory`;
 
+// tools inventory movement
+const toolsInventoryMovement = `${baseUrl}/api/tools/movement`;
+
+// product inventory movement
+const productInventoryMovement = `${baseUrl}/api/product-inventory/movement`;
+
 export default {
   login,
   allUsers,
@@ -112,4 +118,6 @@ export default {
   approvalOtpVerify,
   adminRequestApproval,
   productInventory,
+  toolsInventoryMovement,
+  productInventoryMovement,
 };

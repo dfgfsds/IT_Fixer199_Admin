@@ -14,7 +14,7 @@ const HubMappingModal: React.FC<Props> = ({ show, onClose, hub }) => {
     const [zoneId, setZoneId] = useState("");
     const [zones, setZones] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    console.log(hub)
+    // console.log(hub)
     /* -------------------- FETCH ZONES -------------------- */
     const fetchZones = async () => {
         try {

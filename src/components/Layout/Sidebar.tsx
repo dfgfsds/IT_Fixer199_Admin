@@ -130,6 +130,8 @@ const Sidebar: React.FC = () => {
       children: [
         { name: 'Services', path: '/servicesRequest' },
         { name: 'Requests', path: '/requests' },
+        { name: 'Tools Inventory Movement', path: '/toolsInventoryMovement' },
+        { name: 'Product Inventory Movement', path: '/productInventoryMovement' }
       ],
     },
 

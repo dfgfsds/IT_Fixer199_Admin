@@ -177,12 +177,12 @@ const ServicesRequest: React.FC = () => {
                 </select>
 
                 {/* Date Filter */}
-                <input
+                {/* <input
                     type="date"
                     value={date}
                     onChange={(e) => handleDateChange(e.target.value)}
                     className="px-3 py-2 border rounded-lg"
-                />
+                /> */}
             </div>
 
             {/* Table */}
