@@ -4,6 +4,7 @@ import { Plus, Edit, CheckCircle, XCircle, DollarSign, Trash2 } from "lucide-rea
 import ProductModal from "./ProductModal";
 import PricingModal from "./PricingModal";
 import Api from '../../api-endpoints/ApiUrls';
+import Pagination from "../../components/Pagination";
 
 const Products: React.FC = () => {
     const [products, setProducts] = useState<any[]>([]);
@@ -26,6 +27,10 @@ const Products: React.FC = () => {
     const [brands, setBrands] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
 
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [paginations, setPagination] = useState<any>()
 
     useEffect(() => {
         fetchProducts();
@@ -79,10 +84,28 @@ const Products: React.FC = () => {
         fetchProducts();
     }, []);
 
-    const fetchProducts = async () => {
+    const handlePageSizeChange = (size: number) => {
+        setPageSize(size);
+        setPage(1);
+        fetchProducts(1, size);
+    };
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
+        fetchProducts(newPage);
+    };
+
+
+    const fetchProducts = async (pageNumber = page, size = pageSize) => {
         try {
-            const res = await axiosInstance.get(`${Api?.products}?include_attribute=true&include_category=true&include_media=true&include_brand=true`);
-            setProducts(res?.data?.data || []);
+            const res = await axiosInstance.get(`${Api?.products}?page=${pageNumber}&size=${size}&include_attribute=true&include_category=true&include_media=true&include_brand=true&include_pricing=true`);
+            // setProducts(res?.data?.data || []);
+            setProducts(res?.data?.products || []);
+
+            const pagination = res?.data?.pagination;
+            setPagination(pagination);
+            setPage(pagination?.page);
+            setTotalPages(pagination?.total_pages);
         } catch (err) {
             console.error(err);
         } finally {
@@ -125,7 +148,7 @@ const Products: React.FC = () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                 <StatCard title="Total Products" value={products.length} />
 
@@ -141,11 +164,11 @@ const Products: React.FC = () => {
                     color="text-red-600"
                 />
 
-                <StatCard
+                {/* <StatCard
                     title="Variants"
                     value={products?.filter(p => p.type === "VARIANT").length}
                     color="text-orange-600"
-                />
+                /> */}
 
             </div>
 
@@ -210,11 +233,12 @@ const Products: React.FC = () => {
                     Loading <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
                 </div>
             ) : (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="min-w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">S.No</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
@@ -224,7 +248,6 @@ const Products: React.FC = () => {
                                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                                 </tr>
                             </thead>
-
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {filteredProducts.length === 0 ? (
                                     <tr>
@@ -248,8 +271,11 @@ const Products: React.FC = () => {
                                     </tr>
                                 ) : (
                                     <>
-                                        {filteredProducts?.map((product) => (
+                                        {filteredProducts?.map((product:any,index:number) => (
                                             <tr key={product.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 text-sm text-gray-900">
+                                                    {index + 1}
+                                                </td>
 
                                                 {/* Product */}
                                                 <td className="px-6 py-4 whitespace-nowrap">
@@ -307,18 +333,6 @@ const Products: React.FC = () => {
                                                     </span>
                                                 </td>
 
-                                                {/* <button
-                                            onClick={() => {
-                                                setSelectedProduct(product);
-                                                setShowPricing(true);
-                                            }}
-                                            className="inline-flex items-center mt-6 px-3 py-1.5 bg-green-50 text-green-700 text-xs font-medium rounded-lg hover:bg-green-100"
-                                        >
-
-                                            <DollarSign className="w-3 h-3 mr-1" />
-                                            Pricing
-                                        </button> */}
-
                                                 <td className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end space-x-2">
 
@@ -334,7 +348,6 @@ const Products: React.FC = () => {
                                                             Pricing
                                                         </button>
 
-                                                        {/* Edit */}
                                                         <button
                                                             onClick={() => {
                                                                 setEditProduct(product);
@@ -346,7 +359,6 @@ const Products: React.FC = () => {
                                                             Edit
                                                         </button>
 
-                                                        {/* Delete */}
                                                         <button
                                                             onClick={() => openDeleteModal(product.id)}
                                                             className="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100"
@@ -363,8 +375,17 @@ const Products: React.FC = () => {
                                         ))}
                                     </>)}
                             </tbody>
+
                         </table>
                     </div>
+                    <Pagination
+                        page={page}
+                        totalPages={totalPages}
+                        pageSize={pageSize}
+                        totalItems={paginations?.total_elements || 0}
+                        onPageChange={handlePageChange}
+                        onPageSizeChange={handlePageSizeChange}
+                    />
                 </div>
             )}
 

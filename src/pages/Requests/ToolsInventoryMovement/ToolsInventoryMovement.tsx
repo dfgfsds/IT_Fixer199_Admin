@@ -40,7 +40,7 @@ const ToolsInventoryMovement: React.FC = () => {
         const today = new Date().toISOString().split("T")[0];
 
         const ws = new WebSocket(
-            `wss://api.itfixer199.com/ws/tool-movements/?token=${token}&date=${today}`
+            `wss://api.itfixer199.com/ws/tool-movements/?token=${token}&date=${today}&size=1000`
         );
 
         socketRef.current = ws;

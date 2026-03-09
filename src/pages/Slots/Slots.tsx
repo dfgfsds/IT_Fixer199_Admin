@@ -3,6 +3,7 @@ import { Search, Eye, Edit, Plus, Trash2 } from "lucide-react";
 import axiosInstance from "../../configs/axios-middleware";
 import api from "../../api-endpoints/ApiUrls";
 import SlotModal from "./SlotModal";
+import Pagination from "../../components/Pagination";
 
 
 interface SlotType {
@@ -29,20 +30,53 @@ const Slots: React.FC = () => {
   const [deleteSlotId, setDeleteSlotId] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pagination, setPagination] = useState<any>(null);
+
   useEffect(() => {
     fetchSlots();
   }, []);
 
-  const fetchSlots = async () => {
+  const fetchSlots = async (pageNumber = page, size = pageSize) => {
     try {
-      const response = await axiosInstance.get(api?.allStols);
-      setSlots(response?.data?.slots);
+
+      setLoading(true);
+
+      const response = await axiosInstance.get(
+        `${api?.allStols}?page=${pageNumber}&size=${size}`
+      );
+
+      setSlots(response?.data?.slots || []);
+
+      const p = response?.data?.pagination;
+
+      if (p) {
+        setPagination(p);
+        setPage(p.page);
+        setTotalPages(p.total_pages);
+      }
+
     } catch (error) {
       console.error("Failed to fetch slots:", error);
     } finally {
       setLoading(false);
     }
   };
+
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    fetchSlots(newPage);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setPage(1);
+    fetchSlots(1, size);
+  };
+
 
   const handleDelete = async () => {
     if (!deleteSlotId) return;
@@ -107,14 +141,14 @@ const Slots: React.FC = () => {
           <table className="min-w-[900px] w-full">
             <thead className="bg-gray-50">
               <tr>
-                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   S.No</th>
-                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Zone</th>
-                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
-                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Max Orders</th>
-                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Zone</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Max Orders</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
 
@@ -209,6 +243,17 @@ const Slots: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {!loading && pagination && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={pagination.total_elements}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+          />
+        )}
       </div>
 
       {/* View Modal */}

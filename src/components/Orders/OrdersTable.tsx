@@ -186,12 +186,15 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
   };
 
   const statusColors: any = {
-    PENDING: 'bg-yellow-100 text-yellow-800',
-    assigned: 'bg-blue-100 text-blue-800',
-    in_progress: 'bg-indigo-100 text-indigo-800',
-    completed: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800',
-    refunded: 'bg-gray-100 text-gray-800',
+    PENDING: "bg-yellow-100 text-yellow-800",
+    CONFIRMED: "bg-blue-100 text-blue-800",
+    ASSIGNED: "bg-indigo-100 text-indigo-800",
+    IN_PROGRESS: "bg-purple-100 text-purple-800",
+    IN_TRANSIT: "bg-cyan-100 text-cyan-800",
+    SERVICE_IN_PROGRESS: "bg-orange-100 text-orange-800",
+    COMPLETED: "bg-green-100 text-green-800",
+    CANCELLED: "bg-red-100 text-red-800",
+    REFUNDED: "bg-gray-100 text-gray-800",
   };
 
 
@@ -203,9 +206,10 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
           {/* HEADER */}
           <thead className="bg-gray-100 border-b border-gray-300 text-xs uppercase tracking-wider text-gray-600">
             <tr>
+              <th className="px-6 py-3">S.No</th>
               <th className="px-6 py-3">Customer</th>
-              <th className="px-6 py-3">Zone / Slot</th>
-              {/* <th className="px-6 py-3">Agent</th> */}
+              <th className="px-6 py-3">Zone</th>
+              <th className="px-6 py-3">Slot</th>
               <th className="px-6 py-3">Status</th>
               <th className="px-6 py-3">Amount</th>
               <th className="px-6 py-3 text-right">Actions</th>
@@ -213,96 +217,107 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
           </thead>
 
           {/* BODY */}
-<tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-200">
 
-  {orders && orders?.length > 0 ? (
-    orders?.map((order: any) => (
-      <tr
-        key={order?.id}
-        className="hover:bg-gray-50 transition-colors duration-150"
-      >
+            {orders && orders?.length > 0 ? (
+              orders?.map((order: any, index: number) => (
+                <tr
+                  key={order?.id}
+                  className="hover:bg-gray-50 transition-colors duration-150 capitalize"
+                >
 
-        {/* CUSTOMER */}
-        <td className="px-6 py-4">
-          <div className="font-medium text-gray-900 capitalize">
-            {order?.customer_name}
-          </div>
-          <div className="text-xs text-gray-500">
-            {order?.customer_number}
-          </div>
-        </td>
+                  <td className="px-6 py-4">
+                    <div className="font-medium text-gray-900 capitalize">
+                      {index + 1}
+                    </div>
 
-        {/* ZONE / SLOT */}
-        <td className="px-6 py-4">
-          <div className="text-gray-800">
-            {order?.zone_id}
-          </div>
-          <div className="text-xs text-gray-500">
-            {order?.slot_time || "-"}
-          </div>
-        </td>
+                  </td>
 
-        {/* STATUS */}
-        <td className="px-6 py-4">
-          <span
-            className={`px-2 py-1 text-xs font-medium rounded 
+                  {/* CUSTOMER */}
+                  <td className="px-6 py-4">
+                    <div className="font-medium text-gray-900 capitalize">
+                      {order?.customer_name}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {order?.customer_number}
+                    </div>
+                  </td>
+
+                  {/* ZONE / SLOT */}
+                  <td className="px-6 py-4">
+                    <div className="text-gray-800">
+                      {order?.zone_details?.name || "-"}
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <div className="text-xs text-gray-500">
+                      {order?.slot_time || "-"}
+                    </div>
+                  </td>
+
+
+                  {/* STATUS */}
+                  <td className="px-6 py-4">
+                    <span
+                      className={`px-2 py-1 text-xs font-medium rounded 
               ${statusColors[order?.order_status]}`}
-          >
-            {order?.order_status}
-          </span>
-        </td>
+                    >
+                      {order?.order_status}
+                    </span>
+                  </td>
 
-        {/* AMOUNT */}
-        <td className="px-6 py-4 font-semibold text-gray-900">
-          ₹{order?.total_price}
-        </td>
+                  {/* AMOUNT */}
+                  <td className="px-6 py-4 font-semibold text-gray-900">
+                    ₹{order?.total_price}
+                  </td>
 
-        {/* ACTIONS */}
-        <td className="px-6 py-4 text-right">
-          <div className="flex justify-end gap-4">
+                  {/* ACTIONS */}
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-4">
 
-            <button
-              onClick={() => handleViewOrder(order)}
-              className="text-gray-600 hover:text-black transition"
-            >
-              <Eye className="w-4 h-4" />
-            </button>
+                      <button
+                        onClick={() => handleViewOrder(order)}
+                        className="text-gray-600 hover:text-black transition"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
 
-            <button
-              onClick={() => handleMap(order)}
-              className="text-blue-600 hover:text-blue-800 transition"
-            >
-              <MapPin className="w-4 h-4" />
-            </button>
+                      <button
+                        onClick={() => handleMap(order)}
+                        className="text-blue-600 hover:text-blue-800 transition"
+                      >
+                        <MapPin className="w-4 h-4" />
+                      </button>
 
-          </div>
-        </td>
+                    </div>
+                  </td>
 
-      </tr>
-    ))
-  ) : (
-    <tr>
-      <td colSpan={5}>
-        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5}>
+                  <div className="flex flex-col items-center justify-center py-16 text-gray-400">
 
-          {/* ICON */}
-          <SearchX className="w-12 h-12 mb-4 text-gray-300" />
+                    {/* ICON */}
+                    <SearchX className="w-12 h-12 mb-4 text-gray-300" />
 
-          {/* TEXT */}
-          <p className="text-lg font-medium text-gray-500">
-            No Orders Found
-          </p>
+                    {/* TEXT */}
+                    <p className="text-lg font-medium text-gray-500">
+                      No Orders Found
+                    </p>
 
-          <p className="text-sm text-gray-400 mt-1">
-            Try adjusting your search or filter criteria
-          </p>
+                    <p className="text-sm text-gray-400 mt-1">
+                      Try adjusting your search or filter criteria
+                    </p>
 
-        </div>
-      </td>
-    </tr>
-  )}
+                  </div>
+                </td>
+              </tr>
+            )}
 
-</tbody>
+          </tbody>
 
 
         </table>

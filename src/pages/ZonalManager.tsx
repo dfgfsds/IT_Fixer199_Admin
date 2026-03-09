@@ -3,6 +3,7 @@ import { MapPin, Users, TrendingUp, AlertCircle, Calendar, DollarSign } from 'lu
 import axiosInstance from '../configs/axios-middleware';
 import Api from '../api-endpoints/ApiUrls';
 import ZoneModal from '../components/Modals/ZoneModal';
+import Pagination from '../components/Pagination';
 
 interface Zone {
   id: string;
@@ -30,16 +31,20 @@ const ZonalManager: React.FC = () => {
   const [editZone, setEditZone] = useState<any>('');
   const [search, setSearch] = useState("");
 
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [paginations, setPagination] = useState<any>(null);
 
-  const filteredZones = zones.filter((zone) => {
-    const searchText = search.toLowerCase();
+  const filteredZones = zones?.filter((zone) => {
+    const searchText = search?.toLowerCase();
 
     return (
-      zone.name?.toLowerCase().includes(searchText) ||
-      zone.city?.toLowerCase().includes(searchText) ||
-      zone.state?.toLowerCase().includes(searchText) ||
-      zone.pincode?.toLowerCase().includes(searchText) ||
-      zone.manager_name?.toLowerCase().includes(searchText)
+      zone?.name?.toLowerCase().includes(searchText) ||
+      zone?.city?.toLowerCase().includes(searchText) ||
+      zone?.state?.toLowerCase().includes(searchText) ||
+      zone?.pincode?.toLowerCase().includes(searchText) ||
+      zone?.manager_name?.toLowerCase().includes(searchText)
     );
   });
 
@@ -48,10 +53,34 @@ const ZonalManager: React.FC = () => {
     fetchZones();
   }, []);
 
-  const fetchZones = async () => {
+  // const fetchZones = async () => {
+  //   try {
+  //     const response = await axiosInstance.get(Api?.allZone);
+  //     setZones(response?.data?.zones);
+  //   } catch (error) {
+  //     console.error("Failed to fetch zones:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+  const fetchZones = async (pageNumber = page, size = pageSize) => {
     try {
-      const response = await axiosInstance.get(Api?.allZone);
-      setZones(response?.data?.zones);
+      setLoading(true);
+
+      const response = await axiosInstance.get(
+        `${Api?.allZone}?page=${pageNumber}&size=${size}`
+      );
+
+      setZones(response?.data?.zones || []);
+
+      const p = response?.data?.pagination;
+
+      if (p) {
+        setPagination(p);
+        setPage(p.page);
+        setTotalPages(p.total_pages);
+      }
+
     } catch (error) {
       console.error("Failed to fetch zones:", error);
     } finally {
@@ -59,6 +88,16 @@ const ZonalManager: React.FC = () => {
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    fetchZones(newPage, pageSize);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setPage(1);
+    fetchZones(1, size);
+  };
 
   const handleDelete = async () => {
     if (!deleteZoneId) return;
@@ -76,10 +115,10 @@ const ZonalManager: React.FC = () => {
 
 
   const zoneStats = {
-    totalZones: zones.length || 0,
-    activeZones: zones.filter(z => z.is_active).length || 0,
-    totalAgents: zones.reduce((sum, z) => sum + z.total_agents, 0),
-    totalRevenue: zones.reduce((sum, z) => sum + z.monthly_revenue, 0)
+    totalZones: zones?.length || 0,
+    activeZones: zones?.filter(z => z.is_active).length || 0,
+    totalAgents: zones?.reduce((sum, z) => sum + z.total_agents, 0),
+    totalRevenue: zones?.reduce((sum, z) => sum + z.monthly_revenue, 0)
   };
   //   const zoneStats = {
   //   totalZones: zones.length,
@@ -177,138 +216,152 @@ const ZonalManager: React.FC = () => {
           Loading <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredZones.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-20 text-gray-500">
-              <MapPin className="w-10 h-10 mb-4 text-gray-400" />
-              {zones.length === 0 ? (
-                <>
-                  <p className="text-lg font-semibold">No Zones Created Yet</p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Click "Create Zone" to add one.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="text-lg font-semibold">No Matching Zones Found</p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Try adjusting your search.
-                  </p>
-                </>
-              )}
-            </div>
-          ) : (
-            <>
-              {zones.map((zone) => (
-                <div
-                  key={zone.id}
-                  className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => setSelectedZone(zone)}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                        <MapPin className="w-5 h-5 text-orange-600" />
-                      </div>
-                      <div className="ml-3">
-                        <h3 className="text-lg font-semibold text-gray-900">{zone.name}</h3>
-                        <p className="text-sm text-gray-600">{zone.city}, {zone.state}</p>
-                      </div>
-                    </div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${zone.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                      {zone.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredZones.length === 0 ? (
+              <div className="col-span-full flex flex-col items-center justify-center py-20 text-gray-500">
+                <MapPin className="w-10 h-10 mb-4 text-gray-400" />
+                {zones.length === 0 ? (
+                  <>
+                    <p className="text-lg font-semibold">No Zones Created Yet</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Click "Create Zone" to add one.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-semibold">No Matching Zones Found</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Try adjusting your search.
+                    </p>
+                  </>
+                )}
+              </div>
+            ) : (
+              <>
+                {zones.map((zone) => (
+                  <div
+                    key={zone.id}
+                    className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => setSelectedZone(zone)}
+                  >
+                    <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center">
-                        <Users className="w-4 h-4 text-gray-400 mr-2" />
-                        <span className="text-sm text-gray-600">Agents</span>
+                        <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                          <MapPin className="w-5 h-5 text-orange-600" />
+                        </div>
+                        <div className="ml-3">
+                          <h3 className="text-lg font-semibold text-gray-900">{zone.name}</h3>
+                          <p className="text-sm text-gray-600">{zone.city}, {zone.state}</p>
+                        </div>
                       </div>
-                      <span className="text-sm font-medium text-gray-900">
-                        {zone.active_agents}/{zone.total_agents}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${zone.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                        {zone.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <TrendingUp className="w-4 h-4 text-gray-400 mr-2" />
-                        <span className="text-sm text-gray-600">Orders</span>
-                      </div>
-                      <span className="text-sm font-medium text-gray-900">
-                        {zone.total_orders}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <DollarSign className="w-4 h-4 text-gray-400 mr-2" />
-                        <span className="text-sm text-gray-600">Revenue</span>
-                      </div>
-                      <span className="text-sm font-medium text-gray-900">
-                        ₹{zone?.monthly_revenue?.toLocaleString()}
-                      </span>
-                    </div>
-
-                    {zone.pending_tickets > 0 && (
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <AlertCircle className="w-4 h-4 text-red-400 mr-2" />
-                          <span className="text-sm text-red-600">Pending Tickets</span>
+                          <Users className="w-4 h-4 text-gray-400 mr-2" />
+                          <span className="text-sm text-gray-600">Agents</span>
                         </div>
-                        <span className="text-sm font-medium text-red-600">
-                          {zone.pending_tickets}
+                        <span className="text-sm font-medium text-gray-900">
+                          {zone.active_agents}/{zone.total_agents}
                         </span>
                       </div>
-                    )}
 
-                    {zone.manager_name && (
-                      <div className="pt-3 border-t border-gray-200">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center">
-                            <span className="text-xs font-medium text-gray-600">
-                              {zone.manager_name.charAt(0)}
-                            </span>
+                          <TrendingUp className="w-4 h-4 text-gray-400 mr-2" />
+                          <span className="text-sm text-gray-600">Orders</span>
+                        </div>
+                        <span className="text-sm font-medium text-gray-900">
+                          {zone.total_orders}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <DollarSign className="w-4 h-4 text-gray-400 mr-2" />
+                          <span className="text-sm text-gray-600">Revenue</span>
+                        </div>
+                        <span className="text-sm font-medium text-gray-900">
+                          ₹{zone?.monthly_revenue?.toLocaleString()}
+                        </span>
+                      </div>
+
+                      {zone.pending_tickets > 0 && (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <AlertCircle className="w-4 h-4 text-red-400 mr-2" />
+                            <span className="text-sm text-red-600">Pending Tickets</span>
                           </div>
-                          <span className="ml-2 text-sm text-gray-600">
-                            Manager: {zone.manager_name}
+                          <span className="text-sm font-medium text-red-600">
+                            {zone.pending_tickets}
                           </span>
                         </div>
-                      </div>
-                    )}
+                      )}
+
+                      {zone.manager_name && (
+                        <div className="pt-3 border-t border-gray-200">
+                          <div className="flex items-center">
+                            <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center">
+                              <span className="text-xs font-medium text-gray-600">
+                                {zone.manager_name.charAt(0)}
+                              </span>
+                            </div>
+                            <span className="ml-2 text-sm text-gray-600">
+                              Manager: {zone.manager_name}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end mt-4 space-x-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditZone(zone);
+                          setShowFormModal(true);
+                        }}
+                        className="text-sm px-3 py-1 border rounded-lg hover:bg-gray-50"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteZoneId(zone.id);
+                          setShowDeleteModal(true);
+                        }}
+                        className="text-sm px-3 py-1 text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
+
+
                   </div>
-
-                  <div className="flex justify-end mt-4 space-x-3">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditZone(zone);
-                        setShowFormModal(true);
-                      }}
-                      className="text-sm px-3 py-1 border rounded-lg hover:bg-gray-50"
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteZoneId(zone.id);
-                        setShowDeleteModal(true);
-                      }}
-                      className="text-sm px-3 py-1 text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
-                    >
-                      Delete
-                    </button>
-                  </div>
+                ))}
+              </>)}
 
 
-                </div>
-              ))}
-            </>)}
-        </div>
+          </div>
+          {!loading && paginations && (
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={paginations?.total_elements || 0}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          )}
+        </>
       )}
 
       {/* Zone Details Modal */}

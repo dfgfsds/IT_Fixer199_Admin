@@ -94,7 +94,7 @@ const AppRoutes: React.FC = () => {
         <Route path='productsInventory' element={<ProductsInventory />} />
         <Route path='toolsInventoryMovement' element={<ToolsInventoryMovement />} />
         <Route path='productInventoryMovement' element={<ProductInventoryMovement />} />
-        
+
       </Route>
     </Routes>
   );
