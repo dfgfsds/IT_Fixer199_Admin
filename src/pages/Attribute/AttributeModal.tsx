@@ -183,8 +183,8 @@ const AttributeModal: React.FC<Props> = ({
     if (editAttribute) {
 
       setForm({
-        name: editAttribute.name || "",
-        value: editAttribute.value || [],
+        name: editAttribute?.attribute_name || "",
+        value: editAttribute?.attribute_values?.map((v: any) => v?.value) || [],
       });
 
     } else {
@@ -289,7 +289,7 @@ const AttributeModal: React.FC<Props> = ({
           </h2>
 
           <button onClick={onClose}>
-            <X size={20}/>
+            <X size={20} />
           </button>
 
         </div>
@@ -331,7 +331,7 @@ const AttributeModal: React.FC<Props> = ({
 
               <input
                 value={valueInput}
-                onChange={(e)=>setValueInput(e.target.value)}
+                onChange={(e) => setValueInput(e.target.value)}
                 className="w-full border rounded-lg px-3 py-2"
                 placeholder="Enter value"
               />
@@ -366,9 +366,9 @@ const AttributeModal: React.FC<Props> = ({
 
                   <button
                     type="button"
-                    onClick={()=>removeValue(index)}
+                    onClick={() => removeValue(index)}
                   >
-                    <X size={14}/>
+                    <X size={14} />
                   </button>
 
                 </div>
@@ -409,7 +409,7 @@ const AttributeModal: React.FC<Props> = ({
               className="px-4 py-2 bg-orange-600 text-white rounded-lg flex items-center gap-2"
             >
 
-              {loading && <Loader size={16} className="animate-spin"/>}
+              {loading && <Loader size={16} className="animate-spin" />}
 
               {isEdit ? "Update" : "Create"}
 
@@ -426,3 +426,4 @@ const AttributeModal: React.FC<Props> = ({
 };
 
 export default AttributeModal;
+

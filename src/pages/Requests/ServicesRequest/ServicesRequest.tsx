@@ -22,7 +22,7 @@ const ServicesRequest: React.FC = () => {
     const [statusFilter, setStatusFilter] = useState("all");
     const [date, setDate] = useState("");
     const [loading, setLoading] = useState(true);
-
+    console.log(filteredData)
     const socketRef = useRef<WebSocket | null>(null);
     const emptyImage = 'https://media.istockphoto.com/id/1222357475/vector/image-preview-icon-picture-placeholder-for-website-or-ui-ux-design-vector-illustration.jpg?s=612x612&w=0&k=20&c=KuCo-dRBYV7nz2gbk4J9w1WtTAgpTdznHu55W9FjimE='
 
@@ -40,7 +40,7 @@ const ServicesRequest: React.FC = () => {
         const token = localStorage.getItem("token");
 
         const ws = new WebSocket(
-            `wss://api.itfixer199.com/ws/service-modifications/?token=${token}&date=2026-02-28`
+            `wss://api.itfixer199.com/ws/service-modifications/?token=${token}&size=500`
         );
 
         socketRef.current = ws;
@@ -49,29 +49,38 @@ const ServicesRequest: React.FC = () => {
             console.log("WebSocket Connected");
         };
 
+        // ws.onmessage = (event) => {
+        //     console.log(event)
+        //     const message = JSON.parse(event.data);
+
+        //     if (message.type === "initial_data") {
+        //         setData(message.modifications || []);
+        //         setLoading(false);
+        //     }
+
+        //     if (message.type === "update") {
+        //         const updatedItem = message?.modification;
+        //         console.log(updatedItem)
+        //         setData((prev) => {
+        //             const index = prev?.findIndex((item) => item?.id === updatedItem?.id);
+
+        //             if (index !== -1) {
+        //                 const updatedList = [...prev];
+        //                 updatedList[index] = updatedItem; // 🔥 replace existing
+        //                 return updatedList;
+        //             } else {
+        //                 return [updatedItem, ...prev];
+        //             }
+        //         });
+        //     }
+        // };
+
         ws.onmessage = (event) => {
-            console.log(event)
             const message = JSON.parse(event.data);
 
-            if (message.type === "initial_data") {
+            if (message.type === "initial_data" || message.type === "update") {
                 setData(message.modifications || []);
                 setLoading(false);
-            }
-
-            if (message.type === "update") {
-                const updatedItem = message.modification;
-                console.log(updatedItem)
-                setData((prev) => {
-                    const index = prev.findIndex((item) => item.id === updatedItem.id);
-
-                    if (index !== -1) {
-                        const updatedList = [...prev];
-                        updatedList[index] = updatedItem; // 🔥 replace existing
-                        return updatedList;
-                    } else {
-                        return [updatedItem, ...prev];
-                    }
-                });
             }
         };
 
@@ -89,7 +98,15 @@ const ServicesRequest: React.FC = () => {
         setDate(value);
 
         if (socketRef.current) {
-            socketRef.current.send(JSON.stringify({ date: value }));
+            // socketRef.current.send(JSON.stringify({ date: value }));
+            socketRef.current.send(
+                JSON.stringify({
+                    start_date: value,
+                    end_date: value,
+                    page: 1,
+                    size: 10
+                })
+            );
         }
     };
 
@@ -100,17 +117,17 @@ const ServicesRequest: React.FC = () => {
         if (search) {
             temp = temp.filter(
                 (item) =>
-                    item.order_details?.customer_name
+                    item?.order_details?.customer_name
                         ?.toLowerCase()
                         .includes(search.toLowerCase()) ||
-                    item.new_service_details?.name
+                    item?.new_service_details?.name
                         ?.toLowerCase()
                         .includes(search.toLowerCase())
             );
         }
 
         if (statusFilter !== "all") {
-            temp = temp.filter((item) => item.status === statusFilter);
+            temp = temp?.filter((item) => item?.status === statusFilter);
         }
 
         setFilteredData(temp);
@@ -217,55 +234,55 @@ const ServicesRequest: React.FC = () => {
                                 </tr>
                             ) : (
                                 filteredData.map((item: any, index: number) => (
-                                    <tr key={item.id} className="hover:bg-gray-50 capitalize">
+                                    <tr key={item?.id} className="hover:bg-gray-50 capitalize">
                                         <td className="px-6 py-4">
                                             {index + 1}
                                         </td>
                                         <td className="px-6 py-4">
-                                            {item.order_details?.customer_name}
+                                            {item?.order_details?.customer_name}
                                         </td>
 
                                         <td className="px-6 py-4">
-                                            {item.zone_details?.name}
+                                            {item?.zone_details?.name}
                                         </td>
 
                                         <td className="px-6 py-4 text-sm text-gray-600">
-                                            {item.original_service_details?.name}
+                                            {item?.original_service_details?.name}
                                         </td>
 
                                         <td className="px-6 py-4 font-medium text-blue-600">
-                                            {item.new_service_details?.name}
+                                            {item?.new_service_details?.name}
                                         </td>
 
                                         <td className="px-6 py-4">
-                                            {item.modification_type}
+                                            {item?.modification_type}
                                         </td>
 
                                         <td className="px-6 py-4">
                                             <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
-                                                {item.status}
+                                                {item?.status}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            {item.is_admin_approved === true ? (
+                                            {item?.is_admin_approved === true ? (
                                                 <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
                                                     Approved
                                                 </span>
-                                            ) : item.is_admin_approved === false && item?.status === "REJECTED" ? (
+                                            ) : item?.is_admin_approved === false && item?.status === "REJECTED" ? (
                                                 <span className="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-600">
                                                     Rejected
                                                 </span>
                                             ) : (
                                                 <div className="flex gap-2">
                                                     <button
-                                                        onClick={() => handleAdminApproval(item.id, true)}
+                                                        onClick={() => handleAdminApproval(item?.id, true)}
                                                         className="px-3 py-1 text-xs font-semibold rounded-full bg-green-600 text-white hover:bg-green-700 transition"
                                                     >
                                                         Approve
                                                     </button>
 
                                                     <button
-                                                        onClick={() => handleAdminApproval(item.id, false)}
+                                                        onClick={() => handleAdminApproval(item?.id, false)}
                                                         className="px-3 py-1 text-xs font-semibold rounded-full bg-red-600 text-white hover:bg-red-700 transition"
                                                     >
                                                         Reject
@@ -274,7 +291,7 @@ const ServicesRequest: React.FC = () => {
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-500">
-                                            {new Date(item.created_at).toLocaleString()}
+                                            {new Date(item?.created_at)?.toLocaleString()}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <button
@@ -440,7 +457,6 @@ const ServicesRequest: React.FC = () => {
                                 </div>
 
                             </div>
-
 
                             {/* SERVICE COMPARISON */}
                             <div className="mt-16">

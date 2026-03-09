@@ -13,6 +13,8 @@ import {
 import api from "../../api-endpoints/ApiUrls";
 import AddUserModal from "./AddUserModal";
 import axiosInstance from "../../configs/axios-middleware";
+import toast from "react-hot-toast";
+import Pagination from "../../components/Pagination";
 
 interface UserType {
     id: string;
@@ -41,23 +43,66 @@ const Users: React.FC = () => {
     const [deleteUser, setDeleteUser] = useState<UserType | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [pagination, setPagination] = useState<any>(null);
+
     useEffect(() => {
-        fetchUsers();
+        fetchUsers(page, pageSize);
     }, []);
 
-    const fetchUsers = async () => {
-        try {
+    // const fetchUsers = async () => {
+    //     try {
 
-            const response = await axiosInstance.get(`${api.allUsers}`,
+    //         const response = await axiosInstance.get(`${api.allUsers}`,
+    //         );
+    //         console.log(response)
+    //         setUsers(response.data?.users);
+    //     } catch (error) {
+    //         console.error("Failed to fetch users:", error);
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
+    const fetchUsers = async (pageNumber = page, size = pageSize) => {
+        try {
+            setLoading(true);
+
+            const response = await axiosInstance.get(
+                `${api.allUsers}?page=${pageNumber}&size=${size}`
             );
-            console.log(response)
-            setUsers(response.data?.users);
+
+            setUsers(response.data?.users || []);
+
+            const p = response.data?.pagination;
+
+            if (p) {
+                setPagination(p);
+                setPage(p.page);
+                setTotalPages(p.total_pages);
+            }
+
         } catch (error) {
             console.error("Failed to fetch users:", error);
         } finally {
             setLoading(false);
         }
     };
+
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
+        fetchUsers(newPage, pageSize);
+    };
+
+    const handlePageSizeChange = (size: number) => {
+        setPageSize(size);
+        setPage(1);
+        fetchUsers(1, size);
+    };
+
 
     const handleDeleteUser = async () => {
         if (!deleteUser) return;
@@ -68,8 +113,11 @@ const Users: React.FC = () => {
             setShowDeleteModal(false);
             setDeleteUser(null);
 
-        } catch (error) {
-            console.error("Delete failed:", error);
+        } catch (error: any) {
+            console.error("Failed to delete user:", error);
+            const data = error?.response?.data;
+            let message = "Something went wrong";
+            toast.error(data?.message || message);
         }
     };
 
@@ -81,7 +129,7 @@ const Users: React.FC = () => {
             user?.name?.toLowerCase()?.includes(search.toLowerCase()) ||
             user?.email?.toLowerCase()?.includes(search.toLowerCase())
         );
-    }); 
+    });
 
     return (
         // <div className="space-y-6">
@@ -252,6 +300,17 @@ const Users: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
+
+                    {!loading && pagination && (
+                        <Pagination
+                            page={page}
+                            totalPages={totalPages}
+                            pageSize={pageSize}
+                            totalItems={pagination.total_elements}
+                            onPageChange={handlePageChange}
+                            onPageSizeChange={handlePageSizeChange}
+                        />
+                    )}
                 </div>
             )}
 

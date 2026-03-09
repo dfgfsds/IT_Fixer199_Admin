@@ -181,7 +181,11 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
 
                     {pricingList.map((item, index) => (
                         <div key={index} className="border rounded-lg p-4 space-y-4 relative">
+                            {index === 0 ? (
+                            <h1 className="text-base font-bold">Default Pricing</h1>
+                            ) : (
                             <h1 className="text-base font-bold">Pricing {index + 1}</h1>
+                            )}
                             {/* Remove Button */}
                             {pricingList.length > 1 && (
                                 <button
@@ -216,76 +220,83 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
                             </div>
 
                             {/* Hub Select */}
-                            <div>
-                                <label className="block text-sm font-medium mb-1">
-                                    Hub *
-                                </label>
-                                <select
-                                    value={item.hub}
-                                    onChange={(e) =>
-                                        handleChange(index, "hub", e.target.value)
-                                    }
-                                    className="w-full border rounded-lg px-3 py-2"
-                                    required
-                                >
-                                    <option value="">Select Hub</option>
-                                    {hubs.map((hub) => (
-                                        <option key={hub.id} value={hub.id}>
-                                            {hub.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                            {index !== 0 && (
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">
+                                        Hub *
+                                    </label>
+                                    <select
+                                        value={item.hub}
+                                        onChange={(e) =>
+                                            handleChange(index, "hub", e.target.value)
+                                        }
+                                        className="w-full border rounded-lg px-3 py-2"
+                                        required
+                                    >
+                                        <option value="">Select Hub</option>
+                                        {hubs.map((hub) => (
+                                            <option key={hub.id} value={hub.id}>
+                                                {hub.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+
 
                             {/* Time */}
-                            <div className="grid grid-cols-2 gap-4">
+                            {index !== 0 && (
+                                <div className="grid grid-cols-2 gap-4">
 
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">
-                                        Start Time
-                                    </label>
-                                    <input
-                                        type="time"
-                                        value={item.start_time}
-                                        onChange={(e) =>
-                                            handleChange(index, "start_time", e.target.value)
-                                        }
-                                        className="w-full border rounded-lg px-3 py-2"
-                                    />
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">
+                                            Start Time
+                                        </label>
+                                        <input
+                                            type="time"
+                                            value={item.start_time}
+                                            onChange={(e) =>
+                                                handleChange(index, "start_time", e.target.value)
+                                            }
+                                            className="w-full border rounded-lg px-3 py-2"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">
+                                            End Time
+                                        </label>
+                                        <input
+                                            type="time"
+                                            value={item.end_time}
+                                            onChange={(e) =>
+                                                handleChange(index, "end_time", e.target.value)
+                                            }
+                                            className="w-full border rounded-lg px-3 py-2"
+                                        />
+                                    </div>
+
                                 </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">
-                                        End Time
-                                    </label>
-                                    <input
-                                        type="time"
-                                        value={item.end_time}
-                                        onChange={(e) =>
-                                            handleChange(index, "end_time", e.target.value)
-                                        }
-                                        className="w-full border rounded-lg px-3 py-2"
-                                    />
-                                </div>
-
-                            </div>
-
+                            )}
 
                             {/* Quantity + Price */}
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">
-                                        Max Quantity
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={item.max_quantity}
-                                        onChange={(e) =>
-                                            handleChange(index, "max_quantity", e.target.value)
-                                        }
-                                        className="w-full border rounded-lg px-3 py-2"
-                                    />
-                                </div>
+                                {index !== 0 && (
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">
+                                            Max Quantity
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={item.max_quantity}
+                                            onChange={(e) =>
+                                                handleChange(index, "max_quantity", e.target.value)
+                                            }
+                                            className="w-full border rounded-lg px-3 py-2"
+                                        />
+                                    </div>
+                                )}
 
                                 <div>
                                     <label className="block text-sm font-medium mb-1">

@@ -27,6 +27,7 @@ const ProductModal: React.FC<Props> = ({
     const [existingImages, setExistingImages] = useState<any[]>([]);
     const [newImages, setNewImages] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+    const [priceTypes, setPriceTypes] = useState<any[]>([]);
 
     const [loading, setLoading] = useState(false);
     const [apiErrors, setApiErrors] = useState<string>("");
@@ -45,6 +46,8 @@ const ProductModal: React.FC<Props> = ({
         status: "ACTIVE",
         category_ids: [],
         attributes: [],
+        pricing_type: "",
+        price: ""
     });
 
     // ---------------- Fetch Data ----------------
@@ -52,7 +55,15 @@ const ProductModal: React.FC<Props> = ({
         fetchBrands();
         fetchCategories();
         fetchAttributes();
+        fetchPriceTypes();
     }, []);
+
+
+    const fetchPriceTypes = async () => {
+        const res = await axiosInstance.get(Api?.pricingType);
+        setPriceTypes(res?.data?.data || []);
+    };
+
 
     const fetchBrands = async () => {
         const res = await axiosInstance.get(Api?.allBrands);
@@ -225,6 +236,14 @@ const ProductModal: React.FC<Props> = ({
     const handleSubmit = async (e: any) => {
         e.preventDefault();
         setLoading(true);
+
+        const pricingPayload = [
+            {
+                type: form.pricing_type,
+                price: form.price
+            }
+        ];
+
         try {
             const formData = new FormData();
 
@@ -232,7 +251,9 @@ const ProductModal: React.FC<Props> = ({
                 if (
                     key !== "category_ids" &&
                     key !== "attributes" &&
-                    key !== "specification"
+                    key !== "specification" &&
+                    key !== "pricing_type" &&
+                    key !== "price"
                 ) {
                     formData.append(key, form[key]);
                 }
@@ -269,6 +290,8 @@ const ProductModal: React.FC<Props> = ({
                 "specification",
                 JSON.stringify(formattedSpecification)
             );
+
+            formData.append("pricing", JSON.stringify(pricingPayload));
 
             if (isEdit) {
                 const updateApi = await axiosInstance.put(`${Api?.products}/${editProduct.id}`, formData);
@@ -530,6 +553,47 @@ const ProductModal: React.FC<Props> = ({
                         )}
                     </div>
 
+                    {/* Type */}
+                    {!editProduct && (
+
+                        <>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">
+                                    Product Type *
+                                </label>
+                                <select
+                                    value={form.pricing_type}
+                                    onChange={(e) =>
+                                        setForm({ ...form, pricing_type: e.target.value })
+                                    }
+                                    className="w-full border rounded-lg px-3 py-2"
+                                    required
+                                >
+                                    <option value="">Select Pricing type</option>
+                                    {priceTypes?.map((p: any) => (
+                                        <option key={p?.name} value={p?.name}>
+                                            {p?.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1">
+                                    Price *
+                                </label>
+                                <input
+                                    type="number"
+                                    value={form.price}
+                                    onChange={(e) =>
+                                        setForm({ ...form, price: e.target.value })
+                                    }
+                                    className="w-full border rounded-lg px-3 py-2"
+                                    required
+                                />
+                            </div>
+                        </>
+                    )}
                     {/* Status */}
                     <div>
                         <label className="block text-sm font-medium mb-1">

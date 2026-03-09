@@ -3,6 +3,7 @@ import axiosInstance from "../../configs/axios-middleware";
 import { Search, Trash2, Plus, Loader2 } from "lucide-react";
 import InventoryModal from "./InventoryModal";
 import Api from '../../api-endpoints/ApiUrls';
+import Pagination from "../../components/Pagination";
 
 const ProductsInventory: React.FC = () => {
     const [data, setData] = useState<any[]>([]);
@@ -22,12 +23,40 @@ const ProductsInventory: React.FC = () => {
     const [quantity, setQuantity] = useState(0);
     const [stockLoading, setStockLoading] = useState(false);
 
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [pagination, setPagination] = useState<any>(null);
 
-    const fetchInventory = async () => {
+    // const fetchInventory = async () => {
+    //     try {
+    //         setLoading(true);
+    //         const res = await axiosInstance.get(Api.productInventory);
+    //         setData(res.data?.data || []);
+    //     } catch (err) {
+    //         console.error(err);
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
+    const fetchInventory = async (pageNumber = page, size = pageSize) => {
         try {
+
             setLoading(true);
-            const res = await axiosInstance.get(Api.productInventory);
-            setData(res.data?.data || []);
+
+            const res = await axiosInstance.get(
+                `${Api.productInventory}?page=${pageNumber}&size=${size}`
+            );
+
+            setData(res?.data?.inventories || []);
+
+            const p = res?.data?.pagination;
+
+            setPagination(p);
+            setPage(p?.page);
+            setTotalPages(p?.total_pages);
+
         } catch (err) {
             console.error(err);
         } finally {
@@ -38,6 +67,18 @@ const ProductsInventory: React.FC = () => {
     useEffect(() => {
         fetchInventory();
     }, []);
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
+        fetchInventory(newPage);
+    };
+
+    const handlePageSizeChange = (size: number) => {
+        setPageSize(size);
+        setPage(1);
+        fetchInventory(1, size);
+    };
+
 
     const filteredData = useMemo(() => {
         return data.filter((item) => {
@@ -178,67 +219,106 @@ const ProductsInventory: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredData.map((item: any, index: number) => (
-                                <tr key={item.id} className="border-b hover:bg-gray-50">
-                                    <td className="px-4 py-3">{index + 1}</td>
-                                    <td className="px-4 py-3">
-                                        {item.product?.name}
-                                        {item.product?.name}
-                                    </td>
-                                    <td className="px-4 py-3">{item.hub_name || "-"}</td>
-                                    <td className="px-4 py-3">{item.stock_in_hub}</td>
+                            {filteredData.length === 0 ? (
 
-                                    <td className="px-4 py-3 text-right">
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-16 text-center">
 
-                                        <div className="flex justify-end items-center gap-2">
+                                        <div className="flex flex-col items-center gap-3 text-gray-500">
 
-                                            {/* ADD STOCK */}
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedItem(item);
-                                                    setStockType("add");
-                                                    setStockModal(true);
-                                                }}
-                                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition shadow-sm"
-                                            >
-                                                + Add
-                                            </button>
+                                            <div className="bg-gray-100 rounded-full p-4">
+                                                <Search className="w-8 h-8 text-gray-400" />
+                                            </div>
 
-                                            {/* REMOVE STOCK */}
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedItem(item);
-                                                    setStockType("remove");
-                                                    setStockModal(true);
-                                                }}
-                                                className="flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium rounded-lg transition shadow-sm"
-                                            >
-                                                − Remove
-                                            </button>
+                                            <p className="text-lg font-medium text-gray-700">
+                                                No Inventory Found
+                                            </p>
 
-                                            {/* DIVIDER */}
-                                            <div className="h-6 w-px bg-gray-300 mx-1" />
-
-                                            {/* DELETE */}
-                                            <button
-                                                onClick={() => {
-                                                    setDeleteInventory(item);
-                                                    setShowDeleteModal(true);
-                                                }}
-                                                className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                                                title="Delete Inventory"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            <p className="text-sm text-gray-500">
+                                                Try adjusting your search or filters
+                                            </p>
 
                                         </div>
 
                                     </td>
-
                                 </tr>
-                            ))}
+
+                            ) : (
+                                <>
+                                    {filteredData.map((item: any, index: number) => (
+                                        <tr key={item.id} className="border-b hover:bg-gray-50">
+                                            <td className="px-4 py-3">{index + 1}</td>
+                                            <td className="px-4 py-3">
+                                                {item.product?.name}
+                                                {item.product?.name}
+                                            </td>
+                                            <td className="px-4 py-3">{item.hub_name || "-"}</td>
+                                            <td className="px-4 py-3">{item.stock_in_hub}</td>
+
+                                            <td className="px-4 py-3 text-right">
+
+                                                <div className="flex justify-end items-center gap-2">
+
+                                                    {/* ADD STOCK */}
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedItem(item);
+                                                            setStockType("add");
+                                                            setStockModal(true);
+                                                        }}
+                                                        className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition shadow-sm"
+                                                    >
+                                                        + Add
+                                                    </button>
+
+                                                    {/* REMOVE STOCK */}
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedItem(item);
+                                                            setStockType("remove");
+                                                            setStockModal(true);
+                                                        }}
+                                                        className="flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium rounded-lg transition shadow-sm"
+                                                    >
+                                                        − Remove
+                                                    </button>
+
+                                                    {/* DIVIDER */}
+                                                    <div className="h-6 w-px bg-gray-300 mx-1" />
+
+                                                    {/* DELETE */}
+                                                    <button
+                                                        onClick={() => {
+                                                            setDeleteInventory(item);
+                                                            setShowDeleteModal(true);
+                                                        }}
+                                                        className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                                                        title="Delete Inventory"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+
+                                                </div>
+
+                                            </td>
+
+                                        </tr>
+                                    ))}
+                                </>)}
+
                         </tbody>
                     </table>
+                )}
+
+                {!loading && pagination && (
+                    <Pagination
+                        page={page}
+                        totalPages={totalPages}
+                        pageSize={pageSize}
+                        totalItems={pagination.total_elements}
+                        onPageChange={handlePageChange}
+                        onPageSizeChange={handlePageSizeChange}
+                    />
                 )}
             </div>
 
