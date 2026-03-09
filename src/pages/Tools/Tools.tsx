@@ -3,6 +3,7 @@ import axiosInstance from "../../configs/axios-middleware";
 import { Plus, Edit, Trash2, Search, Loader2 } from "lucide-react";
 import Api from "../../api-endpoints/ApiUrls";
 import ToolModal from "./ToolModal";
+import Pagination from "../../components/Pagination";
 
 interface ToolType {
     id: string;
@@ -21,20 +22,50 @@ const Tools: React.FC = () => {
     const [deleteItem, setDeleteItem] = useState<ToolType | null>(null);
     const [search, setSearch] = useState("");
 
+
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [pagination, setPagination] = useState<any>(null);
+
     useEffect(() => {
         fetchTools();
     }, []);
 
-    const fetchTools = async () => {
+    const fetchTools = async (pageNumber = page, size = pageSize) => {
         try {
             setLoading(true);
-            const res = await axiosInstance.get(Api?.tools);
-            setTools(res?.data?.data || []);
+
+            const res = await axiosInstance.get(
+                `${Api?.tools}?page=${pageNumber}&size=${size}`
+            );
+            console.log("Tools Response:", res?.data);
+            setTools(res?.data?.data?.tools || []);
+
+            const p = res?.data?.data?.pagination;
+
+            if (p) {
+                setPagination(p);
+                setPage(p.page);
+                setTotalPages(p.total_pages);
+            }
+
         } catch (error) {
             console.error("Fetch failed:", error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
+        fetchTools(newPage);
+    };
+
+    const handlePageSizeChange = (size: number) => {
+        setPageSize(size);
+        setPage(1);
+        fetchTools(1, size);
     };
 
     const handleDelete = async () => {
@@ -157,10 +188,10 @@ const Tools: React.FC = () => {
                                                 {tool?.name}
                                             </td>
                                             <td className="px-6 py-4 text-sm font-semibold">
-                                                {tool?.brand}
+                                                {tool?.brand_details?.name ? tool?.brand_details?.name : '--'}
                                             </td>
                                             <td className="px-6 py-4 text-sm font-semibold">
-                                                {tool?.category_id}
+                                                {tool?.category_details?.name ? tool?.category_details?.name : '--'}
                                             </td>
 
                                             <td className="px-6 py-4 text-sm">
@@ -199,6 +230,17 @@ const Tools: React.FC = () => {
 
                         </table>
                     </div>
+
+                    {!loading && pagination && (
+                        <Pagination
+                            page={page}
+                            totalPages={totalPages}
+                            pageSize={pageSize}
+                            totalItems={pagination.total_elements}
+                            onPageChange={handlePageChange}
+                            onPageSizeChange={handlePageSizeChange}
+                        />
+                    )}
                 </div>
             )}
 

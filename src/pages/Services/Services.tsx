@@ -3,6 +3,7 @@ import axiosInstance from "../../configs/axios-middleware";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import ServiceModal from "./ServiceModal";
 import Api from '../../api-endpoints/ApiUrls';
+import Pagination from "../../components/Pagination";
 const Services: React.FC = () => {
     const [services, setServices] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -15,7 +16,14 @@ const Services: React.FC = () => {
     const [search, setSearch] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
     const [categories, setCategories] = useState<any[]>([]);
-    console.log(selectedCategory)
+    const emptyImage = 'https://media.istockphoto.com/id/1222357475/vector/image-preview-icon-picture-placeholder-for-website-or-ui-ux-design-vector-illustration.jpg?s=612x612&w=0&k=20&c=KuCo-dRBYV7nz2gbk4J9w1WtTAgpTdznHu55W9FjimE='
+
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [pagination, setPagination] = useState<any>(null);
+
+
     useEffect(() => {
         fetchServices();
         fetchCategories();
@@ -49,15 +57,48 @@ const Services: React.FC = () => {
         fetchServices();
     }, []);
 
-    const fetchServices = async () => {
+    // const fetchServices = async () => {
+    //     try {
+    //         const res = await axiosInstance.get(`${Api?.services}/?include_categories=true&include_media=true&include_pricing=true&include_zones=true`);
+    //         setServices(res?.data?.services || []);
+    //     } catch (err) {
+    //         console.error(err);
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
+    const fetchServices = async (pageNumber = page, size = pageSize) => {
         try {
-            const res = await axiosInstance.get(`${Api?.services}/?include_categories=true&include_media=true&include_pricing=true&include_zones=true`);
+
+            const res = await axiosInstance.get(
+                `${Api?.services}?page=${pageNumber}&size=${size}&include_categories=true&include_media=true&include_pricing=true&include_zones=true`
+            );
+
             setServices(res?.data?.services || []);
+
+            const p = res?.data?.pagination;
+
+            setPagination(p);
+            setPage(p?.page);
+            setTotalPages(p?.total_pages);
+
         } catch (err) {
             console.error(err);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
+        fetchServices(newPage);
+    };
+
+    const handlePageSizeChange = (size: number) => {
+        setPageSize(size);
+        setPage(1);
+        fetchServices(1, size);
     };
 
     const handleDelete = async () => {
@@ -169,12 +210,6 @@ const Services: React.FC = () => {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                         Categories
                                     </th>
-                                    {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Pricing
-                                    </th> */}
-                                    {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Zone & Hub
-                                    </th> */}
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                         ETA
                                     </th>
@@ -233,14 +268,7 @@ const Services: React.FC = () => {
                                                 {/* SERVICE INFO */}
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-start gap-3">
-
-                                                        {/* Avatar */}
-                                                        {/* <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                                                    <span className="text-orange-600 font-semibold">
-                                                        {service.name?.charAt(0)}
-                                                    </span>
-                                                </div> */}
-
+                                                        <img src={service.media_files?.[0]?.image_url ? service.media_files?.[0]?.image_url : emptyImage} alt={service.name} className="w-16 h-10 object-cover rounded my-auto" />
                                                         <div>
                                                             <div className="text-sm font-semibold text-gray-900">
                                                                 {service.name}
@@ -248,15 +276,6 @@ const Services: React.FC = () => {
                                                             <div className="text-xs text-gray-500 line-clamp-2 mt-1">
                                                                 {service.description?.slice(0, 30)}
                                                             </div>
-
-                                                            {/* Media Preview */}
-                                                            {/* {service.media_files?.length > 0 && (
-                                                        <img
-                                                            src={service.media_files[0].image_url}
-                                                            alt=""
-                                                            className="w-16 h-10 object-cover rounded mt-2 border"
-                                                        />
-                                                    )} */}
                                                         </div>
                                                     </div>
                                                 </td>
@@ -280,20 +299,6 @@ const Services: React.FC = () => {
                                                         )}
                                                     </div>
                                                 </td>
-
-                                                {/* PRICING */}
-                                                {/* <td className="px-6 py-4 text-sm">
-                                            <span className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded-full">
-                                                {service.pricing_models?.length || 0} Pricing
-                                            </span>
-                                        </td> */}
-
-                                                {/* ZONE HUB */}
-                                                {/* <td className="px-6 py-4 text-sm">
-                                            <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
-                                                {service.zone_hub_mappings?.length || 0} Mappings
-                                            </span>
-                                        </td> */}
 
                                                 {/* ETA */}
                                                 <td className="px-6 py-4 text-sm">
@@ -355,6 +360,17 @@ const Services: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
+
+                    {!loading && pagination && (
+                        <Pagination
+                            page={page}
+                            totalPages={totalPages}
+                            pageSize={pageSize}
+                            totalItems={pagination.total_elements}
+                            onPageChange={handlePageChange}
+                            onPageSizeChange={handlePageSizeChange}
+                        />
+                    )}
                 </div>
             )}
 

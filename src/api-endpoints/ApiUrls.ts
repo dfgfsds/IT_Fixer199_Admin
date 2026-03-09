@@ -79,6 +79,9 @@ const toolsInventoryMovement = `${baseUrl}/api/tools/movement`;
 // product inventory movement
 const productInventoryMovement = `${baseUrl}/api/product-inventory/movement`;
 
+// Attribute Fields
+const attributeFields = `${baseUrl}/api/attribute/fields`;
+
 export default {
   login,
   allUsers,
@@ -120,4 +123,5 @@ export default {
   productInventory,
   toolsInventoryMovement,
   productInventoryMovement,
+  attributeFields,
 };

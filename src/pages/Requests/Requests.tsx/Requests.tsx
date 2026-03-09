@@ -31,7 +31,7 @@ const Requests: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
-
+    console.log(requests)
     const [selectedRequest, setSelectedRequest] = useState<any>(null);
     const [showModal, setShowModal] = useState(false);
 
@@ -48,6 +48,70 @@ const Requests: React.FC = () => {
 
 
     // ---------------- SOCKET ----------------
+    // useEffect(() => {
+    //     if (!token) return;
+
+    //     const today = new Date().toISOString().split("T")[0];
+
+    //     const connect = () => {
+    //         const ws = new WebSocket(
+    //             `wss://api.itfixer199.com/ws/requests/?token=${token}&date=${today}`
+    //         );
+
+    //         socketRef.current = ws;
+
+    //         wsRef.current = ws;
+
+    //         ws.onopen = () => {
+    //             console.log("WebSocket connected ✅");
+    //         };
+
+    //         ws.onmessage = (event) => {
+    //             try {
+    //                 const data = JSON.parse(event.data);
+
+    //                 if (data.type === "initial_data") {
+    //                     setRequests(data.requests || []);
+    //                     setLoading(false);
+    //                 }
+
+    //                 if (data.type === "update") {
+    //                     const updatedRequest = data.request;
+    //                     if (!updatedRequest?.id) return;
+
+    //                     setRequests((prev) => {
+    //                         const index = prev.findIndex(
+    //                             (r) => r.id === updatedRequest.id
+    //                         );
+
+    //                         if (index !== -1) {
+    //                             const updated = [...prev];
+    //                             updated[index] = updatedRequest;
+    //                             return updated;
+    //                         }
+
+    //                         return [updatedRequest, ...prev];
+    //                     });
+    //                 }
+    //             } catch (err) {
+    //                 console.error("WebSocket parse error ❌", err);
+    //             }
+    //         };
+
+    //         ws.onclose = () => {
+    //             reconnectRef.current = setTimeout(connect, 3000);
+    //         };
+    //     };
+
+    //     connect();
+
+    //     return () => {
+    //         if (wsRef.current) wsRef.current.close();
+    //         if (reconnectRef.current) clearTimeout(reconnectRef.current);
+    //     };
+    // }, [token]);
+
+
     useEffect(() => {
         if (!token) return;
 
@@ -55,12 +119,10 @@ const Requests: React.FC = () => {
 
         const connect = () => {
             const ws = new WebSocket(
-                `wss://api.itfixer199.com/ws/requests/?token=${token}&date=${today}`
+                `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
             );
 
             socketRef.current = ws;
-
-            wsRef.current = ws;
 
             ws.onopen = () => {
                 console.log("WebSocket connected ✅");
@@ -68,52 +130,34 @@ const Requests: React.FC = () => {
 
             ws.onmessage = (event) => {
                 try {
-                    const data = JSON.parse(event.data);
-
-                    if (data.type === "initial_data") {
-                        setRequests(data.requests || []);
+                    const message = JSON.parse(event.data);
+                    console.log(message)
+                    if (message.type === "initial_data" || message.type === "update") {
+                        setRequests(message?.data || []);
                         setLoading(false);
                     }
 
-                    if (data.type === "update") {
-                        const updatedRequest = data.request;
-                        if (!updatedRequest?.id) return;
-
-                        setRequests((prev) => {
-                            const index = prev.findIndex(
-                                (r) => r.id === updatedRequest.id
-                            );
-
-                            if (index !== -1) {
-                                const updated = [...prev];
-                                updated[index] = updatedRequest;
-                                return updated;
-                            }
-
-                            return [updatedRequest, ...prev];
-                        });
-                    }
                 } catch (err) {
-                    console.error("WebSocket parse error ❌", err);
+                    console.error("WS parse error:", err);
                 }
             };
 
             ws.onclose = () => {
-                reconnectRef.current = setTimeout(connect, 3000);
+                console.log("WS reconnecting...");
+                setTimeout(connect, 3000);
             };
         };
 
         connect();
 
         return () => {
-            if (wsRef.current) wsRef.current.close();
-            if (reconnectRef.current) clearTimeout(reconnectRef.current);
+            socketRef.current?.close();
         };
     }, [token]);
 
     // ---------------- FILTER LOGIC ----------------
     const filteredRequests = useMemo(() => {
-        return requests.filter((req) => {
+        return requests?.filter((req: any) => {
             const matchesSearch =
                 req.request_type
                     ?.toLowerCase()
