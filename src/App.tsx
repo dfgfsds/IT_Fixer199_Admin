@@ -28,10 +28,14 @@ import Services from './pages/Services/Services';
 import Agents360 from './components/Agent/Agent360';
 import Tools from './pages/Tools/Tools';
 import ServicesRequest from './pages/Requests/ServicesRequest/ServicesRequest';
-import Requests from './pages/Requests/Requests.tsx/Requests';
 import ProductsInventory from './pages/ProductsInventory/ProductsInventory';
-import ToolsInventoryMovement from './pages/Requests/ToolsInventoryMovement/ToolsInventoryMovement';
-import ProductInventoryMovement from './pages/Requests/productInventoryMovement/productInventoryMovement';
+import RequestsLive from './pages/Requests/Requests.tsx/RequestsLive';
+import ToolsInventoryMovementLive from './pages/Requests/ToolsInventoryMovement/ToolsInventoryMovementLive';
+import ProductInventoryMovementLive from './pages/Requests/productInventoryMovement/productInventoryMovementLive';
+import ServicesRequestFetch from './pages/ServicesRequest/ServicesRequestFetch';
+import Requests from './pages/Requests.tsx/Requests';
+import ToolsInventoryMovement from './pages/ToolsInventoryMovement/ToolsInventoryMovement';
+import ProductInventoryMovement from './pages/productInventoryMovement/productInventoryMovement';
 
 
 const queryClient = new QueryClient();
@@ -90,10 +94,15 @@ const AppRoutes: React.FC = () => {
         <Route path='agents/:id' element={<Agents360 />} />
         <Route path='tools' element={<Tools />} />
         <Route path='servicesRequest' element={<ServicesRequest />} />
-        <Route path='requests' element={<Requests />} />
+        <Route path='requestsLive' element={<RequestsLive />} />
         <Route path='productsInventory' element={<ProductsInventory />} />
+        <Route path='toolsInventoryMovementLive' element={<ToolsInventoryMovementLive />} />
+        <Route path='productInventoryMovementLive' element={<ProductInventoryMovementLive />} />
+        <Route path='services-Request' element={<ServicesRequestFetch />} />
+        <Route path='requests' element={<Requests />} />
         <Route path='toolsInventoryMovement' element={<ToolsInventoryMovement />} />
         <Route path='productInventoryMovement' element={<ProductInventoryMovement />} />
+
 
       </Route>
     </Routes>

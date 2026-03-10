@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { Eye, Loader2, Search } from "lucide-react";
-import { useAuth } from "../../../contexts/AuthContext";
-import axiosInstance from "../../../configs/axios-middleware";
-import Api from '../../../api-endpoints/ApiUrls';
+import { useAuth } from "../../contexts/AuthContext";
+import axiosInstance from "../../configs/axios-middleware";
+import Api from "../../api-endpoints/ApiUrls";
 
 interface RequestType {
     id: string;
@@ -26,134 +26,40 @@ const STATUS_STYLE: any = {
 };
 
 const Requests: React.FC = () => {
-    const { token } = useAuth();
     const [requests, setRequests] = useState<RequestType[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
-    console.log(requests)
     const [selectedRequest, setSelectedRequest] = useState<any>(null);
     const [showModal, setShowModal] = useState(false);
-
-    const wsRef = useRef<WebSocket | null>(null);
-    const reconnectRef = useRef<any>(null);
-    const socketRef = useRef<WebSocket | null>(null);
-
 
     const [otpModalOpen, setOtpModalOpen] = useState(false);
     const [currentRefundId, setCurrentRefundId] = useState<string | null>(null);
     const [otp, setOtp] = useState("");
     const [approvalAction, setApprovalAction] = useState<boolean>(true);
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
+    const fetchRequests = async () => {
+        try {
+            setLoading(true);
+            const params = new URLSearchParams();
 
-
-    // ---------------- SOCKET ----------------
-    // useEffect(() => {
-    //     if (!token) return;
-
-    //     const today = new Date().toISOString().split("T")[0];
-
-    //     const connect = () => {
-    //         const ws = new WebSocket(
-    //             `wss://api.itfixer199.com/ws/requests/?token=${token}&date=${today}`
-    //         );
-
-    //         socketRef.current = ws;
-
-    //         wsRef.current = ws;
-
-    //         ws.onopen = () => {
-    //             console.log("WebSocket connected ✅");
-    //         };
-
-    //         ws.onmessage = (event) => {
-    //             try {
-    //                 const data = JSON.parse(event.data);
-
-    //                 if (data.type === "initial_data") {
-    //                     setRequests(data.requests || []);
-    //                     setLoading(false);
-    //                 }
-
-    //                 if (data.type === "update") {
-    //                     const updatedRequest = data.request;
-    //                     if (!updatedRequest?.id) return;
-
-    //                     setRequests((prev) => {
-    //                         const index = prev.findIndex(
-    //                             (r) => r.id === updatedRequest.id
-    //                         );
-
-    //                         if (index !== -1) {
-    //                             const updated = [...prev];
-    //                             updated[index] = updatedRequest;
-    //                             return updated;
-    //                         }
-
-    //                         return [updatedRequest, ...prev];
-    //                     });
-    //                 }
-    //             } catch (err) {
-    //                 console.error("WebSocket parse error ❌", err);
-    //             }
-    //         };
-
-    //         ws.onclose = () => {
-    //             reconnectRef.current = setTimeout(connect, 3000);
-    //         };
-    //     };
-
-    //     connect();
-
-    //     return () => {
-    //         if (wsRef.current) wsRef.current.close();
-    //         if (reconnectRef.current) clearTimeout(reconnectRef.current);
-    //     };
-    // }, [token]);
-
+            if (startDate) params.append("start_date", startDate);
+            if (endDate) params.append("end_date", endDate);
+            const res = await axiosInstance.get(`${Api.Requests}/?${params.toString()}`);
+            setRequests(res?.data?.data || res?.data || []);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        if (!token) return;
+        fetchRequests();
+    }, [startDate, endDate, statusFilter]);
 
-        const today = new Date().toISOString().split("T")[0];
-
-        const connect = () => {
-            const ws = new WebSocket(
-                `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
-            );
-
-            socketRef.current = ws;
-
-            ws.onopen = () => {
-                console.log("WebSocket connected ✅");
-            };
-
-            ws.onmessage = (event) => {
-                try {
-                    const message = JSON.parse(event.data);
-                    console.log(message)
-                    if (message.type === "initial_data" || message.type === "update") {
-                        setRequests(message?.data || []);
-                        setLoading(false);
-                    }
-
-                } catch (err) {
-                    console.error("WS parse error:", err);
-                }
-            };
-
-            ws.onclose = () => {
-                console.log("WS reconnecting...");
-                setTimeout(connect, 3000);
-            };
-        };
-
-        connect();
-
-        return () => {
-            socketRef.current?.close();
-        };
-    }, [token]);
 
     // ---------------- FILTER LOGIC ----------------
     const filteredRequests = useMemo(() => {
@@ -163,38 +69,13 @@ const Requests: React.FC = () => {
                     ?.toLowerCase()
                     .includes(search.toLowerCase()) ||
                 req.id?.toLowerCase().includes(search.toLowerCase());
-
             const matchesStatus =
                 statusFilter === "all" || req.status === statusFilter;
-
             return matchesSearch && matchesStatus;
         });
     }, [requests, search, statusFilter]);
 
     const [loadingId, setLoadingId] = useState<string | null>(null);
-    //     const handleAdminApproval = async (id: string, approvalStatus: string) => {
-    //     try {
-    //         setLoadingId(id);
-
-    //         await axiosInstance.post(
-    //             `${Api?.serviceModification}/${id}/admin-approval/`,
-    //             { approval_status: approvalStatus }
-    //         );
-
-    //         if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-    //             socketRef.current.send(
-    //                 JSON.stringify({
-    //                     action: "refresh_modifications"
-    //                 })
-    //             );
-    //         }
-
-    //     } catch (error) {
-    //         console.error(error);
-    //     } finally {
-    //         setLoadingId(null);
-    //     }
-    // };
 
     const handleAdminApproval = async (
         req: any,
@@ -202,22 +83,18 @@ const Requests: React.FC = () => {
     ) => {
         try {
             setLoadingId(req.id);
-
             const isApproved = approvalStatus === "APPROVED";
             if (req.request_type === "REFUND") {
-
                 const updateApi = await axiosInstance.post(
                     `${Api?.requestApprovalOtp}/${req.id}/`
                 );
-
                 if (updateApi) {
+                    fetchRequests();
                     setCurrentRefundId(req.id);
                     setApprovalAction(isApproved);
                     setOtpModalOpen(true);
                 }
-
             } else {
-
                 const updatedApi = await axiosInstance.post(
                     `${Api?.adminRequestApproval}/${req.id}/`,
                     {
@@ -225,17 +102,9 @@ const Requests: React.FC = () => {
                         review_notes: "Reviewed via admin panel"
                     }
                 );
-
                 if (updatedApi) {
-                    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-                        socketRef.current.send(
-                            JSON.stringify({
-                                action: "refresh_modifications"
-                            })
-                        );
-                    }
+                    fetchRequests();
                 }
-
             }
         } catch (error) {
             console.error(error);
@@ -247,7 +116,6 @@ const Requests: React.FC = () => {
     const handleVerifyOtp = async () => {
         try {
             if (!currentRefundId) return;
-
             const updatedApi = await axiosInstance.post(
                 `${Api?.approvalOtpVerify}/${currentRefundId}/`,
                 {
@@ -257,18 +125,11 @@ const Requests: React.FC = () => {
                 }
             );
             if (updatedApi) {
-                if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-                    socketRef.current.send(
-                        JSON.stringify({
-                            action: "refresh_modifications"
-                        })
-                    );
-                }
+                fetchRequests();
                 setOtpModalOpen(false);
                 setOtp("");
                 setCurrentRefundId(null);
             }
-
         } catch (error) {
             console.error("OTP Verify Error:", error);
         }
@@ -279,32 +140,90 @@ const Requests: React.FC = () => {
             <h1 className="text-xl font-bold">Live Requests</h1>
 
             {/* 🔎 FILTER DESIGN */}
-            <div className="bg-white p-4 rounded-lg border flex flex-wrap gap-4 items-center">
+            <div className="bg-white p-4 rounded-lg border flex flex-wrap gap-6 items-end">
+
                 {/* SEARCH */}
-                <div className="relative flex-1 min-w-[250px]">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <div className="flex flex-col min-w-[250px] flex-1">
+                    <label className="text-xs font-semibold text-gray-600 mb-1">
+                        Search
+                    </label>
+
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+
+                        <input
+                            type="text"
+                            placeholder="Search by ID or Request Type..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                        />
+                    </div>
+                </div>
+
+                {/* START DATE */}
+                <div className="flex flex-col">
+                    <label className="text-xs font-semibold text-gray-600 mb-1">
+                        Start Date
+                    </label>
+
                     <input
-                        type="text"
-                        placeholder="Search by ID or Request Type..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="px-3 py-2 border rounded-lg"
+                    />
+                </div>
+
+                {/* END DATE */}
+                <div className="flex flex-col">
+                    <label className="text-xs font-semibold text-gray-600 mb-1">
+                        End Date
+                    </label>
+
+                    <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="px-3 py-2 border rounded-lg"
                     />
                 </div>
 
                 {/* STATUS FILTER */}
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
-                >
-                    <option value="all">All Status</option>
-                    {Object.keys(STATUS_STYLE).map((status: any) => (
-                        <option key={status} value={status}>
-                            {status.replaceAll("_", " ")}
-                        </option>
-                    ))}
-                </select>
+                <div className="flex flex-col">
+                    <label className="text-xs font-semibold text-gray-600 mb-1">
+                        Status
+                    </label>
+
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                    >
+                        <option value="all">All Status</option>
+                        {Object.keys(STATUS_STYLE).map((status: any) => (
+                            <option key={status} value={status}>
+                                {status.replaceAll("_", " ")}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* CLEAR BUTTON */}
+                <div className="flex items-end">
+                    <button
+                        onClick={() => {
+                            setSearch("");
+                            setStartDate("");
+                            setEndDate("");
+                            setStatusFilter("all");
+                        }}
+                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-sm font-semibold rounded-lg"
+                    >
+                        Clear Filters
+                    </button>
+                </div>
+
             </div>
 
             {/* TABLE */}

@@ -129,9 +129,9 @@ const Sidebar: React.FC = () => {
       icon: Users,
       children: [
         { name: 'Services', path: '/servicesRequest' },
-        { name: 'Requests', path: '/requests' },
-        { name: 'Tools Inventory Movement', path: '/toolsInventoryMovement' },
-        { name: 'Product Inventory Movement', path: '/productInventoryMovement' }
+        { name: 'Requests', path: '/requestsLive' },
+        { name: 'Tools Inventory Movement', path: '/toolsInventoryMovementLive' },
+        { name: 'Product Inventory Movement', path: '/productInventoryMovementLive' }
       ],
     },
 
@@ -145,7 +145,6 @@ const Sidebar: React.FC = () => {
         { name: 'Attendance', path: '/attendance' },
       ],
     },
-
     {
       name: 'Product Management',
       icon: Package,
@@ -158,6 +157,10 @@ const Sidebar: React.FC = () => {
         // { name: 'Inventory', path: '/inventory' },
       ],
     },
+    { name: 'Requests', icon: Store, path: '/requests' },
+    { name: 'Services Request', icon: Store, path: '/services-Request' },
+    { name: 'Tools Inventory Movement', icon: Store, path: '/toolsInventoryMovement' },
+    { name: 'Product Inventory Movement', icon: Store, path: '/productInventoryMovement' },
     { name: 'Hubs', icon: Store, path: '/hubs' },
     { name: 'Tools', icon: Wrench, path: '/tools' },
     { name: 'Services', icon: UserCog, path: '/services' },
