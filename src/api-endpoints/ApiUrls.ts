@@ -22,7 +22,6 @@ const categories = `${baseUrl}/api/category`;
 // Brands
 const Brands = `${baseUrl}/api/brand`;
 const allBrands = `${baseUrl}/api/brand/all`;
-
 // Agents
 const agents = `${baseUrl}/api/agents/`;
 // Agent Product
@@ -50,6 +49,9 @@ const orders = `${baseUrl}/api/order/orders/all/`;
 // Products
 const products = `${baseUrl}/api/product`;
 
+// ProductInventoryMovements
+const ProductInventoryMovements = `${baseUrl}/api/product-inventory/movements/role-based`;
+
 // Attribute
 const attribute = `${baseUrl}/api/attribute`;
 
@@ -63,11 +65,13 @@ const allocations = `${baseUrl}/api/allocations/`;
 const supportTickets = `${baseUrl}/api/support-ticket/`;
 
 // service-modification
-const serviceModification=`${baseUrl}/service-modification`;
+const serviceModification = `${baseUrl}/service-modification`;
+// Orders Service Modification
+const serviceModificationOrders = `${baseUrl}/api/order/service-modifications`;
 
 // RequestApprovalOtp
 const requestApprovalOtp = `${baseUrl}/api/request/admin/refund/approve/request-otp`;
-const approvalOtpVerify=`${baseUrl}/api/request/admin/refund/approve/verify`;
+const approvalOtpVerify = `${baseUrl}/api/request/admin/refund/approve/verify`;
 const adminRequestApproval = `${baseUrl}/api/request/admin/approve`;
 
 // product-inventory
@@ -81,6 +85,12 @@ const productInventoryMovement = `${baseUrl}/api/product-inventory/movement`;
 
 // Attribute Fields
 const attributeFields = `${baseUrl}/api/attribute/fields`;
+
+// Requests
+const Requests = `${baseUrl}/api/request`;
+
+// Agent User
+const agentUser =`${baseUrl}/api/user/agent/`;
 
 export default {
   login,
@@ -124,4 +134,9 @@ export default {
   toolsInventoryMovement,
   productInventoryMovement,
   attributeFields,
+  serviceModificationOrders,
+  Requests,
+  ProductInventoryMovements,
+  agentUser,
+  
 };

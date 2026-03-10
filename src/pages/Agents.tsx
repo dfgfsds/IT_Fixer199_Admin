@@ -540,7 +540,7 @@ const Agents: React.FC = () => {
     }
   }
 
-
+  console.log(selectedAgent)
   // Zones
   const openZoneModal = async (agent: any) => {
     setSelectedAgent(agent)
@@ -549,9 +549,9 @@ const Agents: React.FC = () => {
     const res = await axiosInstance.get(`${Api?.agentZones}/${agent?.id}`)
     setAgentZones(res?.data?.data)
 
-    const zonesRes = await axiosInstance.get(Api?.allZone);
+    const zonesRes = await axiosInstance.get(`${Api?.hubMapping}?hub=${selectedAgent?.hub}`);
     console.log(zonesRes)
-    setAllZones(zonesRes?.data?.zones)
+    setAllZones(zonesRes?.data?.mappings)
 
   }
 
@@ -958,11 +958,11 @@ const Agents: React.FC = () => {
                     {allZones
                       .filter(
                         (zone) =>
-                          !agentZones?.zone_details?.some((z: any) => z?.id === zone?.id)
+                          !agentZones?.zone_details?.some((z: any) => z?.id === zone?.zone)
                       )
                       .map((zone) => (
-                        <option key={zone.id} value={zone.id}>
-                          {zone.name}
+                        <option key={zone?.zone} value={zone?.zone}>
+                          {zone?.zone_name}
                         </option>
                       ))}
                   </select>

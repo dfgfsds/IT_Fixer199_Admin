@@ -13,7 +13,7 @@ interface MovementType {
     created_at: string;
 }
 
-const ProductInventoryMovement: React.FC = () => {
+const ProductInventoryMovementLive: React.FC = () => {
 
     const [movements, setMovements] = useState<MovementType[]>([]);
     const [loading, setLoading] = useState(true);
@@ -579,4 +579,4 @@ ${selectedItem.approved_status === "APPROVED"
     );
 };
 
-export default ProductInventoryMovement;
+export default ProductInventoryMovementLive;

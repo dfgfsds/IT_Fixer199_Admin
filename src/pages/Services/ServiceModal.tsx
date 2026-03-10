@@ -69,13 +69,11 @@ const ServiceModal: React.FC<Props> = ({
 
     const fetchZones = async (id: any) => {
         const res = await axiosInstance.get(`${Api?.hubMapping}?hub=${id}`);
-        console.log(res?.data)
         setZones(res?.data?.mappings || []);
     };
 
     const fetchHubsByZone = async () => {
         const res = await axiosInstance.get(Api?.allHubs);
-        console.log(res?.data)
         setHubs(res?.data?.hubs || []);
     };
 

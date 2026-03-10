@@ -4,20 +4,6 @@ import Api from '../../api-endpoints/ApiUrls';
 import axiosInstance from '../../configs/axios-middleware';
 import { ArrowLeft, ArrowLeftIcon, Bike, Calendar, CheckCircle, CreditCard, Mail, MapPin, Palette, Phone, ServerCog, Star, User, XCircle } from 'lucide-react';
 
-interface AgentDetails {
-    id: string
-    user_name: string
-    profile_image_url: string
-    agent_type: string
-    hub_name: string
-    user_details: {
-        mobile_number: string
-        email: string
-        is_staff: boolean
-        date_joined: string
-        status: string
-    }
-}
 
 const Agents360: React.FC = () => {
     const { id } = useParams()
@@ -27,31 +13,148 @@ const Agents360: React.FC = () => {
     const [toolStocks, setToolStocks] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const navigate = useNavigate();
-    console.log(productStocks)
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [hubs, setHubs] = useState<any[]>([]);
+
+    const [formData, setFormData] = useState({
+        name: "",
+        email: "",
+        mobile_number: "",
+        hub_id: "",
+        agent_type: "",
+        is_admin_permission_required: false,
+        start_time: "",
+        end_time: "",
+        vehicle_type: "",
+        vehicle_number: "",
+        account_number: "",
+        ifsc_code: ""
+    });
+
+    // ---------------- FETCH MASTER DATA ----------------
+    useEffect(() => {
+        fetchHubsByZone();
+    }, []);
+
+    const fetchHubsByZone = async () => {
+        const res = await axiosInstance.get(Api?.allHubs);
+        setHubs(res?.data?.hubs || []);
+    };
+
+    const handleEditOpen = () => {
+
+        setFormData({
+            name: agent?.user_details?.name || "",
+            email: agent?.user_details?.email || "",
+            mobile_number: agent?.user_details?.mobile_number || "",
+
+            hub_id: agent?.user_details?.hub_id || "",
+
+            agent_type: agent?.agent_type || "",
+            is_admin_permission_required: agent?.is_admin_permission_required || false,
+
+            start_time: agent?.start_time
+                ? agent.start_time.substring(0, 5)
+                : "",
+
+            end_time: agent?.end_time
+                ? agent.end_time.substring(0, 5)
+                : "",
+
+            vehicle_type: agent?.vehicle_type || "",
+            vehicle_number: agent?.vehicle_number || "",
+
+            account_number: agent?.account_number || "",
+            ifsc_code: agent?.ifsc_code || ""
+        });
+
+        setShowEditModal(true);
+
+    };
+
+    const handleUpdateAgent = async () => {
+        try {
+
+            const form = new FormData();
+
+            Object.entries(formData).forEach(([key, value]) => {
+                form.append(key, String(value));
+            });
+
+            const updatedApi = await axiosInstance.put(
+                `${Api?.agentUser}${agent?.user}`,
+                form
+            );
+            if (updatedApi) {
+                setShowEditModal(false);
+                fetchAgent();
+            }
+
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    const handleStatusToggle = async () => {
+        try {
+
+            const form = new FormData();
+
+            form.append(
+                "is_active",
+                String(!agent?.user_details?.is_active)
+            );
+
+            await axiosInstance.put(
+                `${Api?.agentUser}${agent?.user}`,
+                form
+            );
+
+            fetchAgent();
+
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    const handleKycUpdate = async (
+        field: string,
+        status: "VERIFIED" | "REJECTED"
+    ) => {
+        try {
+
+            const form = new FormData();
+
+            form.append(field, status);
+
+            await axiosInstance.put(
+                `${Api?.agentUser}/${agent?.user}`,
+                form
+            );
+
+            fetchAgent();
+
+        } catch (err) {
+            console.error("KYC Update Error:", err);
+        }
+    };
+
+
     useEffect(() => {
         fetchAgent()
     }, [id])
 
     const fetchAgent = async () => {
         try {
-            const token = localStorage.getItem('token')
-
-            // Agent Details
             const res = await axiosInstance.get(`${Api?.agents}${id}`)
-            // const data = await res.json()
             setAgent(res?.data?.agent)
-
             // Product Stocks
             const productRes = await axiosInstance.get(
                 `${Api?.agentProductStock}?agent_id=${id}`
             )
             setProductStocks(productRes?.data?.data)
-            // Tool Stocks
             const toolRes = await axiosInstance.get(`${Api?.agentToolsStock}/?agent_id=${id}`);
             setToolStocks(toolRes?.data?.data)
-            // const toolData = await toolRes.json()
-            // setToolStocks(Array.isArray(toolData) ? toolData : [toolData])
-
         } catch (err) {
             console.log(err)
         } finally {
@@ -62,23 +165,28 @@ const Agents360: React.FC = () => {
     if (loading) return <div className="p-10 text-center">Loading...</div>
 
     return (
-        <div className="space-y-6">
-            <div
-                onClick={() => navigate(-1)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border bg-white shadow-sm hover:bg-orange-50 hover:border-orange-300 cursor-pointer transition"
-            >
-                <ArrowLeft size={16} />
-                <span className="text-sm font-medium">Back</span>
+        <div className="space-y-3">
+            <div className='flex justify-between'>
+                <div
+                    onClick={() => navigate(-1)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border bg-white shadow-sm hover:bg-orange-50 hover:border-orange-300 cursor-pointer transition"
+                >
+                    <ArrowLeft size={16} />
+                    <span className="text-sm font-medium">Back</span>
+                </div>
+                <button
+                    onClick={handleEditOpen}
+                    className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm"
+                >
+                    Edit Agent
+                </button>
             </div>
-
-
             <div className="bg-white rounded-2xl border shadow-md p-8">
 
                 <div className="flex flex-col lg:flex-row gap-10">
 
                     {/* LEFT SIDE */}
                     <div className="flex items-start gap-8 items-center">
-
                         {/* PROFILE IMAGE */}
                         {agent?.profile_image_url ? (
                             <img
@@ -121,15 +229,6 @@ const Agents360: React.FC = () => {
 
                     {/* RIGHT SIDE DETAILS GRID */}
                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
-
-                        {/* EMAIL */}
-                        {/* <div>
-                            <p className="text-xs text-gray-500 uppercase tracking-wide">Email</p>
-                            <div className="flex items-center gap-2 mt-1 text-gray-800 font-medium">
-                                <Mail size={16} />
-                                {agent?.user_details?.email}
-                            </div>
-                        </div> */}
 
                         {/* MOBILE */}
                         <div>
@@ -194,7 +293,6 @@ const Agents360: React.FC = () => {
                             </div>
                         </div>
 
-
                         {/* RATING */}
                         <div>
                             <p className="text-xs text-gray-500 uppercase tracking-wide">Cumulative Rating</p>
@@ -247,16 +345,17 @@ const Agents360: React.FC = () => {
                                 </div>
                             </div>
                         )}
-
-
                     </div>
+
                 </div>
+
             </div>
 
             {/* TABS */}
             <div className="bg-white rounded-lg border">
 
                 <div className="flex border-b">
+
                     <button
                         onClick={() => setActiveTab('profile')}
                         className={`px-6 py-3 text-sm font-medium ${activeTab === 'profile'
@@ -286,6 +385,7 @@ const Agents360: React.FC = () => {
                     >
                         Agent Tool Stocks
                     </button>
+
                 </div>
 
                 <div className="p-6">
@@ -327,24 +427,109 @@ const Agents360: React.FC = () => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
 
-                                    <StatusBadge
-                                        label="Account Status"
-                                        value={agent?.user_details?.is_active}
-                                    />
+                                    {/* ACCOUNT ACTIVE TOGGLE */}
+                                    <div>
+                                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
+                                            Account Status
+                                        </p>
 
-                                    <StatusBadge
-                                        label="Email Verified"
-                                        value={agent?.user_details?.is_email_verified}
-                                    />
+                                        <div className="flex items-center gap-3">
 
-                                    <StatusBadge
-                                        label="Mobile Verified"
-                                        value={agent?.user_details?.is_mobile_verified}
-                                    />
+                                            {agent?.user_details?.is_active ? (
+                                                <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-medium">
+                                                    Active
+                                                </span>
+                                            ) : (
+                                                <span className="px-3 py-1 rounded-full bg-red-100 text-red-600 text-sm font-medium">
+                                                    Inactive
+                                                </span>
+                                            )}
+
+                                            {/* TOGGLE */}
+                                            <button
+                                                onClick={handleStatusToggle}
+                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition
+          ${agent?.user_details?.is_active ? "bg-green-500" : "bg-gray-300"}`}
+                                            >
+                                                <span
+                                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition
+            ${agent?.user_details?.is_active ? "translate-x-6" : "translate-x-1"}`}
+                                                />
+                                            </button>
+
+                                        </div>
+                                    </div>
+
+                                    {/* EMAIL VERIFIED */}
+                                    <div>
+                                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
+                                            Email Verified
+                                        </p>
+
+                                        {agent?.user_details?.is_email_verified ? (
+
+                                            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-sm font-medium">
+                                                <CheckCircle size={16} />
+                                                Verified
+                                            </span>
+
+                                        ) : (
+
+                                            <div className="flex items-center gap-3">
+
+                                                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-100 text-red-600 text-sm font-medium">
+                                                    <XCircle size={16} />
+                                                    Not Verified
+                                                </span>
+
+                                                {/* <button
+                                                    onClick={() => handleVerify("is_email_verified")}
+                                                    className="text-xs bg-blue-600 text-white px-3 py-1 rounded-md"
+                                                >
+                                                    Verify
+                                                </button> */}
+
+                                            </div>
+
+                                        )}
+                                    </div>
+
+                                    {/* MOBILE VERIFIED */}
+                                    <div>
+                                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
+                                            Mobile Verified
+                                        </p>
+
+                                        {agent?.user_details?.is_mobile_verified ? (
+
+                                            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-sm font-medium">
+                                                <CheckCircle size={16} />
+                                                Verified
+                                            </span>
+
+                                        ) : (
+
+                                            <div className="flex items-center gap-3">
+
+                                                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-100 text-red-600 text-sm font-medium">
+                                                    <XCircle size={16} />
+                                                    Not Verified
+                                                </span>
+
+                                                {/* <button
+                                                    onClick={() => handleVerify("is_mobile_verified")}
+                                                    className="text-xs bg-blue-600 text-white px-3 py-1 rounded-md"
+                                                >
+                                                    Verify
+                                                </button> */}
+
+                                            </div>
+
+                                        )}
+                                    </div>
 
                                 </div>
                             </div>
-
 
                             {/* ===== DOCUMENTS ===== */}
                             <div className="bg-gray-50 rounded-xl p-6 border">
@@ -359,6 +544,7 @@ const Agents360: React.FC = () => {
                                         title="Aadhar Card"
                                         url={agent?.aadhar_doc_url}
                                         verified={agent?.is_aadhar_verified}
+                                        field="is_aadhar_verified"
                                     />
 
                                     {/* PAN */}
@@ -366,13 +552,14 @@ const Agents360: React.FC = () => {
                                         title="PAN Card"
                                         url={agent?.pan_card_url}
                                         verified={agent?.is_pan_verified}
+                                        field="is_pan_verified"
                                     />
 
                                     {/* VIDEO KYC */}
                                     <DocumentCard
                                         title="Video KYC"
                                         url={agent?.video_kyc_url}
-                                        verified="VERIFIED"
+                                        verified={agent?.video_kyc_url ? "VERIFIED" : "PENDING"}
                                     />
 
                                 </div>
@@ -380,7 +567,6 @@ const Agents360: React.FC = () => {
 
                         </div>
                     )}
-
 
                     {/* PRODUCT STOCK TAB */}
                     {activeTab === 'product' && (
@@ -437,7 +623,7 @@ const Agents360: React.FC = () => {
                                                                 </span>
                                                             </div>
 
-                                                          
+
 
                                                         </div>
                                                     </td>
@@ -544,46 +730,250 @@ const Agents360: React.FC = () => {
 
                                                 {/* STOCK */}
                                                 <td className="px-6 py-4 font-semibold text-gray-900">
-                                                <span
-                                                    className={`px-3 py-1 rounded-full text-xs font-semibold ${item?.stock > 10
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : item?.stock > 0
-                                                            ? 'bg-yellow-100 text-yellow-700'
-                                                            : 'bg-red-100 text-red-700'
-                                                        }`}
-                                                >
-                                                    {item?.stock}
+                                                    <span
+                                                        className={`px-3 py-1 rounded-full text-xs font-semibold ${item?.stock > 10
+                                                            ? 'bg-green-100 text-green-700'
+                                                            : item?.stock > 0
+                                                                ? 'bg-yellow-100 text-yellow-700'
+                                                                : 'bg-red-100 text-red-700'
+                                                            }`}
+                                                    >
+                                                        {item?.stock}
 
-                                                </span>
+                                                    </span>
 
-                                            </td>
+                                                </td>
 
-                                                {/* COMMENT */ }
-                                            < td className = "px-6 py-4 text-gray-600" >
-                                            { item?.comment || "-"}
-                                </td>
+                                                {/* COMMENT */}
+                                                < td className="px-6 py-4 text-gray-600" >
+                                                    {item?.comment || "-"}
+                                                </td>
 
-                            </tr>
+                                            </tr>
 
-                            ))
+                                        ))
 
                                     )}
 
-                        </tbody>
+                                </tbody>
 
                             </table>
 
-            </div>
+                        </div>
                     )}
 
-        </div>
+                </div>
             </div >
 
+
+            {showEditModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+
+                    <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+
+                        {/* HEADER */}
+                        <div className="flex justify-between items-center px-6 py-4 border-b">
+                            <h2 className="text-lg font-semibold text-gray-900">
+                                Edit Agent Details
+                            </h2>
+
+                            <button
+                                onClick={() => setShowEditModal(false)}
+                                className="text-gray-400 hover:text-red-500 text-lg"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* BODY */}
+                        <div className="overflow-y-auto p-6 space-y-8">
+
+                            {/* BASIC DETAILS */}
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-500 mb-4">
+                                    Basic Information
+                                </h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                                    <FormInput
+                                        label="Full Name"
+                                        value={formData.name}
+                                        onChange={(v: any) => setFormData({ ...formData, name: v })}
+                                    />
+
+                                    <FormInput
+                                        label="Email"
+                                        value={formData.email}
+                                        onChange={(v: any) => setFormData({ ...formData, email: v })}
+                                    />
+
+                                    <FormInput
+                                        label="Mobile Number"
+                                        value={formData.mobile_number}
+                                        onChange={(v: any) => setFormData({ ...formData, mobile_number: v })}
+                                    />
+                                    <div>
+                                        <label className="text-xs font-semibold text-gray-600 mb-1">
+                                            Agent Type
+                                        </label>
+                                        <select
+                                            value={formData.agent_type}
+                                            onChange={(e: any) =>
+                                                setFormData({ ...formData, agent_type: e.target.value })
+                                            }
+                                            className="px-3 py-2 border rounded-lg w-full"
+                                        >
+                                            <option value="">Select Agent Type</option>
+                                            <option value="OWN">Own</option>
+                                            <option value="PARTNERSHIP">Partnership</option>
+                                        </select>
+                                    </div>
+
+
+                                    <div>
+                                        <label className="text-xs font-semibold text-gray-600 mb-1">
+                                            Hub
+                                        </label>
+                                        <select
+                                            value={formData.hub_id}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, hub_id: e.target.value })
+                                            }
+                                            className="px-3 py-2 border rounded-lg w-full"
+                                        >
+                                            <option value="">Select Hub</option>
+
+                                            {hubs?.map((h: any) => (
+                                                <option key={h.id} value={h.id}>
+                                                    {h.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <FormInput
+                                        label="Start Time"
+                                        type="time"
+                                        value={formData.start_time}
+                                        onChange={(v: any) => setFormData({ ...formData, start_time: v })}
+                                    />
+
+                                    <FormInput
+                                        label="End Time"
+                                        type="time"
+                                        value={formData.end_time}
+                                        onChange={(v: any) => setFormData({ ...formData, end_time: v })}
+                                    />
+
+                                </div>
+                            </div>
+
+                            {/* VEHICLE DETAILS */}
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-500 mb-4">
+                                    Vehicle Details
+                                </h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                                    <FormInput
+                                        label="Vehicle Type"
+                                        value={formData.vehicle_type}
+                                        onChange={(v: any) => setFormData({ ...formData, vehicle_type: v })}
+                                    />
+
+                                    <FormInput
+                                        label="Vehicle Number"
+                                        value={formData.vehicle_number}
+                                        onChange={(v: any) =>
+                                            setFormData({ ...formData, vehicle_number: v })
+                                        }
+                                    />
+
+                                </div>
+                            </div>
+
+                            {/* BANK DETAILS */}
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-500 mb-4">
+                                    Bank Details
+                                </h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                                    <FormInput
+                                        label="Account Number"
+                                        value={formData.account_number}
+                                        onChange={(v: any) =>
+                                            setFormData({ ...formData, account_number: v })
+                                        }
+                                    />
+
+                                    <FormInput
+                                        label="IFSC Code"
+                                        value={formData.ifsc_code}
+                                        onChange={(v: any) => setFormData({ ...formData, ifsc_code: v })}
+                                    />
+
+                                </div>
+                            </div>
+
+                            {/* PERMISSIONS */}
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-500 mb-4">
+                                    Permissions
+                                </h3>
+
+                                <label className="flex items-center gap-3 text-sm">
+
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.is_admin_permission_required}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                is_admin_permission_required: e.target.checked
+                                            })
+                                        }
+                                        className="w-4 h-4"
+                                    />
+
+                                    Admin Permission Required
+
+                                </label>
+
+                            </div>
+
+                        </div>
+
+                        {/* FOOTER */}
+                        <div className="border-t px-6 py-4 flex justify-end gap-3 bg-white">
+
+                            <button
+                                onClick={() => setShowEditModal(false)}
+                                className="px-5 py-2 border rounded-lg text-sm hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                onClick={handleUpdateAgent}
+                                className="px-5 py-2 bg-orange-600 text-white rounded-lg text-sm hover:bg-orange-700"
+                            >
+                                Update Agent
+                            </button>
+
+                        </div>
+
+                    </div>
+                </div>
+            )}
         </div >
     )
 }
 
-export default Agents360
+export default Agents360;
 const Info = ({ label, value }: any) => (
     <div>
         <p className="text-xs text-gray-500 uppercase tracking-wide">
@@ -594,8 +984,6 @@ const Info = ({ label, value }: any) => (
         </p>
     </div>
 )
-
-
 
 const StatusBadge = ({ label, value }: any) => (
     <div>
@@ -617,20 +1005,24 @@ const StatusBadge = ({ label, value }: any) => (
     </div>
 )
 
-const DocumentCard = ({ title, url, verified }: any) => (
+const DocumentCard = ({ title, url, verified, field }: any) => (
+
     <div className="bg-white rounded-xl border shadow-sm p-4">
 
         <div className="flex justify-between items-center mb-3">
             <h4 className="font-medium text-gray-900">{title}</h4>
 
-            <span className={`px-2 py-1 text-xs rounded-full ${verified === "VERIFIED"
-                ? "bg-green-100 text-green-700"
-                : verified === "PENDING"
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-red-100 text-red-600"
-                }`}>
+            <span
+                className={`px-2 py-1 text-xs rounded-full
+        ${verified === "VERIFIED"
+                        ? "bg-green-100 text-green-700"
+                        : verified === "PENDING"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-red-100 text-red-600"}`}
+            >
                 {verified}
             </span>
+
         </div>
 
         {url ? (
@@ -645,5 +1037,54 @@ const DocumentCard = ({ title, url, verified }: any) => (
         ) : (
             <p className="text-sm text-gray-400">No Document Uploaded</p>
         )}
+
+        {/* VERIFY / REJECT */}
+        {verified === "PENDING" && field && (
+
+            <div className="flex gap-2 mt-4">
+
+                <button
+                    // onClick={() => handleKycUpdate(field, "VERIFIED")}
+                    className="text-xs bg-green-600 text-white px-3 py-1 rounded-md"
+                >
+                    Verify
+                </button>
+
+                <button
+                    // onClick={() => handleKycUpdate(field, "REJECTED")}
+                    className="text-xs bg-red-600 text-white px-3 py-1 rounded-md"
+                >
+                    Reject
+                </button>
+
+            </div>
+
+        )}
+
     </div>
-)
+
+);
+
+const FormInput = ({
+    label,
+    value,
+    onChange,
+    type = "text"
+}: any) => (
+
+    <div className="flex flex-col">
+
+        <label className="text-xs font-semibold text-gray-600 mb-1">
+            {label}
+        </label>
+
+        <input
+            type={type}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+        />
+
+    </div>
+
+);
