@@ -131,6 +131,28 @@ const Users: React.FC = () => {
         );
     });
 
+    const handleStatusToggle = async (user: UserType) => {
+        try {
+
+            const dataStatus = user.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+
+            await axiosInstance.put(
+                `${api.createUser}/${user.id}`,
+                {
+                    status: dataStatus
+                }
+            );
+
+            toast.success("User status updated");
+
+            fetchUsers(page, pageSize);
+
+        } catch (error) {
+            console.error("Status update failed:", error);
+            toast.error("Failed to update status");
+        }
+    };
+
     return (
         // <div className="space-y-6">
         <div className="space-y-6 w-full max-w-full">
@@ -250,7 +272,7 @@ const Users: React.FC = () => {
                                             </div>
                                         </td>
 
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        {/* <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <span
                                                 className={`px-2 py-1 rounded-full text-xs font-medium ${user.status === "ACTIVE"
                                                     ? "bg-green-100 text-green-700"
@@ -259,8 +281,29 @@ const Users: React.FC = () => {
                                             >
                                                 {user?.status}
                                             </span>
-                                        </td>
+                                        </td> */}
 
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    onClick={() => handleStatusToggle(user)}
+                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${user.status === "ACTIVE"
+                                                        ? "bg-green-500"
+                                                        : "bg-gray-300"
+                                                        }`}
+                                                >
+                                                    <span
+                                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${user.status === "ACTIVE"
+                                                            ? "translate-x-6"
+                                                            : "translate-x-1"
+                                                            }`}
+                                                    />
+                                                </button>
+
+                                            </div>
+
+                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                                             <div className="flex justify-end space-x-2">
                                                 <button

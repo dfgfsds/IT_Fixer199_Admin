@@ -14,7 +14,7 @@ interface MovementType {
     created_at: string;
 }
 
-const ToolsInventoryMovement: React.FC = () => {
+const ToolsInventoryMovementLive: React.FC = () => {
 
     const [movements, setMovements] = useState<MovementType[]>([]);
     const [loading, setLoading] = useState(true);
@@ -530,4 +530,4 @@ ${selectedItem.approved_status === "APPROVED"
     );
 };
 
-export default ToolsInventoryMovement;
+export default  ToolsInventoryMovementLive;
