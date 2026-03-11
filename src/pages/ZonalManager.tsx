@@ -125,6 +125,20 @@ const ZonalManager: React.FC = () => {
   //   activeZones: zones.filter(z => z.status === "ACTIVE").length,
   // };
 
+  const handleZoneToggle = async (zone: any) => {
+    try {
+      const payload = {
+        status: zone.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"
+      }
+      const updatedApi = await axiosInstance.put(`${Api.zone}/${zone.id}`, payload)
+      if (updatedApi) {
+        fetchZones();
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
 
   return (
     <div className="space-y-6">
@@ -152,7 +166,7 @@ const ZonalManager: React.FC = () => {
 
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
@@ -186,7 +200,7 @@ const ZonalManager: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+        {/* <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
@@ -196,7 +210,7 @@ const ZonalManager: React.FC = () => {
               <DollarSign className="w-6 h-6 text-white" />
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Search */}
@@ -239,11 +253,11 @@ const ZonalManager: React.FC = () => {
               </div>
             ) : (
               <>
-                {zones.map((zone) => (
+                {zones?.map((zone: any) => (
                   <div
                     key={zone.id}
                     className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => setSelectedZone(zone)}
+                  // onClick={() => setSelectedZone(zone)}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center">
@@ -251,17 +265,35 @@ const ZonalManager: React.FC = () => {
                           <MapPin className="w-5 h-5 text-orange-600" />
                         </div>
                         <div className="ml-3">
-                          <h3 className="text-lg font-semibold text-gray-900">{zone.name}</h3>
-                          <p className="text-sm text-gray-600">{zone.city}, {zone.state}</p>
+                          <h3 className="text-lg font-semibold text-gray-900 capitalize">{zone.name}</h3>
+                          <p className="text-sm text-gray-400 capitalize">{zone?.description?.slice(0, 100)}...</p>
                         </div>
                       </div>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${zone.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      {/* <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${zone.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
-                        {zone.is_active ? 'Active' : 'Inactive'}
-                      </span>
+                        {zone?.status ? 'Active' : 'Inactive'}
+                      </span> */}
+
+                      <div className="flex items-center gap-2">
+
+                        <span className={`text-xs font-medium ${zone.status === "ACTIVE" ? "text-green-600" : "text-red-600"}`}>
+                          {zone.status === "ACTIVE" ? "ACTIVE" : "INACTIVE"}
+                        </span>
+
+                        <button
+                          onClick={() => handleZoneToggle(zone)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition
+  ${zone.status === "ACTIVE" ? "bg-green-500" : "bg-gray-300"}`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition
+    ${zone.status === "ACTIVE" ? "translate-x-6" : "translate-x-1"}`}
+                          />
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="space-y-3">
+                    {/* <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
                           <Users className="w-4 h-4 text-gray-400 mr-2" />
@@ -318,7 +350,7 @@ const ZonalManager: React.FC = () => {
                           </div>
                         </div>
                       )}
-                    </div>
+                    </div> */}
 
                     <div className="flex justify-end mt-4 space-x-3">
                       <button

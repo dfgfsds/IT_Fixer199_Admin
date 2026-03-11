@@ -18,7 +18,7 @@ const HubMappingModal: React.FC<Props> = ({ show, onClose, hub }) => {
     /* -------------------- FETCH ZONES -------------------- */
     const fetchZones = async () => {
         try {
-            const response = await axiosInstance.get(Api?.allZone);
+            const response = await axiosInstance.get(`${Api?.allZone}?size=1000`);
             setZones(response?.data?.zones || response?.data || []);
         } catch (error) {
             console.error("Failed to fetch zones:", error);

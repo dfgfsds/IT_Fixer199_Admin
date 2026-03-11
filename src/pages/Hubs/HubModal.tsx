@@ -28,18 +28,21 @@ const HubModal: React.FC<Props> = ({
     }, []);
 
     const fetchUsers = async () => {
+        const roleQuery = "SUPER_ADMIN,ADMIN,HUB_MANAGER,MANAGER,AGENT";
+
         try {
             setLoadingUsers(true);
-            const response = await axiosInstance.get(Api.allUsers);
-            setUsers(response?.data?.users || response?.data || []);
+            const response = await axiosInstance.get(
+                `${Api.allUsers}?size=1000&role=${roleQuery}`
+            );
+            // const response = await axiosInstance.get(Api.allUsers);
+            setUsers(response.data?.users || response.data?.users || []);
         } catch (error) {
             console.error("Failed to fetch users:", error);
         } finally {
             setLoadingUsers(false);
         }
     };
-
-
 
     const [form, setForm] = useState({
         name: "",
@@ -87,9 +90,6 @@ const HubModal: React.FC<Props> = ({
             setApiErrors(extractErrorMessage(error));
             setLoading(false);
         }
-
-
-
     };
 
     if (!show) return null;
@@ -110,9 +110,7 @@ const HubModal: React.FC<Props> = ({
 
                 {/* Body */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
                         <div>
                             <label className="text-sm text-gray-600">Hub Name</label>
                             <input
@@ -126,7 +124,6 @@ const HubModal: React.FC<Props> = ({
 
                         <div>
                             <label className="text-sm text-gray-600">Head User</label>
-
                             <select
                                 required
                                 value={form.head}
@@ -134,19 +131,16 @@ const HubModal: React.FC<Props> = ({
                                 className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 capitalize "
                             >
                                 <option value="">Select Head User</option>
-
                                 {users.map((user) => (
                                     <option key={user.id} value={user.id} className="capitalize">
                                         {user.name} ({user.email})
                                     </option>
                                 ))}
                             </select>
-
                             {loadingUsers && (
                                 <p className="text-xs text-gray-400 mt-1">Loading users...</p>
                             )}
                         </div>
-
 
                         <div>
                             <label className="text-sm text-gray-600">Latitude</label>
@@ -162,12 +156,11 @@ const HubModal: React.FC<Props> = ({
                             <label className="text-sm text-gray-600">Longitude</label>
                             <input
                                 type="text"
-                                value={form.longitude}
+                                value={form?.longitude}
                                 onChange={(e) => setForm({ ...form, longitude: e.target.value })}
                                 className="w-full border rounded-lg px-3 py-2"
                             />
                         </div>
-
                     </div>
 
                     <div>
@@ -230,7 +223,6 @@ const HubModal: React.FC<Props> = ({
                         >
                             {/* {isEdit ? "Update Hub" : "Create Hub"} */}
                             {isEdit ? "Edit User" :
-
                                 (<>
                                     {loading ? (
                                         <div className="flex gap-2 items-center "> <Loader size={16} className="animate-spin" />Creating... </div>) : "Create Hub"}
@@ -238,7 +230,6 @@ const HubModal: React.FC<Props> = ({
 
                         </button>
                     </div>
-
                 </form>
             </div>
         </div>
