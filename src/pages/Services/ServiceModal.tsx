@@ -523,7 +523,7 @@ const ServiceModal: React.FC<Props> = ({
                                             className="mt-1 w-full border rounded-lg px-3 py-2"
                                         >
                                             <option value="">Select Hub</option>
-                                            {hubs?.map((h: any) => (
+                                            {hubs?.filter((h: any) => h.status === "ACTIVE").map((h: any) => (
                                                 <option key={h.id} value={h.id}>
                                                     {h.name}
                                                 </option>

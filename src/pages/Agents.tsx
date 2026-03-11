@@ -455,7 +455,7 @@
 // export default Agents;
 
 import React, { useEffect, useState } from 'react'
-import { Search, Eye, Star, Loader, TrashIcon, Trash2Icon } from 'lucide-react'
+import { Search, Eye, Star, Loader, TrashIcon, Trash2Icon, MapPin } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import axiosInstance from '../configs/axios-middleware'
 import Api from '../api-endpoints/ApiUrls';
@@ -545,13 +545,15 @@ const Agents: React.FC = () => {
   const openZoneModal = async (agent: any) => {
     setSelectedAgent(agent)
     setZoneModal(true)
+    if (agent?.id) {
+      const res = await axiosInstance.get(`${Api?.agentZones}/${agent?.id}`)
+      setAgentZones(res?.data?.data)
 
-    const res = await axiosInstance.get(`${Api?.agentZones}/${agent?.id}`)
-    setAgentZones(res?.data?.data)
+      const zonesRes = await axiosInstance.get(`${Api?.hubMapping}?hub=${selectedAgent?.hub}`);
+      console.log(zonesRes)
+      setAllZones(zonesRes?.data?.mappings)
+    }
 
-    const zonesRes = await axiosInstance.get(`${Api?.hubMapping}?hub=${selectedAgent?.hub}`);
-    console.log(zonesRes)
-    setAllZones(zonesRes?.data?.mappings)
 
   }
 
@@ -673,14 +675,11 @@ const Agents: React.FC = () => {
                   Agent
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Mobile
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Hub
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Performance
-                </th>
+                </th> */}
                 {user?.role !== 'HUB_MANAGER' && (
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Manager
@@ -713,45 +712,50 @@ const Agents: React.FC = () => {
                       {index + 1}
                     </td>
 
-                    <td className="px-6 py-4 flex items-center space-x-3">
-                      {agent.profile_image_url ? (
-                        <img
-                          src={agent.profile_image_url}
-                          alt="profile"
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-10 h-10  rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-semibold">
-                          {agent.user_name?.charAt(0)}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-3">
+
+                        {agent.profile_image_url ? (
+                          <img
+                            src={agent.profile_image_url}
+                            alt="profile"
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-semibold">
+                            {agent.user_name?.charAt(0)}
+                          </div>
+                        )}
+
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-gray-900 capitalize">
+                            {agent.user_name}
+                          </span>
+
+                          <span className="text-xs text-gray-500">
+                            {agent.user_details?.mobile_number}
+                          </span>
                         </div>
-                      )}
-                      <span className="text-sm capitalize font-medium text-gray-900">
-                        {agent.user_name}
-                      </span>
+
+                      </div>
                     </td>
 
-                    {/* Mobile */}
-                    <td className="px-6 py-4 text-sm text-gray-700">
-                      {agent.user_details?.mobile_number}
-                    </td>
 
                     {/* Zone */}
                     <td className="px-6 py-4 text-sm text-gray-700">
                       {agent.hub_name}
                     </td>
 
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    {/* <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
                         <div className="flex items-center">
                           <Star className="w-4 h-4 text-yellow-400 mr-1" />
                           {agent?.cumulative_rating}
-                          {/* ({agent?.total_reviews}) */}
+                        
                         </div>
-                        {/* <div className="text-xs text-gray-500">
-                           {agent.total_orders} orders completed
-                         </div> */}
+                     
                       </div>
-                    </td>
+                    </td> */}
 
                     {user?.role !== 'HUB_MANAGER' && (
                       <td className="px-6 py-4">
@@ -814,27 +818,31 @@ const Agents: React.FC = () => {
                     </td>
 
                     {/* Actions */}
-                    <td className="px-6 py-4 text-right space-x-3 flex">
+                    <td className="px-6 py-4 flex justify-end items-center gap-3 mt-8">
+
+                      {/* Tracking */}
                       <button
                         onClick={() => {
                           setSelectedAgent(agent);
                           setTrackingModal(true);
                         }}
-                        className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-lg"
+                        className="flex items-center gap-1 px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
                       >
                         Tracking
+                        <MapPin className="w-3 h-3" />
                       </button>
 
+                      {/* View */}
                       <button
                         onClick={() => navigate(`/agents/${agent.id}`)}
-                        className="text-gray-600 hover:text-orange-600"
+                        className="flex items-center gap-1 px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
                       >
-                        <Eye className="w-4 h-4" />
+                        View
+                        <Eye className="w-3 h-3" />
                       </button>
 
-
-
                     </td>
+
                   </tr>
                 ))
               )}

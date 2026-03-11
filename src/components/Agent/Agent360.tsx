@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import Api from '../../api-endpoints/ApiUrls';
 import axiosInstance from '../../configs/axios-middleware';
 import { ArrowLeft, ArrowLeftIcon, Bike, Calendar, CheckCircle, CreditCard, Mail, MapPin, Palette, Phone, ServerCog, Star, User, XCircle } from 'lucide-react';
+import Pagination from '../Pagination';
 
 
 const Agents360: React.FC = () => {
@@ -15,6 +16,11 @@ const Agents360: React.FC = () => {
     const navigate = useNavigate();
     const [showEditModal, setShowEditModal] = useState(false);
     const [hubs, setHubs] = useState<any[]>([]);
+
+    const [page, setPage] = useState(1)
+    const [pageSize, setPageSize] = useState(10)
+    const [totalPages, setTotalPages] = useState(1)
+    const [pagination, setPagination] = useState<any>(null)
 
     const [formData, setFormData] = useState({
         name: "",
@@ -128,7 +134,7 @@ const Agents360: React.FC = () => {
             form.append(field, status);
 
             await axiosInstance.put(
-                `${Api?.agentUser}/${agent?.user}`,
+                `${Api?.agentUser}${agent?.user}`,
                 form
             );
 
@@ -141,10 +147,10 @@ const Agents360: React.FC = () => {
 
 
     useEffect(() => {
-        fetchAgent()
-    }, [id])
+        fetchAgentProduct()
+    }, [id, activeTab === 'product'])
 
-    const fetchAgent = async () => {
+    const fetchAgentProduct = async () => {
         try {
             const res = await axiosInstance.get(`${Api?.agents}${id}`)
             setAgent(res?.data?.agent)
@@ -153,14 +159,52 @@ const Agents360: React.FC = () => {
                 `${Api?.agentProductStock}?agent_id=${id}`
             )
             setProductStocks(productRes?.data?.data)
-            const toolRes = await axiosInstance.get(`${Api?.agentToolsStock}/?agent_id=${id}`);
-            setToolStocks(toolRes?.data?.data)
+            // const toolRes = await axiosInstance.get(`${Api?.agentToolsStock}/?agent_id=${id}`);
+            // setToolStocks(toolRes?.data?.data)
         } catch (err) {
             console.log(err)
         } finally {
             setLoading(false)
         }
     }
+
+    useEffect(() => {
+        fetchAgentTool()
+    }, [id, activeTab === 'tool'])
+
+    const fetchAgentTool = async () => {
+        try {
+            const toolRes = await axiosInstance.get(
+                `${Api?.agentToolsStock}?agent_id=${id}&page=${page}&size=${pageSize}`
+            )
+
+            setToolStocks(toolRes?.data?.data?.stocks || [])
+
+            const p = toolRes?.data?.data?.pagination
+
+            if (p) {
+                setPagination(p)
+                setPage(p.page)
+                setTotalPages(p.total_pages)
+            }
+        } catch (err) {
+            console.log(err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage)
+        fetchAgentTool()
+    }
+
+    const handlePageSizeChange = (size: number) => {
+        setPageSize(size)
+        setPage(1)
+        fetchAgentTool()
+    }
+
 
     if (loading) return <div className="p-10 text-center">Loading...</div>
 
@@ -545,6 +589,7 @@ const Agents360: React.FC = () => {
                                         url={agent?.aadhar_doc_url}
                                         verified={agent?.is_aadhar_verified}
                                         field="is_aadhar_verified"
+                                        onUpdate={handleKycUpdate}
                                     />
 
                                     {/* PAN */}
@@ -553,13 +598,16 @@ const Agents360: React.FC = () => {
                                         url={agent?.pan_card_url}
                                         verified={agent?.is_pan_verified}
                                         field="is_pan_verified"
+                                        onUpdate={handleKycUpdate}
                                     />
 
                                     {/* VIDEO KYC */}
                                     <DocumentCard
                                         title="Video KYC"
                                         url={agent?.video_kyc_url}
-                                        verified={agent?.video_kyc_url ? "VERIFIED" : "PENDING"}
+                                        verified={agent?.is_video_kyc_verified}
+                                        field="is_video_kyc_verified"
+                                        onUpdate={handleKycUpdate}
                                     />
 
                                 </div>
@@ -758,7 +806,16 @@ const Agents360: React.FC = () => {
                                 </tbody>
 
                             </table>
-
+                            {!loading && pagination && (
+                                <Pagination
+                                    page={page}
+                                    totalPages={totalPages}
+                                    pageSize={pageSize}
+                                    totalItems={pagination.total_elements}
+                                    onPageChange={handlePageChange}
+                                    onPageSizeChange={handlePageSizeChange}
+                                />
+                            )}
                         </div>
                     )}
 
@@ -1005,65 +1062,65 @@ const StatusBadge = ({ label, value }: any) => (
     </div>
 )
 
-const DocumentCard = ({ title, url, verified, field }: any) => (
+const DocumentCard = ({ title, url, verified, field, onUpdate }: any) => {
 
-    <div className="bg-white rounded-xl border shadow-sm p-4">
+    return (
+        <div className="bg-white rounded-xl border shadow-sm p-4">
 
-        <div className="flex justify-between items-center mb-3">
-            <h4 className="font-medium text-gray-900">{title}</h4>
+            <div className="flex justify-between items-center mb-3">
+                <h4 className="font-medium text-gray-900">{title}</h4>
 
-            <span
-                className={`px-2 py-1 text-xs rounded-full
+                <span
+                    className={`px-2 py-1 text-xs rounded-full
         ${verified === "VERIFIED"
-                        ? "bg-green-100 text-green-700"
-                        : verified === "PENDING"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-red-100 text-red-600"}`}
-            >
-                {verified}
-            </span>
-
-        </div>
-
-        {url ? (
-            <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-orange-600 hover:underline"
-            >
-                View Document
-            </a>
-        ) : (
-            <p className="text-sm text-gray-400">No Document Uploaded</p>
-        )}
-
-        {/* VERIFY / REJECT */}
-        {verified === "PENDING" && field && (
-
-            <div className="flex gap-2 mt-4">
-
-                <button
-                    // onClick={() => handleKycUpdate(field, "VERIFIED")}
-                    className="text-xs bg-green-600 text-white px-3 py-1 rounded-md"
+                            ? "bg-green-100 text-green-700"
+                            : verified === "PENDING"
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-red-100 text-red-600"}`}
                 >
-                    Verify
-                </button>
-
-                <button
-                    // onClick={() => handleKycUpdate(field, "REJECTED")}
-                    className="text-xs bg-red-600 text-white px-3 py-1 rounded-md"
-                >
-                    Reject
-                </button>
+                    {verified}
+                </span>
 
             </div>
 
-        )}
+            {url ? (
+                <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-orange-600 hover:underline"
+                >
+                    View Document
+                </a>
+            ) : (
+                <p className="text-sm text-gray-400">No Document Uploaded</p>
+            )}
 
-    </div>
+            {verified === "PENDING" && field && (
 
-);
+                <div className="flex gap-2 mt-4">
+
+                    <button
+                        onClick={() => onUpdate(field, "VERIFIED")}
+                        className="text-xs bg-green-600 text-white px-3 py-1 rounded-md"
+                    >
+                        Verify
+                    </button>
+
+                    <button
+                        onClick={() => onUpdate(field, "REJECTED")}
+                        className="text-xs bg-red-600 text-white px-3 py-1 rounded-md"
+                    >
+                        Reject
+                    </button>
+
+                </div>
+
+            )}
+
+        </div>
+    )
+}
 
 const FormInput = ({
     label,

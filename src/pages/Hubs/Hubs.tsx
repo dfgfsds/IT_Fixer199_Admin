@@ -79,7 +79,7 @@ const Hubs: React.FC = () => {
             hub.primary_address.toLowerCase().includes(search.toLowerCase()) ||
             hub.contact_info.toLowerCase().includes(search.toLowerCase())
     );
-console.log(filteredHubs)
+    console.log(filteredHubs)
 
 
     // const handleDelete = async (id: string) => {
@@ -149,7 +149,7 @@ console.log(filteredHubs)
                         </thead>
 
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredHubs?.map((hub:any, index:number) => (
+                            {filteredHubs?.map((hub: any, index: number) => (
                                 <tr key={hub.id} className="hover:bg-gray-50">
 
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -171,7 +171,7 @@ console.log(filteredHubs)
                                     <td className="px-6 py-4 text-sm">
                                         {hub?.contact_info?.name}
                                     </td>
-                                
+
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                         <span
                                             className={`px-2 py-1 rounded-full text-xs font-medium ${hub?.status === "ACTIVE"

@@ -41,9 +41,7 @@ const Orders: React.FC = () => {
       }
 
       const response: any = await axiosInstance?.get(
-        Api?.orders,
-        { params }   // 👈 THIS WAS MISSING
-      );
+        `${Api?.orders}?is_active=true`);
       if (response) {
         setOrders(response?.data?.orders);
         // setFilteredOrders(response?.data?.orders || []);
