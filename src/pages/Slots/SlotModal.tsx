@@ -34,7 +34,7 @@ const SlotModal: React.FC<Props> = ({
 
     const fetchZones = async () => {
         try {
-            const response = await axiosInstance.get(Api?.allZone);
+            const response = await axiosInstance.get(`${Api?.allZone}?size=1000`);
             setZones(response?.data?.zones || response?.data || []);
         } catch (error) {
             console.error("Failed to fetch zones:", error);
@@ -143,7 +143,7 @@ const SlotModal: React.FC<Props> = ({
                                 className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500"
                             >
                                 <option value="">Select Zone</option>
-                                {zones?.map((zone) => (
+                                {zones?.filter((item: any) => item?.status === "ACTIVE")?.map((zone) => (
                                     <option key={zone?.id} value={zone?.id}>
                                         {zone?.name}
                                     </option>

@@ -142,7 +142,7 @@ const Sidebar: React.FC = () => {
         { name: 'Customers', path: '/customers' },
         { name: 'Users', path: '/users' },
         { name: 'Agents', path: '/agents' },
-        { name: 'Attendance', path: '/attendance' },
+        // { name: 'Attendance', path: '/attendance' },
       ],
     },
     {
