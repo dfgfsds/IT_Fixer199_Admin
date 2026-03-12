@@ -9,6 +9,7 @@ interface Props {
     onClose: () => void;
     onSuccess: () => void;
     editHub: any;
+    setEditHub: any;
 }
 
 const HubModal: React.FC<Props> = ({
@@ -16,6 +17,7 @@ const HubModal: React.FC<Props> = ({
     onClose,
     onSuccess,
     editHub,
+    setEditHub,
 }) => {
     const isEdit = !!editHub;
     const [users, setUsers] = useState<any[]>([]);
@@ -23,9 +25,9 @@ const HubModal: React.FC<Props> = ({
     const [apiErrors, setApiErrors] = useState<string>("");
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
+    // useEffect(() => {
+    //     fetchUsers();
+    // }, []);
 
     const fetchUsers = async () => {
         const roleQuery = "SUPER_ADMIN,ADMIN,HUB_MANAGER,MANAGER,AGENT";
@@ -47,10 +49,14 @@ const HubModal: React.FC<Props> = ({
     const [form, setForm] = useState({
         name: "",
         primary_address: "",
-        head: "",
+        // head: "",
         latitude: "",
         longitude: "",
-        contact_info: "",
+        contact_info: {
+            phone: "",
+            email: "",
+            whatsapp: ""
+        },
         status: "ACTIVE",
     });
 
@@ -59,10 +65,14 @@ const HubModal: React.FC<Props> = ({
             setForm({
                 name: editHub.name || "",
                 primary_address: editHub.primary_address || "",
-                head: editHub.head?.id || "",
+                // head: editHub.head?.id || "",
                 latitude: editHub.latitude || "",
                 longitude: editHub.longitude || "",
-                contact_info: editHub.contact_info || "",
+                contact_info: {
+                    phone: editHub.contact_info?.phone || "",
+                    email: editHub.contact_info?.email || "",
+                    whatsapp: editHub.contact_info?.whatsapp || ""
+                },
                 status: editHub.status || "ACTIVE",
             });
         }
@@ -92,6 +102,24 @@ const HubModal: React.FC<Props> = ({
         }
     };
 
+    const resetForm = () => {
+        setForm({
+            name: "",
+            primary_address: "",
+            // head: "",
+            latitude: "",
+            longitude: "",
+            contact_info: {
+                phone: "",
+                email: "",
+                whatsapp: ""
+            },
+            status: "ACTIVE",
+        });
+        setEditHub(null);
+        setApiErrors("");
+    };
+
     if (!show) return null;
 
     return (
@@ -103,7 +131,12 @@ const HubModal: React.FC<Props> = ({
                     <h2 className="text-lg font-semibold">
                         {isEdit ? "Edit Hub" : "Create Hub"}
                     </h2>
-                    <button onClick={onClose} className="text-gray-500 text-xl">
+                    <button
+                        onClick={() => {
+                            resetForm();
+                            onClose();
+                        }}
+                        className="text-gray-500 text-xl">
                         ×
                     </button>
                 </div>
@@ -121,7 +154,7 @@ const HubModal: React.FC<Props> = ({
                                 className="w-full border rounded-lg px-3 py-2"
                             />
                         </div>
-
+                        {/* 
                         <div>
                             <label className="text-sm text-gray-600">Head User</label>
                             <select
@@ -140,7 +173,7 @@ const HubModal: React.FC<Props> = ({
                             {loadingUsers && (
                                 <p className="text-xs text-gray-400 mt-1">Loading users...</p>
                             )}
-                        </div>
+                        </div> */}
 
                         <div>
                             <label className="text-sm text-gray-600">Latitude</label>
@@ -175,7 +208,7 @@ const HubModal: React.FC<Props> = ({
                         />
                     </div>
 
-                    <div>
+                    {/* <div>
                         <label className="text-sm text-gray-600">Contact Info</label>
                         <input
                             type="text"
@@ -185,6 +218,55 @@ const HubModal: React.FC<Props> = ({
                             }
                             className="w-full border rounded-lg px-3 py-2"
                         />
+                    </div> */}
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                        <div>
+                            <label className="text-sm text-gray-600">Phone</label>
+                            <input
+                                type="text"
+                                value={form.contact_info.phone}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        contact_info: { ...form.contact_info, phone: e.target.value }
+                                    })
+                                }
+                                className="w-full border rounded-lg px-3 py-2"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="text-sm text-gray-600">Email</label>
+                            <input
+                                type="email"
+                                value={form.contact_info.email}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        contact_info: { ...form.contact_info, email: e.target.value }
+                                    })
+                                }
+                                className="w-full border rounded-lg px-3 py-2"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="text-sm text-gray-600">Whatsapp</label>
+                            <input
+                                type="text"
+                                value={form.contact_info.whatsapp}
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        contact_info: { ...form.contact_info, whatsapp: e.target.value }
+                                    })
+                                }
+                                className="w-full border rounded-lg px-3 py-2"
+                            />
+                        </div>
+
                     </div>
 
                     <div>
@@ -210,8 +292,11 @@ const HubModal: React.FC<Props> = ({
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <button
                             type="button"
-                            onClick={onClose}
-                            disabled={loading}
+                            onClick={() => {
+                                resetForm();
+                                onClose();
+                            }}
+                            // disabled={loading}
                             className="px-4 py-2 border rounded-lg"
                         >
                             Cancel

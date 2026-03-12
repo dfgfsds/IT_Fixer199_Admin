@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Edit, Trash2, MapPin, Search, ZapIcon, Map } from "lucide-react";
+import { Plus, Edit, Trash2, MapPin, Search, ZapIcon, Map, Users } from "lucide-react";
 import axiosInstance from "../../configs/axios-middleware";
 // import HubModal from "./HubModal";
 // import HubMappingModal from "./HubMappingModal";
@@ -7,6 +7,7 @@ import Api from '../../api-endpoints/ApiUrls';
 import HubMappingModal from "./HubMappingModal";
 import HubModal from "./HubModal";
 import HubZoneViewModal from "./HubZoneViewModal";
+import HubManagersModal from "./HubManagersModal";
 
 
 interface HubType {
@@ -25,7 +26,7 @@ interface HubType {
 const Hubs: React.FC = () => {
     const [hubs, setHubs] = useState<HubType[]>([]);
     const [loading, setLoading] = useState(true);
-    const [editHub, setEditHub] = useState<HubType | null>(null);
+    const [editHub, setEditHub] = useState<any>("");
     const [showModal, setShowModal] = useState(false);
     const [showMappingModal, setShowMappingModal] = useState(false);
     const [selectedHub, setSelectedHub] = useState<HubType | null>(null);
@@ -33,6 +34,7 @@ const Hubs: React.FC = () => {
     const [search, setSearch] = useState("");
     const [showZoneModal, setShowZoneModal] = useState(false);
     const [zonesData, setZonesData] = useState<any[]>([]);
+    const [showManagerModal, setShowManagerModal] = useState(false)
 
     const fetchZonesForHub = async (hubId: string) => {
         try {
@@ -75,23 +77,10 @@ const Hubs: React.FC = () => {
 
     const filteredHubs = hubs?.filter(
         (hub) =>
-            hub.name.toLowerCase().includes(search.toLowerCase()) ||
-            hub.primary_address.toLowerCase().includes(search.toLowerCase()) ||
-            hub.contact_info.toLowerCase().includes(search.toLowerCase())
+            hub?.name?.toLowerCase()?.includes(search?.toLowerCase()) ||
+            hub?.primary_address?.toLowerCase()?.includes(search?.toLowerCase()) ||
+            hub?.contact_info?.toLowerCase()?.includes(search?.toLowerCase())
     );
-    console.log(filteredHubs)
-
-
-    // const handleDelete = async (id: string) => {
-    //     if (!window.confirm("Delete this hub?")) return;
-
-    //     try {
-    //         await axiosInstance.delete(`/api/hub/${id}`);
-    //         fetchHubs();
-    //     } catch (error) {
-    //         console.error("Delete failed:", error);
-    //     }
-    // };
 
     return (
         <div className="space-y-6">
@@ -138,10 +127,9 @@ const Hubs: React.FC = () => {
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">S.No</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Head</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">managers</th>
                                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Mapping</th>
                                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Zones</th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -158,19 +146,20 @@ const Hubs: React.FC = () => {
 
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
                                         {hub?.name}
-                                    </td>
 
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        {hub?.head?.name || "-"}
+                                        {hub?.contact_info?.phone && (
+                                            <div className="text-xs text-gray-500">{hub.contact_info.phone}</div>
+                                        )}
+
+                                        {hub?.contact_info?.email && (
+                                            <div className="text-xs text-gray-500">{hub.contact_info.email}</div>
+                                        )}
                                     </td>
 
                                     <td className="px-6 py-4 text-sm text-gray-600">
                                         {hub?.primary_address}
                                     </td>
 
-                                    <td className="px-6 py-4 text-sm">
-                                        {hub?.contact_info?.name}
-                                    </td>
 
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                         <span
@@ -181,6 +170,19 @@ const Hubs: React.FC = () => {
                                         >
                                             {hub?.status}
                                         </span>
+                                    </td>
+
+                                    <td className="px-6 py-4 text-center">
+                                        <button
+                                            onClick={() => {
+                                                setSelectedHub(hub);
+                                                setShowManagerModal(!showManagerModal);
+                                            }}
+                                            className="text-blue-600 hover:text-blue-800 text-sm"
+                                        >
+                                            <Users className="w-4 h-4 inline mr-1" />
+                                            Managers
+                                        </button>
                                     </td>
 
                                     <td className="px-6 py-4 text-center">
@@ -200,7 +202,6 @@ const Hubs: React.FC = () => {
                                         <button
                                             onClick={() => {
                                                 fetchZonesForHub(hub.id);
-                                                // setShowZoneModal(!showZoneModal);
                                             }}
 
                                             className="text-blue-600 hover:text-blue-800 text-sm"
@@ -243,9 +244,10 @@ const Hubs: React.FC = () => {
             {/* Hub Create/Edit Modal */}
             <HubModal
                 show={showModal}
-                onClose={() => setShowModal(false)}
+                onClose={() => { setEditHub(""); setShowModal(false); }}
                 onSuccess={fetchHubs}
                 editHub={editHub}
+                setEditHub={setEditHub}
             />
 
             {/* Mapping Modal */}
@@ -262,7 +264,11 @@ const Hubs: React.FC = () => {
                 zones={zonesData}
             />
 
-
+<HubManagersModal
+  show={showManagerModal}
+  onClose={()=>setShowManagerModal(false)}
+  hub={selectedHub}
+/>
 
             {deleteHubId && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

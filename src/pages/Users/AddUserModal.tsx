@@ -3,6 +3,7 @@ import axiosInstance from "../../configs/axios-middleware";
 import Api from '../../api-endpoints/ApiUrls';
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 import { Loader } from "lucide-react";
+import { removeEmptyFields } from "../../utils/removeEmptyFields ";
 
 interface AddUserModalProps {
     show: boolean;
@@ -67,18 +68,20 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
 
             let response;
 
+            const cleanedUser = removeEmptyFields(newUser);
+
             if (editUser) {
                 // EDIT MODE
                 response = await axiosInstance.put(
-                    `${Api.createUser}/${editUser.id}`,
-                    {
-                        ...newUser,
-                        ...(newUser.password ? {} : { password: undefined }),
-                    }
+                    `${Api.createUser}/${editUser.id}`, { cleanedUser }
+                    // {
+                    //     ...newUser,
+                    //     ...(newUser.password ? {} : { password: undefined }),
+                    // }
                 );
             } else {
                 // CREATE MODE
-                response = await axiosInstance.post(Api.createUser, newUser);
+                response = await axiosInstance.post(Api.createUser, cleanedUser);
             }
 
             if (response?.data?.success !== false) {
@@ -202,6 +205,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                                     onChange={(e) =>
                                         setNewUser({ ...newUser, hub_id: e.target.value })
                                     }
+                                    required
                                     className="mt-1 w-full border rounded-lg px-3 py-2"
                                 >
                                     <option value="">Select Hub</option>

@@ -139,7 +139,7 @@ const ServicesRequest: React.FC = () => {
             setLoadingId(id);
 
             await axiosInstance.post(
-                `${Api?.serviceModification}/${id}/admin-approval/`,
+                `${Api?.serviceModificationOrders}/${id}/admin-approval/`,
                 { is_approved: isApproved }
             );
 
