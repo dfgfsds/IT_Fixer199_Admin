@@ -17,6 +17,10 @@ const createHub = `${baseUrl}/api/hub/create`;
 const hub = `${baseUrl}/api/hub`;
 // Hub Mapping
 const hubMapping = `${baseUrl}/api/hub/mapping`;
+
+// hubManagerMapping
+const hubManagerMapping = `${baseUrl}/api/hub/manager-mapping`;
+
 // Categories
 const categories = `${baseUrl}/api/category`;
 // Brands
@@ -67,7 +71,7 @@ const supportTickets = `${baseUrl}/api/support-ticket/`;
 // service-modification
 const serviceModification = `${baseUrl}/service-modification`;
 // Orders Service Modification
-const serviceModificationOrders = `${baseUrl}/api/order/service-modifications`;
+const serviceModificationOrders = `${baseUrl}/api/order/service-modification`;
 
 // RequestApprovalOtp
 const requestApprovalOtp = `${baseUrl}/api/request/admin/refund/approve/request-otp`;
@@ -90,7 +94,23 @@ const attributeFields = `${baseUrl}/api/attribute/fields`;
 const Requests = `${baseUrl}/api/request`;
 
 // Agent User
-const agentUser =`${baseUrl}/api/user/agent/`;
+const agentUser = `${baseUrl}/api/user/agent/`;
+
+// adminCancelOrder
+const adminCancelOrder = `${baseUrl}/api/order/orders`;
+
+// zoneByLocation
+const zoneByLocation = `${baseUrl}/api/zone/by-location`;
+
+// directSlotChange
+const directSlotChange = `${baseUrl}/api/request/direct/slot-change/`;
+
+// request tracking
+const requestTracking = `${baseUrl}/api/request/tracking`;
+
+// Tracking Delivery Verify OTP
+const deliveryVerifyOtp = `${baseUrl}/api/request/delivery/verify-otp`;
+
 
 export default {
   login,
@@ -138,5 +158,12 @@ export default {
   Requests,
   ProductInventoryMovements,
   agentUser,
-  
+  hubManagerMapping,
+  adminCancelOrder,
+  zoneByLocation,
+  directSlotChange,
+  requestTracking,
+  deliveryVerifyOtp,
 };
+
+

@@ -3,6 +3,8 @@ import { Eye, Loader2, Search } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import axiosInstance from "../../configs/axios-middleware";
 import Api from "../../api-endpoints/ApiUrls";
+import AgentAssign from "../Requests/Requests.tsx/AgentAssign";
+import TrackingModal from "../Requests/Requests.tsx/TrackingModal";
 
 interface RequestType {
     id: string;
@@ -39,6 +41,11 @@ const Requests: React.FC = () => {
     const [approvalAction, setApprovalAction] = useState<boolean>(true);
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+
+
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [trackingModal, setTrackingModal] = useState(false)
+
 
     const fetchRequests = async () => {
         try {
@@ -243,6 +250,7 @@ const Requests: React.FC = () => {
                                 <th className="px-4 py-3 text-left">S.No</th>
                                 <th className="px-4 py-3 text-left">Customer</th>
                                 <th className="px-4 py-3 text-left">Type</th>
+                                <th className="px-4 py-3 text-left">Requested By</th>
                                 <th className="px-4 py-3 text-left">Status</th>
                                 {/* <th className="px-4 py-3 text-left">Hub Status</th> */}
                                 <th className="px-4 py-3 text-left">Approval</th>
@@ -272,6 +280,9 @@ const Requests: React.FC = () => {
                                     <td className="px-4 py-3">
                                         {req?.request_type}
                                     </td>
+                                    <td className="px-4 py-3 ">
+                                        {req?.requested_by_role}
+                                    </td>
 
                                     <td className="px-4 py-3">
                                         <span
@@ -285,9 +296,32 @@ const Requests: React.FC = () => {
 
                                     <td className="px-6 py-4">
                                         {req.approval_status === "APPROVED" ? (
-                                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
-                                                Approved
-                                            </span>
+                                            <>
+                                                <span className="px-3 py-1 cursor-pointer text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                                                    Approved
+                                                </span>
+                                                {req?.request_type === "CANCELLATION" && req?.requested_by_role !== "CUSTOMER" && !req?.order_details?.assigned_agent_id && req?.order_details?.order_status !== "CANCELLED" && (
+                                                    <span
+                                                        onClick={() => {
+                                                            setSelectedRequest(req);
+                                                            setAssignModalOpen(true);
+                                                        }}
+                                                        className="px-3 cursor-pointer ml-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                                                        Assign
+                                                    </span>
+                                                )}
+                                                {req?.request_type === "HUB_SERVICE" && req?.approval_status === "APPROVED" && req?.status === "APPROVED"
+                                                    && (
+                                                        <span
+                                                            onClick={() => {
+                                                                setSelectedRequest(req)
+                                                                setTrackingModal(true)
+                                                            }}
+                                                            className="px-3 cursor-pointer ml-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                                                            Tracking
+                                                        </span>
+                                                    )}
+                                            </>
                                         ) : req.approval_status === "REJECTED" ? (
                                             <span className="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-600">
                                                 Rejected
@@ -311,6 +345,7 @@ const Requests: React.FC = () => {
                                         )}
                                     </td>
 
+
                                     <td className="px-4 py-3">
                                         {req?.created_at ? new Date(req.created_at).toLocaleString() : "-"}
                                     </td>
@@ -333,6 +368,19 @@ const Requests: React.FC = () => {
                     </table>
                 </div>
             )}
+
+
+            <AgentAssign
+                show={assignModalOpen}
+                onClose={() => setAssignModalOpen(false)}
+                order={selectedRequest?.order_details}
+            />
+
+            <TrackingModal
+                show={trackingModal}
+                onClose={() => setTrackingModal(false)}
+                requestId={selectedRequest?.id}
+            />
 
             {showModal && selectedRequest && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
