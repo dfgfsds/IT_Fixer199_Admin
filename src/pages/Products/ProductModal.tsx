@@ -32,7 +32,7 @@ const ProductModal: React.FC<Props> = ({
     const [loading, setLoading] = useState(false);
     const [apiErrors, setApiErrors] = useState<string>("");
 
-
+    console.log(attributesList)
     const [form, setForm] = useState<any>({
         name: "",
         description: "",
@@ -75,9 +75,22 @@ const ProductModal: React.FC<Props> = ({
         setCategories(res?.data?.data || []);
     };
 
+    // const fetchAttributes = async () => {
+    //     const res = await axiosInstance.get(Api?.attribute);
+    //     setAttributesList(res?.data?.data || []);
+    // };
+
     const fetchAttributes = async () => {
-        const res = await axiosInstance.get(Api?.attribute);
-        setAttributesList(res?.data?.data || []);
+        const res = await axiosInstance.get(Api?.attributeFields);
+        console.log(res?.data?.data)
+        const values = (res?.data?.data || []).flatMap((attr: any) =>
+            (attr?.attribute_values || []).map((val: any) => ({
+                value_id: val.value_id,
+                value: val.value,
+            }))
+        );
+
+        setAttributesList(values);
     };
 
     const categoryOptions = categories.map((cat) => ({
@@ -99,7 +112,7 @@ const ProductModal: React.FC<Props> = ({
 
     const attributeOptions = attributesList.map((attr) => ({
         value: attr?.value_id,
-        label: `${attr.name} - ${attr.value}`,
+        label: `${attr.value}`,
         full: attr,
     }));
 
@@ -274,10 +287,13 @@ const ProductModal: React.FC<Props> = ({
             // });
 
             // Send only new images
+            // newImages.forEach((file) => {
+            //     formData.append("media_files", file);
+            // });
+            
             newImages.forEach((file) => {
-                formData.append("media_files", file);
+                formData.append("media_files[]", file);
             });
-
 
             // 🔥 Convert to required format
             const formattedSpecification = form.specification
