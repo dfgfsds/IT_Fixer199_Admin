@@ -183,20 +183,20 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                                 }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                             >
-                                <option value="SUPER_ADMIN">SUPER ADMIN</option>
+                                {/* <option value="SUPER_ADMIN">SUPER ADMIN</option> */}
                                 <option value="ADMIN">ADMIN</option>
                                 <option value="MANAGER">MANAGER</option>
                                 <option value="HUB_MANAGER">HUB MANAGER</option>
-                                <option value="AGENT">AGENT</option>
+                                {/* <option value="AGENT">AGENT</option> */}
                                 <option value="CUSTOMER">CUSTOMER</option>
 
                             </select>
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {["MANAGER", "HUB_MANAGER"].includes(newUser.role) && (
+                        {["MANAGER"].includes(newUser.role) && (
                             <div>
-                                <label className="text-sm text-gray-600">Hub</label>
+                                <   label className="text-sm text-gray-600">Hub</label>
                                 <select
                                     value={newUser.hub_id}
                                     onChange={(e) =>
