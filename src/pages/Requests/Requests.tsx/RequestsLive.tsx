@@ -3,6 +3,8 @@ import { Eye, Loader2, Search } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
 import axiosInstance from "../../../configs/axios-middleware";
 import Api from '../../../api-endpoints/ApiUrls';
+import AgentAssign from "./AgentAssign";
+import TrackingModal from "./TrackingModal";
 
 interface RequestType {
     id: string;
@@ -45,7 +47,8 @@ const RequestsLive: React.FC = () => {
     const [otp, setOtp] = useState("");
     const [approvalAction, setApprovalAction] = useState<boolean>(true);
 
-
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [trackingModal, setTrackingModal] = useState(false)
 
     // ---------------- SOCKET ----------------
     // useEffect(() => {
@@ -172,29 +175,7 @@ const RequestsLive: React.FC = () => {
     }, [requests, search, statusFilter]);
 
     const [loadingId, setLoadingId] = useState<string | null>(null);
-    //     const handleAdminApproval = async (id: string, approvalStatus: string) => {
-    //     try {
-    //         setLoadingId(id);
 
-    //         await axiosInstance.post(
-    //             `${Api?.serviceModification}/${id}/admin-approval/`,
-    //             { approval_status: approvalStatus }
-    //         );
-
-    //         if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-    //             socketRef.current.send(
-    //                 JSON.stringify({
-    //                     action: "refresh_modifications"
-    //                 })
-    //             );
-    //         }
-
-    //     } catch (error) {
-    //         console.error(error);
-    //     } finally {
-    //         setLoadingId(null);
-    //     }
-    // };
 
     const handleAdminApproval = async (
         req: any,
@@ -324,6 +305,7 @@ const RequestsLive: React.FC = () => {
                                 <th className="px-4 py-3 text-left">S.No</th>
                                 <th className="px-4 py-3 text-left">Customer</th>
                                 <th className="px-4 py-3 text-left">Type</th>
+                                <th className="px-4 py-3 text-left">RequestedBy</th>
                                 <th className="px-4 py-3 text-left">Status</th>
                                 {/* <th className="px-4 py-3 text-left">Hub Status</th> */}
                                 <th className="px-4 py-3 text-left">Approval</th>
@@ -353,6 +335,9 @@ const RequestsLive: React.FC = () => {
                                     <td className="px-4 py-3">
                                         {req?.request_type}
                                     </td>
+                                    <td className="px-4 py-3 ">
+                                        {req?.requested_by_role}
+                                    </td>
 
                                     <td className="px-4 py-3">
                                         <span
@@ -366,9 +351,32 @@ const RequestsLive: React.FC = () => {
 
                                     <td className="px-6 py-4">
                                         {req.approval_status === "APPROVED" ? (
-                                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
-                                                Approved
-                                            </span>
+                                            <>
+                                                <span className="px-3 py-1 cursor-pointer text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                                                    Approved
+                                                </span>
+                                                {req?.request_type === "CANCELLATION" && req?.requested_by_role !== "CUSTOMER" && !req?.order_details?.assigned_agent_id && req?.order_details?.order_status !== "CANCELLED" && (
+                                                    <span
+                                                        onClick={() => {
+                                                            setSelectedRequest(req);
+                                                            setAssignModalOpen(true);
+                                                        }}
+                                                        className="px-3 cursor-pointer ml-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                                                        Assign
+                                                    </span>
+                                                )}
+                                                {req?.request_type === "HUB_SERVICE" && req?.approval_status === "APPROVED" && req?.status === "APPROVED"
+                                                    && (
+                                                        <span
+                                                            onClick={() => {
+                                                                setSelectedRequest(req)
+                                                                setTrackingModal(true)
+                                                            }}
+                                                            className="px-3 cursor-pointer ml-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                                                            Tracking
+                                                        </span>
+                                                    )}
+                                            </>
                                         ) : req.approval_status === "REJECTED" ? (
                                             <span className="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-600">
                                                 Rejected
@@ -414,6 +422,18 @@ const RequestsLive: React.FC = () => {
                     </table>
                 </div>
             )}
+
+            <AgentAssign
+                show={assignModalOpen}
+                onClose={() => setAssignModalOpen(false)}
+                order={selectedRequest?.order_details}
+            />
+
+            <TrackingModal
+                show={trackingModal}
+                onClose={() => setTrackingModal(false)}
+                requestId={selectedRequest?.id}
+            />
 
             {showModal && selectedRequest && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
@@ -721,6 +741,8 @@ const RequestsLive: React.FC = () => {
                     </div>
                 </div>
             )}
+
+
         </div>
     );
 };

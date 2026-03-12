@@ -149,6 +149,7 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 import { Loader, X } from "lucide-react";
+import Api from '../../api-endpoints/ApiUrls';
 
 interface Props {
   show: boolean;
@@ -245,14 +246,14 @@ const AttributeModal: React.FC<Props> = ({
       if (isEdit) {
 
         await axiosInstance.put(
-          `/api/attribute/${editAttribute.attribute_id}`,
+          `${Api?.attribute}/${editAttribute.attribute_id}`,
           payload
         );
 
       } else {
 
         await axiosInstance.post(
-          "/api/attribute",
+          `${Api?.attribute}`,
           payload
         );
 

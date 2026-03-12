@@ -79,7 +79,7 @@ const ServicesRequestFetch: React.FC = () => {
             setLoadingId(id);
 
             const updatedApi = await axiosInstance.post(
-                `${Api?.serviceModification}/${id}/admin-approval/`,
+                `${Api?.serviceModificationOrders}/${id}/admin-approval/`,
                 { is_approved: isApproved }
             );
             if (updatedApi) {
