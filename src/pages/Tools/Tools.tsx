@@ -21,7 +21,11 @@ const Tools: React.FC = () => {
     const [editTool, setEditTool] = useState<any>('');
     const [deleteItem, setDeleteItem] = useState<ToolType | null>(null);
     const [search, setSearch] = useState("");
-
+    const [statusFilter, setStatusFilter] = useState("");
+    const [brandFilter, setBrandFilter] = useState("");
+    const [categoryFilter, setCategoryFilter] = useState("");
+    const [brands, setBrands] = useState<any[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
 
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -29,17 +33,27 @@ const Tools: React.FC = () => {
     const [pagination, setPagination] = useState<any>(null);
 
     useEffect(() => {
-        fetchTools();
-    }, []);
+        fetchTools(1);
+        fetchBrands();
+        fetchCategories();
+    }, [search, statusFilter, brandFilter, categoryFilter]);
 
     const fetchTools = async (pageNumber = page, size = pageSize) => {
         try {
             setLoading(true);
 
-            const res = await axiosInstance.get(
-                `${Api?.tools}?page=${pageNumber}&size=${size}`
-            );
-            console.log("Tools Response:", res?.data);
+            const params: any = {
+                page: pageNumber,
+                size: size
+            };
+
+            if (search) params.search = search;
+            if (statusFilter) params.status = statusFilter;
+            if (brandFilter) params.brand_id = brandFilter;
+            if (categoryFilter) params.category_id = categoryFilter;
+
+            const res = await axiosInstance.get(Api.tools, { params });
+
             setTools(res?.data?.data?.tools || []);
 
             const p = res?.data?.data?.pagination;
@@ -80,6 +94,45 @@ const Tools: React.FC = () => {
         }
     };
 
+
+    const fetchBrands = async () => {
+        try {
+            const res = await axiosInstance.get(Api?.allBrands);
+            setBrands(res?.data?.brands || []);
+        } catch (err) {
+            console.error("Brand fetch failed:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchCategories = async () => {
+        try {
+            const res = await axiosInstance.get(Api?.categories);
+            setCategories(res?.data?.data || []);
+        } catch (err) {
+            console.error("Fetch error:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const toggleStatus = async (tool: any) => {
+        try {
+
+            const newStatus = tool.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+
+            await axiosInstance.put(`${Api.tools}/${tool.id}/`, {
+                status: newStatus
+            });
+
+            fetchTools();
+
+        } catch (error) {
+            console.error("Status update failed", error);
+        }
+    };
+
     // 🔥 Search Filter
     const filteredTools = tools.filter(
         (tool) =>
@@ -114,17 +167,80 @@ const Tools: React.FC = () => {
             </div>
 
             {/* 🔥 Search Box */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 grid md:grid-cols-5 gap-4">
+
+                <div className="flex flex-col">
+                    <label className="text-xs text-gray-600 mb-1">Search</label>
                     <input
                         type="text"
-                        placeholder="Search by name or model..."
+                        placeholder="Search tool..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        className="border px-3 py-2 rounded-lg"
                     />
                 </div>
+
+                <div className="flex flex-col">
+                    <label className="text-xs text-gray-600 mb-1">Status</label>
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="border px-3 py-2 rounded-lg"
+                    >
+                        <option value="">All Status</option>
+                        <option value="ACTIVE">ACTIVE</option>
+                        <option value="INACTIVE">INACTIVE</option>
+                    </select>
+                </div>
+
+                <div className="flex flex-col">
+                    <label className="text-xs text-gray-600 mb-1">Brand</label>
+                    <select
+                        value={brandFilter}
+                        onChange={(e) => setBrandFilter(e.target.value)}
+                        className="border px-3 py-2 rounded-lg"
+                    >
+                        <option value="">All Brands</option>
+                        {brands?.filter((brand) => brand?.type === "TOOLS")?.map((brand) => (
+                            <option key={brand?.id} value={brand?.id}>
+                                {brand?.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="flex flex-col">
+                    <label className="text-xs text-gray-600 mb-1">Category</label>
+                    <select
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                        className="border px-3 py-2 rounded-lg"
+                    >
+                        <option value="">All Categories</option>
+                        {categories?.filter((category) => category?.type === "TOOLS")?.map((category) => (
+                            <option key={category?.id} value={category?.id}>
+                                {category?.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Clear Button */}
+                <div className="flex flex-col justify-end">
+                    <button
+                        onClick={() => {
+                            setSearch("");
+                            setStatusFilter("");
+                            setBrandFilter("");
+                            setCategoryFilter("");
+                            fetchTools(1);
+                        }}
+                        className="px-4 py-2 bg-gray-100 text-sm rounded-lg hover:bg-gray-200"
+                    >
+                        Clear All
+                    </button>
+                </div>
+
             </div>
 
             {/* 🔥 Loading State */}
@@ -158,6 +274,9 @@ const Tools: React.FC = () => {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                         Price
                                     </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                        Status
+                                    </th>
                                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                                         Actions
                                     </th>
@@ -167,13 +286,34 @@ const Tools: React.FC = () => {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {filteredTools.length === 0 ? (
                                     <tr>
-                                        <td
-                                            colSpan={5}
-                                            className="px-6 py-6 text-center text-gray-500"
-                                        >
-                                            {tools.length === 0
-                                                ? "No tools created yet"
-                                                : "No matching tools found"}
+                                        <td colSpan={7} className="px-6 py-16">
+                                            <div className="flex flex-col items-center justify-center text-center">
+
+                                                <div className="bg-gray-100 rounded-full p-4 mb-4">
+                                                    <Search className="w-8 h-8 text-gray-400" />
+                                                </div>
+
+                                                {tools.length === 0 ? (
+                                                    <>
+                                                        <p className="text-lg font-semibold text-gray-700">
+                                                            No Tools Added Yet
+                                                        </p>
+                                                        <p className="text-sm text-gray-500 mt-1">
+                                                            Click <span className="font-medium text-orange-600">"Add Tool"</span> to create your first tool.
+                                                        </p>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-lg font-semibold text-gray-700">
+                                                            No Matching Tools Found
+                                                        </p>
+                                                        <p className="text-sm text-gray-500 mt-1">
+                                                            Try adjusting your search or filters.
+                                                        </p>
+                                                    </>
+                                                )}
+
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
@@ -201,7 +341,18 @@ const Tools: React.FC = () => {
                                             <td className="px-6 py-4 text-sm font-medium text-green-600">
                                                 ₹{tool?.price}
                                             </td>
-
+                                            <td className="px-6 py-4">
+                                                <button
+                                                    onClick={() => toggleStatus(tool)}
+                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition 
+        ${tool.status === "ACTIVE" ? "bg-green-500" : "bg-gray-300"}`}
+                                                >
+                                                    <span
+                                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition 
+            ${tool.status === "ACTIVE" ? "translate-x-6" : "translate-x-1"}`}
+                                                    />
+                                                </button>
+                                            </td>
                                             <td className="px-6 py-4 text-right text-sm">
                                                 <div className="flex justify-end space-x-2">
                                                     <button

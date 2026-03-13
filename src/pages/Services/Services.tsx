@@ -17,6 +17,9 @@ const Services: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState("");
     const [categories, setCategories] = useState<any[]>([]);
     const emptyImage = 'https://media.istockphoto.com/id/1222357475/vector/image-preview-icon-picture-placeholder-for-website-or-ui-ux-design-vector-illustration.jpg?s=612x612&w=0&k=20&c=KuCo-dRBYV7nz2gbk4J9w1WtTAgpTdznHu55W9FjimE='
+    const [statusFilter, setStatusFilter] = useState("");
+    const [zoneFilter, setZoneFilter] = useState("");
+    const [zones, setZones] = useState<any[]>([]);
 
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -49,31 +52,56 @@ const Services: React.FC = () => {
             service?.categories?.some(
                 (cat: any) => cat?.category === selectedCategory
             );
-        console.log(matchesCategory)
         return matchesSearch && matchesCategory;
     });
 
     useEffect(() => {
-        fetchServices();
+        fetchZones();
     }, []);
 
-    // const fetchServices = async () => {
-    //     try {
-    //         const res = await axiosInstance.get(`${Api?.services}/?include_categories=true&include_media=true&include_pricing=true&include_zones=true`);
-    //         setServices(res?.data?.services || []);
-    //     } catch (err) {
-    //         console.error(err);
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
+    const fetchZones = async (pageNumber = page, size = pageSize) => {
+        try {
+            setLoading(true);
+
+            const response = await axiosInstance.get(
+                `${Api?.allZone}?size=1000`
+            );
+
+            setZones(response?.data?.zones || []);
+
+            const p = response?.data?.pagination;
+
+            if (p) {
+                setPagination(p);
+                setPage(p.page);
+                setTotalPages(p.total_pages);
+            }
+
+        } catch (error) {
+            console.error("Failed to fetch zones:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const fetchServices = async (pageNumber = page, size = pageSize) => {
         try {
 
-            const res = await axiosInstance.get(
-                `${Api?.services}?page=${pageNumber}&size=${size}&include_categories=true&include_media=true&include_pricing=true&include_zones=true`
-            );
+            const params: any = {
+                page: pageNumber,
+                size: size,
+                include_categories: true,
+                include_media: true,
+                include_pricing: true,
+                include_zones: true
+            };
+
+            if (search) params.search = search;
+            if (selectedCategory) params.category_id = selectedCategory;
+            if (statusFilter) params.status = statusFilter;
+            if (zoneFilter) params.zone_id = zoneFilter;
+
+            const res = await axiosInstance.get(Api.services, { params });
 
             setServices(res?.data?.services || []);
 
@@ -89,6 +117,10 @@ const Services: React.FC = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchServices(1);
+    }, [search, selectedCategory, statusFilter, zoneFilter]);
 
     const handlePageChange = (newPage: number) => {
         setPage(newPage);
@@ -107,6 +139,32 @@ const Services: React.FC = () => {
         await axiosInstance.delete(`${Api?.services}/${deleteId}/`);
         setDeleteId(null);
         fetchServices();
+    };
+
+    const toggleStatus = async (service: any) => {
+        try {
+
+            const newStatus =
+                service.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+
+            const formData = new FormData();
+
+            const serviceObject = {
+                status: newStatus,
+            };
+
+            formData.append("service", JSON.stringify(serviceObject));
+
+            await axiosInstance.put(
+                `${Api?.services}/${service.id}/`,
+                formData
+            );
+
+            fetchServices();
+
+        } catch (error) {
+            console.error("Status update failed:", error);
+        }
     };
 
     return (
@@ -154,38 +212,80 @@ const Services: React.FC = () => {
             <div className="bg-white p-4 rounded-lg border border-gray-200 flex flex-col md:flex-row gap-4">
 
                 {/* Search */}
-                <input
-                    type="text"
-                    placeholder="Search service..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full md:w-1/3 border rounded-lg px-3 py-2 text-sm"
-                />
+                <div className="flex flex-col w-full md:w-1/3">
+                    <label className="text-xs text-gray-600 mb-1">Search</label>
+                    <input
+                        type="text"
+                        placeholder="Search service..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="border rounded-lg px-3 py-2 text-sm"
+                    />
+                </div>
 
-                {/* Category Filter */}
-                <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full md:w-1/4 border rounded-lg px-3 py-2 text-sm"
-                >
-                    <option value="">All Categories</option>
-                    {categories?.map((cat) => (
-                        <option key={cat?.id} value={cat?.id}>
-                            {cat?.category_name || cat?.name}
-                        </option>
-                    ))}
-                </select>
+                {/* Status */}
+                <div className="flex flex-col w-full md:w-1/4">
+                    <label className="text-xs text-gray-600 mb-1">Status</label>
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="border rounded-lg px-3 py-2 text-sm"
+                    >
+                        <option value="">All Status</option>
+                        <option value="ACTIVE">ACTIVE</option>
+                        <option value="INACTIVE">INACTIVE</option>
+                    </select>
+                </div>
 
-                {/* Clear Button */}
-                <button
-                    onClick={() => {
-                        setSearch("");
-                        setSelectedCategory("");
-                    }}
-                    className="px-4 py-2 bg-gray-100 text-sm rounded-lg hover:bg-gray-200"
-                >
-                    Clear
-                </button>
+                {/* Zone */}
+                <div className="flex flex-col w-full md:w-1/4">
+                    <label className="text-xs text-gray-600 mb-1">Zone</label>
+                    <select
+                        value={zoneFilter}
+                        onChange={(e) => setZoneFilter(e.target.value)}
+                        className="border rounded-lg px-3 py-2 text-sm"
+                    >
+                        <option value="">All Zones</option>
+                        {zones?.map((zone) => (
+                            <option key={zone?.id} value={zone?.id}>
+                                {zone?.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Category */}
+                <div className="flex flex-col w-full md:w-1/4">
+                    <label className="text-xs text-gray-600 mb-1">Category</label>
+                    <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="border rounded-lg px-3 py-2 text-sm"
+                    >
+                        <option value="">All Categories</option>
+                        {categories?.map((cat) => (
+                            <option key={cat?.id} value={cat?.id}>
+                                {cat?.category_name || cat?.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Clear */}
+                <div className="flex flex-col justify-end">
+                    <label className="text-xs text-transparent mb-1">Clear</label>
+                    <button
+                        onClick={() => {
+                            setSearch("");
+                            setSelectedCategory("");
+                            setStatusFilter("");
+                            setZoneFilter("");
+                        }}
+                        className="px-4 py-2 bg-gray-100 text-sm rounded-lg hover:bg-gray-200"
+                    >
+                        Clear
+                    </button>
+                </div>
 
             </div>
 
@@ -319,7 +419,7 @@ const Services: React.FC = () => {
                                                 </td>
 
                                                 {/* STATUS */}
-                                                <td className="px-6 py-4">
+                                                {/* <td className="px-6 py-4">
                                                     <span
                                                         className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${service.status === "ACTIVE"
                                                             ? "bg-green-100 text-green-800"
@@ -328,6 +428,35 @@ const Services: React.FC = () => {
                                                     >
                                                         {service.status}
                                                     </span>
+                                                </td> */}
+
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2">
+
+                                                        <button
+                                                            onClick={() => toggleStatus(service)}
+                                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition
+            ${service.status === "ACTIVE" ? "bg-green-500" : "bg-gray-300"}`}
+                                                        >
+                                                            <span
+                                                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition
+                ${service.status === "ACTIVE"
+                                                                        ? "translate-x-6"
+                                                                        : "translate-x-1"
+                                                                    }`}
+                                                            />
+                                                        </button>
+
+                                                        <span
+                                                            className={`text-xs font-medium ${service.status === "ACTIVE"
+                                                                ? "text-green-600"
+                                                                : "text-red-500"
+                                                                }`}
+                                                        >
+                                                            {service.status}
+                                                        </span>
+
+                                                    </div>
                                                 </td>
 
                                                 {/* ACTIONS */}

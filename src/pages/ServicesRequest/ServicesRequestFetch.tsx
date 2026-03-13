@@ -19,7 +19,7 @@ const ServicesRequestFetch: React.FC = () => {
     const [data, setData] = useState<ServiceModification[]>([]);
     const [filteredData, setFilteredData] = useState<ServiceModification[]>([]);
     const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("all");
+    const [statusFilter, setStatusFilter] = useState("");
     const [date, setDate] = useState("");
     const [loading, setLoading] = useState(true);
     const [startDate, setStartDate] = useState("");
@@ -40,8 +40,18 @@ const ServicesRequestFetch: React.FC = () => {
     const fetchModifications = async () => {
         try {
             setLoading(true);
-            const res = await axiosInstance.get(`${Api.serviceModificationOrders}/?start_date=${startDate}&end_date=${endDate}&status=${statusFilter}`);
-            setData(res?.data?.results || res?.data || []);
+
+            const params: any = {};
+
+            if (startDate) params.start_date = startDate;
+            if (endDate) params.end_date = endDate;
+            if (statusFilter && statusFilter !== "all") params.status = statusFilter;
+
+            const res: any = await axiosInstance.get(Api.serviceModificationOrders, {
+                params
+            });
+            console.log("Fetched Modifications:", res?.data?.service_modifications);
+            setData(res?.data?.service_modifications);
         } catch (error) {
             console.error(error);
         } finally {
@@ -98,7 +108,7 @@ const ServicesRequestFetch: React.FC = () => {
         <div className="p-0 space-y-6">
             {/* Header */}
             <h1 className="text-2xl font-bold text-gray-900">
-                Service Modification Requests (Live)
+                Service Modification
             </h1>
 
             {/* Filters */}
@@ -210,14 +220,14 @@ const ServicesRequestFetch: React.FC = () => {
                         </thead>
 
                         <tbody className="divide-y">
-                            {filteredData.length === 0 ? (
+                            {data?.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="text-center py-8 text-gray-400">
                                         No Data Found
                                     </td>
                                 </tr>
                             ) : (
-                                filteredData.map((item: any, index: number) => (
+                                data?.map((item: any, index: number) => (
                                     <tr key={item?.id} className="hover:bg-gray-50 capitalize">
                                         <td className="px-6 py-4">
                                             {index + 1}

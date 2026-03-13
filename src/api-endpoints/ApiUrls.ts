@@ -71,7 +71,7 @@ const supportTickets = `${baseUrl}/api/support-ticket/`;
 // service-modification
 const serviceModification = `${baseUrl}/service-modification`;
 // Orders Service Modification
-const serviceModificationOrders = `${baseUrl}/api/order/service-modification`;
+const serviceModificationOrders = `${baseUrl}/api/order/service-modifications`;
 
 // RequestApprovalOtp
 const requestApprovalOtp = `${baseUrl}/api/request/admin/refund/approve/request-otp`;

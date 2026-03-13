@@ -26,9 +26,9 @@ const InventoryModal: React.FC<Props> = ({
     console.log("Form State:", products);
 
     const fetchData = async () => {
-        const prod = await axiosInstance.get(`${Api?.products}`);
+        const prod = await axiosInstance.get(`${Api?.products}?size=1000`);
         const hubRes = await axiosInstance.get(Api?.allHubs);
-        setProducts(prod?.data?.data);
+        setProducts(prod?.data?.products);
         setHubs(hubRes.data?.hubs || []);
     };
 
