@@ -408,7 +408,6 @@ const Slots: React.FC = () => {
         </div>
       )}
 
-
     </div>
   );
 };

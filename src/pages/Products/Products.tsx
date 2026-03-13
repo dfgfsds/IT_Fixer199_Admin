@@ -49,7 +49,7 @@ const Products: React.FC = () => {
     };
 
 
-    const filteredProducts = products.filter((product) => {
+    const filteredProducts = products?.filter((product) => {
         const matchesSearch =
             product.name?.toLowerCase().includes(search.toLowerCase()) ||
             product.sku?.toLowerCase().includes(search.toLowerCase());
@@ -100,7 +100,7 @@ const Products: React.FC = () => {
         try {
             const res = await axiosInstance.get(`${Api?.products}?page=${pageNumber}&size=${size}&include_attribute=true&include_category=true&include_media=true&include_brand=true&include_pricing=true`);
             // setProducts(res?.data?.data || []);
-            setProducts(res?.data?.products || []);
+            setProducts(res?.data?.products);
 
             const pagination = res?.data?.pagination;
             setPagination(pagination);
@@ -118,6 +118,19 @@ const Products: React.FC = () => {
         await axiosInstance.delete(`${Api?.products}/${id}`);
         fetchProducts();
     };
+
+
+const handleProductToggle = async (product: any) => {
+    try {
+        const formData = new FormData();
+        const newStatus = product.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+        formData.append("status", newStatus);
+        await axiosInstance.put(`${Api?.products}/${product.id}`, formData);
+        fetchProducts(page);
+    } catch (error) {
+        console.error("Status update failed:", error);
+    }
+};
 
     return (
         <div className="space-y-6">
@@ -163,13 +176,6 @@ const Products: React.FC = () => {
                     value={products?.filter(p => p.status === "INACTIVE").length}
                     color="text-red-600"
                 />
-
-                {/* <StatCard
-                    title="Variants"
-                    value={products?.filter(p => p.type === "VARIANT").length}
-                    color="text-orange-600"
-                /> */}
-
             </div>
 
             {/* Filters */}
@@ -188,10 +194,10 @@ const Products: React.FC = () => {
                 <select
                     value={selectedBrand}
                     onChange={(e) => setSelectedBrand(e.target.value)}
-                    className="w-full md:w-1/4 border rounded-lg px-3 py-2 text-sm"
+                    className="w-full md:w-1/4 border rounded-lg px-3 py-2 text-sm capitalize"
                 >
                     <option value="">All Brands</option>
-                    {brands?.map((b) => (
+                    {brands?.filter((b) => b?.type === "PRODUCT")?.filter((i) => i?.status === "ACTIVE")?.map((b) => (
                         <option key={b.id} value={b.id}>
                             {b.name}
                         </option>
@@ -202,10 +208,10 @@ const Products: React.FC = () => {
                 <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full md:w-1/4 border rounded-lg px-3 py-2 text-sm"
+                    className="w-full md:w-1/4 border rounded-lg px-3 py-2 text-sm capitalize"
                 >
                     <option value="">All Categories</option>
-                    {categories?.map((c) => (
+                    {categories?.filter((c) => c?.type === "PRODUCT")?.filter((i) => i?.status === "ACTIVE")?.map((c) => (
                         <option key={c.id} value={c.id}>
                             {c.name}
                         </option>
@@ -271,7 +277,7 @@ const Products: React.FC = () => {
                                     </tr>
                                 ) : (
                                     <>
-                                        {filteredProducts?.map((product:any,index:number) => (
+                                        {filteredProducts?.map((product: any, index: number) => (
                                             <tr key={product.id} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 text-sm text-gray-900">
                                                     {index + 1}
@@ -317,7 +323,7 @@ const Products: React.FC = () => {
                                                     </div>
                                                 </td>
 
-                                                <td className="px-6 py-4">
+                                                {/* <td className="px-6 py-4">
                                                     <span
                                                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.status === "ACTIVE"
                                                             ? "bg-green-100 text-green-800"
@@ -331,6 +337,43 @@ const Products: React.FC = () => {
                                                         )}
                                                         {product.status}
                                                     </span>
+                                                </td> */}
+
+
+                                                <td className="px-6 py-4">
+
+                                                    <div className="flex items-center gap-2">
+
+
+
+                                                        <button
+                                                            onClick={() => handleProductToggle(product)}
+                                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition
+                ${product?.status === "ACTIVE"
+                                                                    ? "bg-green-500"
+                                                                    : "bg-gray-300"
+                                                                }`}
+                                                        >
+                                                            <span
+                                                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition
+                    ${product?.status === "ACTIVE"
+                                                                        ? "translate-x-6"
+                                                                        : "translate-x-1"
+                                                                    }`}
+                                                            />
+                                                        </button>
+
+                                                        <span
+                                                            className={`text-xs font-medium ${product?.status === "ACTIVE"
+                                                                ? "text-green-600"
+                                                                : "text-red-600"
+                                                                }`}
+                                                        >
+                                                            {product?.status}
+                                                        </span>
+
+                                                    </div>
+
                                                 </td>
 
                                                 <td className="px-6 py-4 text-right">

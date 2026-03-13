@@ -4,6 +4,7 @@ import axiosInstance from '../configs/axios-middleware';
 import Api from '../api-endpoints/ApiUrls';
 import ZoneModal from '../components/Modals/ZoneModal';
 import Pagination from '../components/Pagination';
+import { useNavigate } from 'react-router-dom';
 
 interface Zone {
   id: string;
@@ -32,9 +33,10 @@ const ZonalManager: React.FC = () => {
   const [search, setSearch] = useState("");
 
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(9);
   const [totalPages, setTotalPages] = useState(1);
   const [paginations, setPagination] = useState<any>(null);
+  const navigate = useNavigate();
 
   const filteredZones = zones?.filter((zone) => {
     const searchText = search?.toLowerCase();
@@ -63,6 +65,8 @@ const ZonalManager: React.FC = () => {
   //     setLoading(false);
   //   }
   // };
+
+  
   const fetchZones = async (pageNumber = page, size = pageSize) => {
     try {
       setLoading(true);
@@ -259,7 +263,7 @@ const ZonalManager: React.FC = () => {
                     className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
                   // onClick={() => setSelectedZone(zone)}
                   >
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between gap-2 flex-wrap mb-4">
                       <div className="flex items-center">
                         <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
                           <MapPin className="w-5 h-5 text-orange-600" />
@@ -274,7 +278,7 @@ const ZonalManager: React.FC = () => {
                         {zone?.status ? 'Active' : 'Inactive'}
                       </span> */}
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center  gap-2">
 
                         <span className={`text-xs font-medium ${zone.status === "ACTIVE" ? "text-green-600" : "text-red-600"}`}>
                           {zone.status === "ACTIVE" ? "ACTIVE" : "INACTIVE"}
@@ -293,14 +297,14 @@ const ZonalManager: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* <div className="space-y-3">
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
                           <Users className="w-4 h-4 text-gray-400 mr-2" />
                           <span className="text-sm text-gray-600">Agents</span>
                         </div>
                         <span className="text-sm font-medium text-gray-900">
-                          {zone.active_agents}/{zone.total_agents}
+                          {zone?.total_agents}
                         </span>
                       </div>
 
@@ -310,11 +314,11 @@ const ZonalManager: React.FC = () => {
                           <span className="text-sm text-gray-600">Orders</span>
                         </div>
                         <span className="text-sm font-medium text-gray-900">
-                          {zone.total_orders}
+                          {zone?.total_orders}
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between">
+                      {/* <div className="flex items-center justify-between">
                         <div className="flex items-center">
                           <DollarSign className="w-4 h-4 text-gray-400 mr-2" />
                           <span className="text-sm text-gray-600">Revenue</span>
@@ -322,9 +326,9 @@ const ZonalManager: React.FC = () => {
                         <span className="text-sm font-medium text-gray-900">
                           ₹{zone?.monthly_revenue?.toLocaleString()}
                         </span>
-                      </div>
+                      </div> */}
 
-                      {zone.pending_tickets > 0 && (
+                      {/* {zone.pending_tickets > 0 && (
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
                             <AlertCircle className="w-4 h-4 text-red-400 mr-2" />
@@ -334,9 +338,9 @@ const ZonalManager: React.FC = () => {
                             {zone.pending_tickets}
                           </span>
                         </div>
-                      )}
+                      )} */}
 
-                      {zone.manager_name && (
+                      {/* {zone.manager_name && (
                         <div className="pt-3 border-t border-gray-200">
                           <div className="flex items-center">
                             <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center">
@@ -349,10 +353,10 @@ const ZonalManager: React.FC = () => {
                             </span>
                           </div>
                         </div>
-                      )}
-                    </div> */}
+                      )} */}
+                    </div>
 
-                    <div className="flex justify-end mt-4 space-x-3">
+                    {/* <div className="flex justify-end mt-4 space-x-3">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -374,8 +378,43 @@ const ZonalManager: React.FC = () => {
                       >
                         Delete
                       </button>
-                    </div>
+                    </div> */}
 
+                    <div className="flex justify-end mt-4 space-x-3">
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/zone-slots?zone_id=${zone.id}`);
+                        }}
+                        className="text-sm px-3 py-1 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200"
+                      >
+                        View Slots
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditZone(zone);
+                          setShowFormModal(true);
+                        }}
+                        className="text-sm px-3 py-1 border rounded-lg hover:bg-gray-50"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteZoneId(zone.id);
+                          setShowDeleteModal(true);
+                        }}
+                        className="text-sm px-3 py-1 text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
+                      >
+                        Delete
+                      </button>
+
+                    </div>
 
                   </div>
                 ))}
