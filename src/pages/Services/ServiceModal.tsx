@@ -29,6 +29,10 @@ const ServiceModal: React.FC<Props> = ({
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [deletedMediaIds, setDeletedMediaIds] = useState<string[]>([]);
 
+    const [deletedCategories, setDeletedCategories] = useState<string[]>([]);
+    const [deletedPricingIds, setDeletedPricingIds] = useState<any[]>([]);
+    const [deletedZoneHubIds, setDeletedZoneHubIds] = useState<any[]>([]);
+
 
     const [loading, setLoading] = useState(false);
     const [apiErrors, setApiErrors] = useState<string>("");
@@ -48,6 +52,36 @@ const ServiceModal: React.FC<Props> = ({
             { zone_id: "", hub_id: "" }
         ],
     });
+
+    const resetForm = () => {
+        setForm({
+            name: "",
+            description: "",
+            parent: "",
+            is_otp_required: false,
+            eta: 0,
+            status: "ACTIVE",
+            categories: [],
+            pricing_models: [{ price_type_id: "", price: "" }],
+            zone_hub_mappings: [{ zone_id: "", hub_id: "" }],
+        });
+
+        setExistingMedia([]);
+        setNewMedia([]);
+        setPreviewUrls([]);
+        setDeletedMediaIds([]);
+
+        setDeletedCategories([]);
+        setDeletedPricingIds([]);
+        setDeletedZoneHubIds([]);
+
+        setApiErrors("");
+    };
+
+    const handleClose = () => {
+        resetForm();
+        onClose();
+    };
 
     // ---------------- FETCH MASTER DATA ----------------
     useEffect(() => {
@@ -87,9 +121,19 @@ const ServiceModal: React.FC<Props> = ({
 
 
     const handleCategoryChange = (selected: any) => {
+        const newCategories = selected ? selected.map((s: any) => s.value) : [];
+
+        if (isEdit) {
+            const removed = form.categories.filter(
+                (cat: string) => !newCategories.includes(cat)
+            );
+
+            setDeletedCategories((prev) => [...prev, ...removed]);
+        }
+
         setForm({
             ...form,
-            categories: selected ? selected.map((s: any) => s.value) : [],
+            categories: newCategories,
         });
     };
 
@@ -153,8 +197,22 @@ const ServiceModal: React.FC<Props> = ({
         });
     };
 
+
     const removePricing = (index: number) => {
         const updated = [...form.pricing_models];
+        const removed = updated[index];
+
+        if (isEdit && removed?.id) {
+            setDeletedPricingIds((prev) => [
+                ...prev,
+                {
+                    price_type_id: removed.price_type_id,
+                    hub_id: removed.hub_id,
+                    price: removed.price
+                }
+            ]);
+        }
+
         updated.splice(index, 1);
         setForm({ ...form, pricing_models: updated });
     };
@@ -182,6 +240,18 @@ const ServiceModal: React.FC<Props> = ({
 
     const removeZoneHub = (index: number) => {
         const updated = [...form.zone_hub_mappings];
+        const removed = updated[index];
+
+        if (isEdit && removed?.id) {
+            setDeletedZoneHubIds((prev) => [
+                ...prev,
+                {
+                    zone_id: removed.zone_id,
+                    hub_id: removed.hub_id
+                }
+            ]);
+        }
+
         updated.splice(index, 1);
         setForm({ ...form, zone_hub_mappings: updated });
     };
@@ -267,6 +337,22 @@ const ServiceModal: React.FC<Props> = ({
 
             newMedia.forEach((file: any) =>
                 formData.append("media_files", file)
+            );
+
+            deletedCategories.forEach((id) =>
+                formData.append("delete_categories", id)
+            );
+
+            deletedPricingIds.forEach((item) =>
+                formData.append("delete_pricing_models", JSON.stringify(item))
+            );
+
+            deletedZoneHubIds.forEach((item) =>
+                formData.append("delete_zone_hubs", JSON.stringify(item))
+            );
+
+            deletedMediaIds.forEach((id) =>
+                formData.append("delete_media_ids", id)
             );
 
             if (isEdit) {
@@ -616,7 +702,7 @@ const ServiceModal: React.FC<Props> = ({
                         <div className="flex justify-end gap-4 pt-6 border-t">
                             <button
                                 type="button"
-                                onClick={onClose}
+                                onClick={handleClose}
                                 className="px-5 py-2 border rounded-lg hover:bg-gray-50"
                             >
                                 Cancel

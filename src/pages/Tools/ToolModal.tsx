@@ -223,7 +223,7 @@ const ToolModal: React.FC<Props> = ({
                             className="w-full border rounded-lg px-3 py-2"
                         >
                             <option value="">Select Brand</option>
-                            {brands.map((b) => (
+                       {brands?.filter((brand) => brand?.type === "TOOLS")?.map((b) => (
                                 <option key={b.id} value={b.id}>
                                     {b.name}
                                 </option>
@@ -243,7 +243,7 @@ const ToolModal: React.FC<Props> = ({
                             className="w-full border rounded-lg px-3 py-2"
                         >
                             <option value="">Select category</option>
-                            {categories?.map((b) => (
+                            {categories?.filter((category) => category?.type === "TOOLS")?.map((b) => (
                                 <option key={b?.id} value={b?.id}>
                                     {b?.name}
                                 </option>

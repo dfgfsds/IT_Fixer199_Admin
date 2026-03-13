@@ -28,23 +28,9 @@ const ProductsInventory: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [pagination, setPagination] = useState<any>(null);
 
-    // const fetchInventory = async () => {
-    //     try {
-    //         setLoading(true);
-    //         const res = await axiosInstance.get(Api.productInventory);
-    //         setData(res.data?.data || []);
-    //     } catch (err) {
-    //         console.error(err);
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
-
     const fetchInventory = async (pageNumber = page, size = pageSize) => {
         try {
-
             setLoading(true);
-
             const res = await axiosInstance.get(
                 `${Api.productInventory}?page=${pageNumber}&size=${size}`
             );

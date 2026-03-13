@@ -93,9 +93,9 @@ const ProductModal: React.FC<Props> = ({
         setAttributesList(values);
     };
 
-    const categoryOptions = categories.map((cat) => ({
-        value: cat.id,
-        label: cat.name,
+    const categoryOptions = categories?.filter((cat) => cat?.type === "PRODUCT")?.filter((i) => i?.status === "ACTIVE")?.map((cat) => ({
+        value: cat?.id,
+        label: cat?.name,
     }));
 
     const handleCategoryChange = (selected: any) => {
@@ -105,14 +105,14 @@ const ProductModal: React.FC<Props> = ({
         });
     };
 
-    const selectedCategoryOptions = categoryOptions.filter((option) =>
-        form.category_ids.includes(option.value)
+    const selectedCategoryOptions = categoryOptions?.filter((option) =>
+        form?.category_ids.includes(option?.value)
     );
 
 
-    const attributeOptions = attributesList.map((attr) => ({
+    const attributeOptions = attributesList?.map((attr) => ({
         value: attr?.value_id,
-        label: `${attr.value}`,
+        label: `${attr?.value}`,
         full: attr,
     }));
 
@@ -121,16 +121,16 @@ const ProductModal: React.FC<Props> = ({
         setForm({
             ...form,
             attributes: selected
-                ? selected.map((s: any) => ({
-                    id: s.full.value_id,
-                    attribute_name: s.full.name,
-                    value: s.full.value,
+                ? selected?.map((s: any) => ({
+                    id: s?.full?.value_id,
+                    attribute_name: s?.full?.name,
+                    value: s?.full?.value,
                 }))
                 : [],
         });
     };
-    console.log(form)
-    const selectedAttributeOptions = attributeOptions.filter((option) =>
+
+    const selectedAttributeOptions = attributeOptions?.filter((option) =>
         form?.attributes?.some((a: any) => a?.id === option?.value)
     );
 
@@ -244,7 +244,6 @@ const ProductModal: React.FC<Props> = ({
         setForm({ ...form, specification: updatedSpecs });
     };
 
-
     // ---------------- Submit ----------------
     const handleSubmit = async (e: any) => {
         e.preventDefault();
@@ -290,7 +289,7 @@ const ProductModal: React.FC<Props> = ({
             // newImages.forEach((file) => {
             //     formData.append("media_files", file);
             // });
-            
+
             newImages.forEach((file) => {
                 formData.append("media_files[]", file);
             });
@@ -333,7 +332,6 @@ const ProductModal: React.FC<Props> = ({
         }
 
     };
-
 
     if (!show) return null;
 
@@ -486,12 +484,12 @@ const ProductModal: React.FC<Props> = ({
                             onChange={(e) =>
                                 setForm({ ...form, brand_id: e.target.value })
                             }
-                            className="w-full border rounded-lg px-3 py-2"
+                            className="w-full border rounded-lg px-3 py-2 capitalize"
                         >
                             <option value="">Select Brand</option>
-                            {brands.map((b) => (
-                                <option key={b.id} value={b.id}>
-                                    {b.name}
+                            {brands?.filter((b) => b?.type === "PRODUCT")?.filter((i) => i?.status === "ACTIVE")?.map((b) => (
+                                <option key={b?.id} value={b?.id}>
+                                    {b?.name}
                                 </option>
                             ))}
                         </select>
