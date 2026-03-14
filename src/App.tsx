@@ -37,6 +37,7 @@ import Requests from './pages/Requests.tsx/Requests';
 import ToolsInventoryMovement from './pages/ToolsInventoryMovement/ToolsInventoryMovement';
 import ProductInventoryMovement from './pages/productInventoryMovement/productInventoryMovement';
 import ZoneSlots from './pages/ZoneSlots/ZoneSlots';
+import ToolsInventory from './pages/ToolsInventory/ToolsInventory';
 
 
 const queryClient = new QueryClient();
@@ -104,6 +105,8 @@ const AppRoutes: React.FC = () => {
         <Route path='toolsInventoryMovement' element={<ToolsInventoryMovement />} />
         <Route path='productInventoryMovement' element={<ProductInventoryMovement />} />
         <Route path='zone-slots' element={<ZoneSlots />} />
+        <Route path='toolsInventory' element={<ToolsInventory />} />
+
       </Route>
     </Routes>
   );

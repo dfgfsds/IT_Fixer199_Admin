@@ -95,7 +95,7 @@ const HubMappingModal: React.FC<Props> = ({ show, onClose, hub }) => {
     if (!show || !hub) return null;
 
     return (
-     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] no-scrollbar overflow-y-auto">
 
                 {/* Header */}
@@ -166,7 +166,7 @@ const HubMappingModal: React.FC<Props> = ({ show, onClose, hub }) => {
                             className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500"
                         >
                             <option value="">Select Zone</option>
-                            {zones
+                            {zones?.filter((i: any) => i?.status === "ACTIVE")
                                 ?.filter(
                                     (zone) =>
                                         !mappings?.some((m) => m?.zone === zone?.id)

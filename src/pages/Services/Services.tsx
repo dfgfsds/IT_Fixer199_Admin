@@ -209,7 +209,7 @@ const Services: React.FC = () => {
             </div>
 
             {/* Filters */}
-            <div className="bg-white p-4 rounded-lg border border-gray-200 flex flex-col md:flex-row gap-4">
+            <div className="bg-white p-4 rounded-lg border border-gray-200 flex flex-col md:flex-row flex-wrap gap-4">
 
                 {/* Search */}
                 <div className="flex flex-col w-full md:w-1/3">
@@ -243,10 +243,10 @@ const Services: React.FC = () => {
                     <select
                         value={zoneFilter}
                         onChange={(e) => setZoneFilter(e.target.value)}
-                        className="border rounded-lg px-3 py-2 text-sm"
+                        className="border rounded-lg px-3 py-2 text-sm capitalize"
                     >
                         <option value="">All Zones</option>
-                        {zones?.map((zone) => (
+                        {zones?.map((zone: any) => (
                             <option key={zone?.id} value={zone?.id}>
                                 {zone?.name}
                             </option>
@@ -263,7 +263,7 @@ const Services: React.FC = () => {
                         className="border rounded-lg px-3 py-2 text-sm"
                     >
                         <option value="">All Categories</option>
-                        {categories?.map((cat) => (
+                        {categories?.filter((cat) => cat?.type === "SERVICE")?.map((cat) => (
                             <option key={cat?.id} value={cat?.id}>
                                 {cat?.category_name || cat?.name}
                             </option>

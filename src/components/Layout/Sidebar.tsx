@@ -163,22 +163,23 @@ const Sidebar: React.FC = () => {
     { name: 'Product Inventory Movement', icon: Store, path: '/productInventoryMovement' },
     { name: 'Hubs', icon: Store, path: '/hubs' },
     { name: 'Tools', icon: Wrench, path: '/tools' },
+    { name: 'Tools Inventory',icon: Store, path: '/toolsInventory' },
     { name: 'Services', icon: UserCog, path: '/services' },
     { name: 'Zonal Manager Panel', icon: MapPin, path: '/zones' },
-    { name: 'Slots', icon: Users, path: '/slots' },
+    // { name: 'Slots', icon: Users, path: '/slots' },
     {
       name: 'Orders Management',
       icon: ShoppingCart,
       children: [
         { name: 'All Orders', path: '/orders' },
-        { name: 'Refund Orders', path: '/refunds' },
-        { name: 'Tickets & Escalations', path: '/tickets' },
-        { name: 'Coupons & Promotions', path: '/coupons' },
-        { name: 'Payments & Settlements', path: '/payments' },
+        // { name: 'Refund Orders', path: '/refunds' },
+        // { name: 'Tickets & Escalations', path: '/tickets' },
+        // { name: 'Coupons & Promotions', path: '/coupons' },
+        // { name: 'Payments & Settlements', path: '/payments' },
 
       ],
     },
-    { name: 'Reports', icon: BarChart3, path: '/reports' },
+    // { name: 'Reports', icon: BarChart3, path: '/reports' },
     { name: 'Settings', icon: Settings, path: '/settings' },
   ];
 

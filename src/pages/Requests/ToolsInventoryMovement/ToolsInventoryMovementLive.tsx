@@ -164,7 +164,7 @@ const ToolsInventoryMovementLive: React.FC = () => {
 
             {/* HEADER */}
             <div>
-                <h1 className="text-xl font-bold">Tools Inventory Movement</h1>
+                <h1 className="text-xl font-bold">Tools Inventory Movement (Live)</h1>
                 <p className="text-gray-500 text-sm">
                     Realtime tools movement tracking
                 </p>

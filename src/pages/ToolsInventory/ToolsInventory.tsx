@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import { Search, Trash2, Plus, Loader2 } from "lucide-react";
-import InventoryModal from "./InventoryModal";
+// import InventoryModal from "./InventoryModal";
 import Api from '../../api-endpoints/ApiUrls';
 import Pagination from "../../components/Pagination";
+import ToolInventoryModal from "./ToolInventoryModal";
 
-const ProductsInventory: React.FC = () => {
+const ToolsInventory: React.FC = () => {
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -32,12 +33,12 @@ const ProductsInventory: React.FC = () => {
         try {
             setLoading(true);
             const res = await axiosInstance.get(
-                `${Api.productInventory}?page=${pageNumber}&size=${size}`
+                `${Api.toolsInventory}?page=${pageNumber}&size=${size}`
             );
 
-            setData(res?.data?.inventories || []);
+            setData(res?.data?.data?.inventories || []);
 
-            const p = res?.data?.pagination;
+            const p = res?.data?.data?.pagination;
 
             setPagination(p);
             setPage(p?.page);
@@ -69,10 +70,10 @@ const ProductsInventory: React.FC = () => {
     const filteredData = useMemo(() => {
         return data.filter((item) => {
             const matchesSearch =
-                item.product?.name
+                item.tool?.name
                     ?.toLowerCase()
                     .includes(search.toLowerCase()) ||
-                item.hub_name?.toLowerCase().includes(search.toLowerCase());
+                item?.hub_name?.toLowerCase().includes(search.toLowerCase());
 
             const matchesStock =
                 stockFilter === "all"
@@ -92,7 +93,7 @@ const ProductsInventory: React.FC = () => {
             setDeleteLoading(true);
 
             await axiosInstance.delete(
-                `${Api.productInventory}/${deleteInventory.id}/`
+                `${Api.toolsInventory}/${deleteInventory.id}/`
             );
 
             fetchInventory();
@@ -114,19 +115,19 @@ const ProductsInventory: React.FC = () => {
             setStockLoading(true);
 
             if (stockType === "add") {
-                await axiosInstance.post(`${Api.productInventory}/`, {
-                    product_id: selectedItem.product.id,
-                    hub_id: selectedItem.hub_id,
+                await axiosInstance.post(`${Api.toolsInventory}/`, {
+                    tool_id: selectedItem?.tool?.id,
+                    hub_id: selectedItem?.hub_id,
                     stock_in_hub: quantity,
                 });
             }
 
             if (stockType === "remove") {
                 await axiosInstance.post(
-                    `${Api.productInventory}/remove/`,
+                    `${Api.toolsInventory}/remove/`,
                     {
-                        product_id: selectedItem.product.id,
-                        hub_id: selectedItem.hub_id,
+                        tool_id: selectedItem?.tool?.id,
+                        hub_id: selectedItem?.hub_id,
                         quantity: quantity,
                     }
                 );
@@ -150,7 +151,7 @@ const ProductsInventory: React.FC = () => {
             {/* HEADER */}
             <div className="flex justify-between items-center">
                 <h1 className="text-xl font-bold">
-                    Product Inventory
+                    Tools Inventory
                 </h1>
 
                 <button
@@ -198,7 +199,7 @@ const ProductsInventory: React.FC = () => {
                         <thead className="bg-gray-100 text-xs uppercase text-gray-600">
                             <tr>
                                 <th className="px-4 py-3 text-left">S.No</th>
-                                <th className="px-4 py-3 text-left">Product</th>
+                                <th className="px-4 py-3 text-left">Tool</th>
                                 <th className="px-4 py-3 text-left">Hub</th>
                                 <th className="px-4 py-3 text-left">Stock</th>
                                 <th className="px-4 py-3 text-right">Action</th>
@@ -232,14 +233,14 @@ const ProductsInventory: React.FC = () => {
                             ) : (
                                 <>
                                     {filteredData.map((item: any, index: number) => (
-                                        <tr key={item.id} className="border-b hover:bg-gray-50">
+                                        <tr key={item?.id} className="border-b hover:bg-gray-50">
                                             <td className="px-4 py-3">{index + 1}</td>
                                             <td className="px-4 py-3">
-                                                {item.product?.name}
-                                                {/* {item.product?.name} */}
+                                                {item?.tool?.name}
+                                                {/* {item.product?.model} */}
                                             </td>
-                                            <td className="px-4 py-3">{item.hub_name || "-"}</td>
-                                            <td className="px-4 py-3">{item.stock_in_hub}</td>
+                                            <td className="px-4 py-3">{item?.hub_name || "-"}</td>
+                                            <td className="px-4 py-3">{item?.stock_in_hub}</td>
 
                                             <td className="px-4 py-3 text-right">
 
@@ -308,7 +309,7 @@ const ProductsInventory: React.FC = () => {
                 )}
             </div>
 
-            <InventoryModal
+            <ToolInventoryModal
                 show={showModal}
                 onClose={() => setShowModal(false)}
                 onSuccess={fetchInventory}
@@ -387,9 +388,9 @@ const ProductsInventory: React.FC = () => {
                             <div className="bg-gray-50 border rounded-2xl p-5 space-y-3">
 
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Product</span>
+                                    <span className="text-gray-500">Tool</span>
                                     <span className="font-semibold text-gray-800">
-                                        {selectedItem.product?.name}
+                                        {selectedItem.tool?.name}
                                     </span>
                                 </div>
 
@@ -471,4 +472,4 @@ const ProductsInventory: React.FC = () => {
     );
 };
 
-export default ProductsInventory;
+export default ToolsInventory;
