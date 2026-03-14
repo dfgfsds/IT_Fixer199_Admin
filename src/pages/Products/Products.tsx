@@ -120,17 +120,26 @@ const Products: React.FC = () => {
     };
 
 
-const handleProductToggle = async (product: any) => {
-    try {
-        const formData = new FormData();
-        const newStatus = product.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-        formData.append("status", newStatus);
-        await axiosInstance.put(`${Api?.products}/${product.id}`, formData);
-        fetchProducts(page);
-    } catch (error) {
-        console.error("Status update failed:", error);
-    }
-};
+    const handleProductToggle = async (product: any) => {
+        try {
+            const payload = new FormData();
+
+            const newStatus = product.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+            payload.append("status", newStatus);
+
+            await axiosInstance.put(`${Api?.products}/${product.id}`, payload);
+
+            // 🔥 Local state update (index change agathu)
+            setProducts((prev: any[]) =>
+                prev.map((p) =>
+                    p.id === product.id ? { ...p, status: newStatus } : p
+                )
+            );
+
+        } catch (error) {
+            console.error("Status update failed:", error);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -197,7 +206,7 @@ const handleProductToggle = async (product: any) => {
                     className="w-full md:w-1/4 border rounded-lg px-3 py-2 text-sm capitalize"
                 >
                     <option value="">All Brands</option>
-                    {brands?.filter((b) => b?.type === "PRODUCT")?.filter((i) => i?.status === "ACTIVE")?.map((b) => (
+                    {brands?.filter((b) => b?.type === "PRODUCT")?.map((b) => (
                         <option key={b.id} value={b.id}>
                             {b.name}
                         </option>
@@ -211,7 +220,7 @@ const handleProductToggle = async (product: any) => {
                     className="w-full md:w-1/4 border rounded-lg px-3 py-2 text-sm capitalize"
                 >
                     <option value="">All Categories</option>
-                    {categories?.filter((c) => c?.type === "PRODUCT")?.filter((i) => i?.status === "ACTIVE")?.map((c) => (
+                    {categories?.filter((c) => c?.type === "PRODUCT")?.map((c) => (
                         <option key={c.id} value={c.id}>
                             {c.name}
                         </option>
@@ -412,7 +421,6 @@ const handleProductToggle = async (product: any) => {
 
                                                     </div>
                                                 </td>
-
 
                                             </tr>
                                         ))}

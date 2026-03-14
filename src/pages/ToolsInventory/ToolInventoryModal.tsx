@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import { Loader2 } from "lucide-react";
 import Api from "../../api-endpoints/ApiUrls";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 interface Props {
     show: boolean;
@@ -9,7 +10,7 @@ interface Props {
     onSuccess: () => void;
 }
 
-const InventoryModal: React.FC<Props> = ({
+const ToolInventoryModal: React.FC<Props> = ({
     show,
     onClose,
     onSuccess,
@@ -20,7 +21,7 @@ const InventoryModal: React.FC<Props> = ({
     const [apiErrors, setApiErrors] = useState<string>("");
 
     const initialForm = {
-        product_id: "",
+        tool_id: "",
         hub_id: "",
         stock_in_hub: 0,
     };
@@ -38,19 +39,17 @@ const InventoryModal: React.FC<Props> = ({
     };
 
 
+
     const fetchData = async () => {
-        const prod = await axiosInstance.get(`${Api?.products}?size=1000`);
+        const prod = await axiosInstance.get(`${Api?.tools}?size=1000`);
         const hubRes = await axiosInstance.get(Api?.allHubs);
-        setProducts(prod?.data?.products);
+        setProducts(prod?.data?.data?.tools);
         setHubs(hubRes.data?.hubs || []);
     };
 
 
     useEffect(() => {
         if (!show) return;
-
-
-
         fetchData();
     }, [show]);
 
@@ -60,16 +59,16 @@ const InventoryModal: React.FC<Props> = ({
             setLoading(true);
 
             const updatedApi = await axiosInstance.post(
-                "/api/product-inventory/inventory/",
+                `${Api.toolsInventory}/`,
                 form
             );
-
             if (updatedApi) {
                 onSuccess();
                 handleClose();
             }
 
         } catch (err) {
+            setApiErrors(extractErrorMessage(err));
             console.error(err);
         } finally {
             setLoading(false);
@@ -92,18 +91,18 @@ const InventoryModal: React.FC<Props> = ({
                     {/* Product */}
                     <div>
                         <label className="block text-sm font-medium mb-1">
-                            Product *
+                            Tools *
                         </label>
                         <select
                             required
-                            value={form.product_id}
+                            value={form.tool_id}
                             onChange={(e) =>
-                                setForm({ ...form, product_id: e.target.value })
+                                setForm({ ...form, tool_id: e.target.value })
                             }
                             className="w-full border px-3 py-2 rounded-lg"
                         >
                             <option value="">Select Product</option>
-                            {products?.map((p) => (
+                            {products?.filter((i: any) => i?.status === "ACTIVE")?.map((p) => (
                                 <option key={p.id} value={p.id}>
                                     {p.name}
                                 </option>
@@ -125,7 +124,7 @@ const InventoryModal: React.FC<Props> = ({
                             className="w-full border px-3 py-2 rounded-lg"
                         >
                             <option value="">Select Hub</option>
-                            {hubs.map((h) => (
+                            {hubs?.filter((i: any) => i?.status === "ACTIVE")?.map((h) => (
                                 <option key={h.id} value={h.id}>
                                     {h.name}
                                 </option>
@@ -152,6 +151,7 @@ const InventoryModal: React.FC<Props> = ({
                             className="w-full border px-3 py-2 rounded-lg"
                         />
                     </div>
+
                     {apiErrors && (
                         <p className="text-red-500 mt-2 text-end">
                             {apiErrors}
@@ -184,4 +184,4 @@ const InventoryModal: React.FC<Props> = ({
     );
 };
 
-export default InventoryModal;
+export default ToolInventoryModal;

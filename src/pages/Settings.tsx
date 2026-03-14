@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, Users, Shield, DollarSign, Bell, Globe, Save } from 'lucide-react';
+import AppSetting from '../components/AppSetting/AppSetting';
 
 interface Role {
   id: string;
@@ -26,7 +27,7 @@ const Settings: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'roles' | 'pricing' | 'notifications' | 'business'>('roles');
+  const [activeTab, setActiveTab] = useState<'roles' | 'pricing' | 'notifications' | 'business' | 'appSetting'>('appSetting');
   const [showCreateRole, setShowCreateRole] = useState(false);
 
   const [newRole, setNewRole] = useState({
@@ -184,23 +185,24 @@ const Settings: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings & Roles</h1>
+          {/* <h1 className="text-2xl font-bold text-gray-900">Settings & Roles</h1> */}
+          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
           <p className="text-gray-600">Manage system settings and user permissions</p>
         </div>
-        <button
-          onClick={handleUpdateSettings}
-          className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700"
-        >
-          <Save className="w-4 h-4 mr-2" />
-          Save Changes
-        </button>
+        {/* <button
+            onClick={handleUpdateSettings}
+            className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Save Changes
+          </button> */}
       </div>
 
       {/* Tabs */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="border-b border-gray-200">
           <nav className="flex space-x-8 px-6">
-            <button
+            {/* <button
               onClick={() => setActiveTab('roles')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'roles'
@@ -243,6 +245,16 @@ const Settings: React.FC = () => {
             >
               <Globe className="w-5 h-5 inline mr-2" />
               Business Settings
+            </button> */}
+            <button
+              onClick={() => setActiveTab('appSetting')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'appSetting'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+            >
+              <Globe className="w-5 h-5 inline mr-2" />
+              App Settings
             </button>
           </nav>
         </div>
@@ -297,7 +309,7 @@ const Settings: React.FC = () => {
           {activeTab === 'pricing' && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900">Pricing Configuration</h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h4 className="font-medium text-gray-900 mb-4">Base Service Fee</h4>
@@ -375,7 +387,7 @@ const Settings: React.FC = () => {
           {activeTab === 'notifications' && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900">Notification Settings</h3>
-              
+
               <div className="space-y-4">
                 {Object.entries(currentSettings.notification_settings).map(([setting, enabled]) => (
                   <div key={setting} className="flex items-center justify-between">
@@ -415,7 +427,7 @@ const Settings: React.FC = () => {
           {activeTab === 'business' && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900">Business Settings</h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h4 className="font-medium text-gray-900 mb-4">Business Hours</h4>
@@ -486,6 +498,10 @@ const Settings: React.FC = () => {
               </div>
             </div>
           )}
+
+          {activeTab === 'appSetting' && (
+            <AppSetting />
+          )}
         </div>
       </div>
 
@@ -502,7 +518,7 @@ const Settings: React.FC = () => {
                 ×
               </button>
             </div>
-            
+
             <form onSubmit={handleCreateRole} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

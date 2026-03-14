@@ -110,7 +110,12 @@ const requestTracking = `${baseUrl}/api/request/tracking`;
 
 // Tracking Delivery Verify OTP
 const deliveryVerifyOtp = `${baseUrl}/api/request/delivery/verify-otp`;
-
+// /api/app-settings
+const appSettings =`${baseUrl}/api/app-settings`;
+// /api/tools/inventory/
+const toolsInventory=`${baseUrl}/api/tools/inventory`;
+// api/notifications
+const notifications=`${baseUrl}/api/notifications`;
 
 export default {
   login,
@@ -164,6 +169,9 @@ export default {
   directSlotChange,
   requestTracking,
   deliveryVerifyOtp,
+  appSettings,
+  toolsInventory,
+  notifications,
 };
 
 

@@ -57,6 +57,29 @@ const Categories: React.FC = () => {
             cat.type.toLowerCase().includes(search.toLowerCase())
     );
 
+    const handleStatusToggle = async (cat: Category) => {
+    try {
+
+        const formData = new FormData();
+
+        formData.append(
+            "status",
+            cat.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"
+        );
+
+        await axiosInstance.put(
+            `${Api?.categories}/${cat.id}`,
+            formData
+        );
+
+        fetchCategories();
+
+    } catch (err) {
+        console.error("Status update failed:", err);
+    }
+};
+
+
     return (
         <div className="space-y-6 w-full">
 
@@ -154,7 +177,7 @@ const Categories: React.FC = () => {
                                             {cat.type}
                                         </td>
 
-                                        <td className="px-6 py-4 text-sm">
+                                        {/* <td className="px-6 py-4 text-sm">
                                             <span
                                                 className={`px-2 py-1 rounded-full text-xs font-medium ${cat.status === "ACTIVE"
                                                     ? "bg-green-100 text-green-700"
@@ -163,7 +186,24 @@ const Categories: React.FC = () => {
                                             >
                                                 {cat.status}
                                             </span>
-                                        </td>
+                                        </td> */}
+
+                                        <td className="px-6 py-4 text-sm">
+    <label className="relative inline-flex items-center cursor-pointer">
+        <input
+            type="checkbox"
+            checked={cat.status === "ACTIVE"}
+            onChange={() => handleStatusToggle(cat)}
+            className="sr-only peer"
+        />
+        <div className="w-11 h-6 bg-gray-200 rounded-full peer 
+        peer-checked:bg-green-500 
+        after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+        after:bg-white after:border after:rounded-full after:h-5 after:w-5
+        after:transition-all peer-checked:after:translate-x-full">
+        </div>
+    </label>
+</td>
 
                                         <td className="px-6 py-4 text-sm text-gray-500">
                                             {new Date(cat.created_at).toLocaleDateString()}

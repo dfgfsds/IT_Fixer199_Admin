@@ -92,11 +92,11 @@ const HubManagersModal = ({ show, onClose, hub }: any) => {
                         <select
                             value={selectedManager}
                             onChange={(e) => setSelectedManager(e.target.value)}
-                            className="border rounded-lg px-3 py-2 flex-1 text-sm"
+                            className="border rounded-lg px-3 py-2 flex-1 text-sm capitalize"
                         >
                             <option value="">Select Manager</option>
 
-                            {availableManagers.map((m: any) => (
+                            {availableManagers?.filter((i) => i?.status === "ACTIVE")?.map((m: any) => (
                                 <option key={m.id} value={m.id}>
                                     {m.name} ({m.email})
                                 </option>
