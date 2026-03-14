@@ -3,7 +3,8 @@ import { Bell, Search, User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { initializeApp } from 'firebase/app';
-
+import axiosInstance from '../../configs/axios-middleware';
+import Api from '../../api-endpoints/ApiUrls';
 
 // Firebase config - SAME as in Service Worker
 const firebaseConfig = {
@@ -24,6 +25,26 @@ const Header: React.FC = () => {
   const [notifications, setNotifications] = React.useState<any[]>([]);
   const [notifOpen, setNotifOpen] = React.useState(false);
   const [loadingNotif, setLoadingNotif] = React.useState(false);
+  const notificationSound = React.useRef<HTMLAudioElement | null>(null);
+  const notifRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: any) => {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setNotifOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    notificationSound.current = new Audio("/music/bell.wav");
+  }, []);
 
   const fetchNotifications = async () => {
     try {
@@ -146,18 +167,22 @@ const Header: React.FC = () => {
     const unsubscribe = onMessage(messaging, (payload) => {
       console.log("📩 Firebase Message Received:", payload);
 
-      const title =
-        payload.notification?.title || "New Notification";
+      const title = payload.notification?.title || "New Notification";
+      const body = payload.notification?.body || "You have a new message";
 
-      const body =
-        payload.notification?.body || "You have a new message";
+      // 🔔 Play sound
+      if (notificationSound.current) {
+        notificationSound.current.currentTime = 0;
+        notificationSound.current.play().catch((err) => {
+          console.log("Sound blocked:", err);
+        });
+      }
 
       const notification = new Notification(title, {
         body: body,
         icon: "/default-icon.png",
       });
 
-      // 🔥 Auto close after 4 seconds
       setTimeout(() => {
         notification.close();
       }, 4000);
@@ -165,6 +190,22 @@ const Header: React.FC = () => {
 
     return () => unsubscribe();
   }, []);
+
+  const markAsRead = async (id: string) => {
+    try {
+      const updatedApi = await axiosInstance.patch(`${Api?.notifications}/${id}/read/`);
+
+      if (updatedApi) {
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n.id === id ? { ...n, is_read: true } : n
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Read notification error:", err);
+    }
+  };
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 h-16 flex items-center justify-between px-6">
@@ -180,11 +221,6 @@ const Header: React.FC = () => {
       </div>
 
       <div className="flex items-center space-x-4">
-        {/* <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button> */}
-
         <div className="relative">
           <button
             onClick={() => {
@@ -193,11 +229,18 @@ const Header: React.FC = () => {
             }}
             className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <Bell className="w-5 h-5" />
+            <Bell className="w-5 h-5 animate-[bellShake_0.5s]" />
+            {notifications?.some(n => !n.is_read) && (
+              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            )}
           </button>
 
           {notifOpen && (
-            <div className="absolute right-0 mt-2 w-96 bg-white shadow-lg rounded-lg border border-gray-200 max-h-96 overflow-y-auto z-50">
+            <div
+              ref={notifRef}
+              onMouseLeave={() => setNotifOpen(false)}
+              className="absolute right-0 mt-2 w-96 bg-white shadow-lg rounded-lg border border-gray-200 max-h-96 overflow-y-auto z-50"
+            >
 
               {loadingNotif ? (
                 <div className="p-4 text-center text-gray-500">
@@ -211,6 +254,7 @@ const Header: React.FC = () => {
                 notifications?.map((notif) => (
                   <div
                     key={notif.id}
+                    onClick={() => markAsRead(notif.id)}
                     className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${!notif.is_read ? "bg-gray-100" : ""
                       }`}
                   >

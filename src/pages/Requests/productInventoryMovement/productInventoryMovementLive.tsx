@@ -150,7 +150,7 @@ const ProductInventoryMovementLive: React.FC = () => {
 
             <div>
                 <h1 className="text-xl font-bold">
-                    Product Inventory Movements
+                    Product Inventory Movements (Live)
                 </h1>
 
                 <p className="text-sm text-gray-500">

@@ -257,7 +257,7 @@ const RequestsLive: React.FC = () => {
 
     return (
         <div className="p-0 space-y-6">
-            <h1 className="text-xl font-bold">Live Requests</h1>
+            <h1 className="text-xl font-bold">Requests (Live)</h1>
 
             {/* 🔎 FILTER DESIGN */}
             <div className="bg-white p-4 rounded-lg border flex flex-wrap gap-4 items-center">

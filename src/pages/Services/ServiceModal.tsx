@@ -111,7 +111,7 @@ const ServiceModal: React.FC<Props> = ({
         setHubs(res?.data?.hubs || []);
     };
 
-    const categoryOptions = categories.map((cat) => ({
+    const categoryOptions = categories?.filter((cat) => cat?.type === "SERVICE")?.filter((i) => i?.status === "ACTIVE")?.map((cat) => ({
         value: cat.id,
         label: cat.name,
     }));

@@ -207,6 +207,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
           <thead className="bg-gray-100 border-b border-gray-300 text-xs uppercase tracking-wider text-gray-600">
             <tr>
               <th className="px-6 py-3">S.No</th>
+              <th className="px-6 py-3">Order Id</th>
               <th className="px-6 py-3">Customer</th>
               <th className="px-6 py-3">Zone</th>
               <th className="px-6 py-3">Slot</th>
@@ -231,6 +232,12 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                       {index + 1}
                     </div>
 
+                  </td>
+   {/* ORDER ID */}
+                  <td className="px-6 py-4">
+                    <div className="font-medium text-gray-900 capitalize">
+                      {order?.id}
+                    </div>  
                   </td>
 
                   {/* CUSTOMER */}
