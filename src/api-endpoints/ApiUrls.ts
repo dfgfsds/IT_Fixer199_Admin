@@ -117,6 +117,10 @@ const toolsInventory=`${baseUrl}/api/tools/inventory`;
 // api/notifications
 const notifications=`${baseUrl}/api/notifications`;
 
+// refund/direct/request-otp
+const refundOtpRequest=`${baseUrl}/api/request/admin/refund/direct/request-otp`;
+const refundOtpVerify =`${baseUrl}/api/request/admin/refund/direct/verify`;
+
 export default {
   login,
   allUsers,
@@ -172,6 +176,8 @@ export default {
   appSettings,
   toolsInventory,
   notifications,
+  refundOtpRequest,
+  refundOtpVerify,
 };
 
 
