@@ -215,6 +215,7 @@ const Orders: React.FC = () => {
           onViewOrder={handleViewOrder}
           onEditOrder={handleEditOrder}
           onAssignAgent={handleAssignAgent}
+          fetchOrders={fetchOrders}
         />
       )}
 
