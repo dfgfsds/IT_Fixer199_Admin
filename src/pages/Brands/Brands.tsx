@@ -20,21 +20,39 @@ const Brands: React.FC = () => {
     const [editBrand, setEditBrand] = useState<any>('');
     const [deleteBrand, setDeleteBrand] = useState<Brand | null>(null);
     const [search, setSearch] = useState("");
+    const [typeFilter, setTypeFilter] = useState("");
 
     useEffect(() => {
         fetchBrands();
-    }, []);
+    }, [typeFilter]);
 
     const fetchBrands = async () => {
         try {
-            const res = await axiosInstance.get(Api?.allBrands);
+
+            const params = new URLSearchParams();
+
+            if (typeFilter !== "") {
+                params.append("type", typeFilter);
+            }
+
+            const res = await axiosInstance.get(
+                `${Api?.allBrands}?${params.toString()}`
+            );
+
             setBrands(res?.data?.brands || []);
+
         } catch (err) {
             console.error("Brand fetch failed:", err);
         } finally {
             setLoading(false);
         }
     };
+
+    const clearFilters = () => {
+        setSearch("");
+        setTypeFilter("");
+    };
+
 
     const handleDelete = async () => {
         if (!deleteBrand) return;
@@ -51,9 +69,31 @@ const Brands: React.FC = () => {
     // 🔥 Search Filter
     const filteredBrands = brands.filter(
         (brand) =>
-            brand.name.toLowerCase().includes(search.toLowerCase()) ||
-            brand.type.toLowerCase().includes(search.toLowerCase())
+            brand?.name?.toLowerCase()?.includes(search?.toLowerCase()) ||
+            brand?.type?.toLowerCase()?.includes(search?.toLowerCase())
     );
+
+    const handleStatusToggle = async (brand: Brand) => {
+        try {
+
+            const formData = new FormData();
+
+            formData.append(
+                "status",
+                brand.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"
+            );
+
+            await axiosInstance.put(
+                `${Api?.Brands}/${brand.id}`,
+                formData
+            );
+
+            fetchBrands();
+
+        } catch (err) {
+            console.error("Status update failed:", err);
+        }
+    };
 
     return (
         <div className="space-y-6 w-full">
@@ -83,16 +123,45 @@ const Brands: React.FC = () => {
 
             {/* 🔥 Search Box */}
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                        type="text"
-                        placeholder="Search by brand name or type..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
+
+                <div className="flex flex-col sm:flex-row gap-4">
+
+                    {/* SEARCH */}
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <input
+                            type="text"
+                            placeholder="Search by brand name..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                        />
+                    </div>
+
+                    {/* TYPE FILTER */}
+                    <select
+                        value={typeFilter}
+                        onChange={(e) => setTypeFilter(e.target.value)}
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    >
+                        <option value="">All Types</option>
+                        <option value="SERVICE">Service</option>
+                        <option value="PRODUCT">Product</option>
+                        <option value="TOOLS">Tools</option>
+                    </select>
+
+                    {/* CLEAR */}
+                    {(search || typeFilter) && (
+                        <button
+                            onClick={clearFilters}
+                            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+                        >
+                            Clear
+                        </button>
+                    )}
+
                 </div>
+
             </div>
 
             {/* Table */}
@@ -167,14 +236,21 @@ const Brands: React.FC = () => {
                                         </td>
 
                                         <td className="px-6 py-4 text-sm">
-                                            <span
-                                                className={`px-2 py-1 rounded-full text-xs font-medium ${brand.status === "ACTIVE"
-                                                        ? "bg-green-100 text-green-700"
-                                                        : "bg-red-100 text-red-700"
-                                                    }`}
-                                            >
-                                                {brand.status}
-                                            </span>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={brand.status === "ACTIVE"}
+                                                    onChange={() => handleStatusToggle(brand)}
+                                                    className="sr-only peer"
+                                                />
+
+                                                <div className="w-11 h-6 bg-gray-200 rounded-full peer 
+        peer-checked:bg-green-500
+        after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+        after:bg-white after:border after:rounded-full after:h-5 after:w-5
+        after:transition-all peer-checked:after:translate-x-full">
+                                                </div>
+                                            </label>
                                         </td>
 
                                         <td className="px-6 py-4 text-right text-sm">

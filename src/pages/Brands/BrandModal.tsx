@@ -83,6 +83,8 @@ const BrandModal: React.FC<Props> = ({
         }
     };
 
+    
+
     if (!show) return null;
 
     return (
