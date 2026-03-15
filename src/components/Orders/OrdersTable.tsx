@@ -1,4 +1,4 @@
-import { Eye, MapPin, SearchX } from "lucide-react";
+import { Copy, Eye, MapPin, SearchX } from "lucide-react";
 import { Order } from '../../types';
 import { useState } from "react";
 import OrderViewModal from "./OrderViewModal";
@@ -6,6 +6,8 @@ import OrderLocationModal from "./OrderLocationModal";
 import RefundModal from "./RefundModal";
 import Api from '../../api-endpoints/ApiUrls';
 import axiosInstance from "../../configs/axios-middleware";
+import toast from "react-hot-toast";
+import SlotChangeModal from "./SlotChangeModal";
 
 interface OrdersTableProps {
   orders: Order[];
@@ -25,6 +27,14 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [locationOrder, setLocationOrder] = useState(null);
+  const [cancelOrder, setCancelOrder] = useState<any>(null);
+
+  const [slotChangeOrder, setSlotChangeOrder] = useState<any>(null);
+
+  const openSlotChange = (order: any) => {
+    setSlotChangeOrder(order);
+  };
+
 
   const handleViewOrder = (order: any) => {
     setSelectedOrder(order);
@@ -47,6 +57,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
   };
 
   const [refundOrder, setRefundOrder] = useState<any>(null);
+
   const handleRefund = async (order: any) => {
     try {
       const updatedApi = await axiosInstance.post(`${Api?.refundOtpRequest}/`, {
@@ -61,8 +72,37 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
     }
   };
 
+  const canChangeSlot = (status: string) => {
+    const blocked = [
+      "IN_PROGRESS",
+      "IN_TRANSIT",
+      "CANCELLED",
+      "COMPLETED",
+      "SERVICE_IN_PROGRESS",
+      "REFUNDED"
+    ];
+    return !blocked.includes(status);
+  };
 
 
+  const handleCancelOrder = async (order: any) => {
+    try {
+      await axiosInstance.post(
+        `${Api?.orderCancel}/${order?.id}/admin-cancel/`
+      );
+
+      fetchOrders();
+      setCancelOrder(null);
+
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "something went wrong, please try again later")
+    }
+  };
+
+  const copyOrderId = (id: string) => {
+    navigator.clipboard.writeText(id);
+    toast.success("Order ID copied");
+  };
   return (
     <div className="bg-white border border-gray-200">
       <div className="overflow-x-auto">
@@ -100,8 +140,19 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                   </td>
                   {/* ORDER ID */}
                   <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900 capitalize">
-                      {order?.id}
+                    <div className="flex items-center gap-2">
+
+                      <span className="font-medium text-gray-900">
+                        {order?.id}
+                      </span>
+
+                      <button
+                        onClick={() => copyOrderId(order?.id)}
+                        className="text-gray-400 hover:text-gray-700 transition"
+                      >
+                        <Copy size={14} />
+                      </button>
+
                     </div>
                   </td>
 
@@ -136,23 +187,37 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                     >
                       {order?.order_status}
                     </span>
-                    {order?.order_status === "CANCELLED" && order?.payment_status === "SUCCESS" && (
-                      <button
-                        onClick={() => handleRefund(order)}
-                        className="ml-2 text-xs text-red-600 underline"
-                      >
-                        Refund
-                      </button>
-                    )}
+                    <div className="flex flex-wrap gap-2 mt-2">
 
-                      {/* {order?.order_status === "CANCELLED" && order?.order_status === "SUCCESS" && (
-                      <button
-                        onClick={() => handleRefund(order)}
-                        className="ml-2 text-xs text-red-600 underline"
-                      >
-                        Refund
-                      </button>
-                    )} */}
+                      {order?.order_status === "CANCELLED" && order?.payment_status === "SUCCESS" && (
+                        <button
+                          onClick={() => handleRefund(order)}
+                          className="text-xs px-2 py-1 rounded-md bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition"
+                        >
+                          Refund
+                        </button>
+                      )}
+
+                      {order?.order_status !== "CANCELLED" && order?.order_status !== "COMPLETED" && (
+                        <button
+                          onClick={() => setCancelOrder(order)}
+                          className="text-xs px-2 py-1 rounded-md bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition"
+                        >
+                          Cancel
+                        </button>
+                      )}
+
+                      {canChangeSlot(order?.order_status) && (
+                        <button
+                          onClick={() => openSlotChange(order)}
+                          className="text-xs px-2 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition"
+                        >
+                          Change Slot
+                        </button>
+                      )}
+
+                    </div>
+
                   </td>
 
                   {/* AMOUNT */}
@@ -233,6 +298,55 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
             fetchOrders();
           }}
         />
+      )}
+
+      {slotChangeOrder && (
+        <SlotChangeModal
+          order={slotChangeOrder}
+          onClose={() => setSlotChangeOrder(null)}
+          onSuccess={() => {
+            setSlotChangeOrder(null);
+            fetchOrders();
+            toast.success("Slot changed successfully");
+          }}
+        />
+      )}
+
+      {cancelOrder && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+
+            <h2 className="text-lg font-semibold mb-4">
+              Cancel Order
+            </h2>
+
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to cancel order
+              <span className="font-semibold"> {cancelOrder.id}</span> ?
+            </p>
+
+            <div className="flex justify-end gap-3">
+
+              <button
+                onClick={() => setCancelOrder(null)}
+                className="px-4 py-2 border rounded-lg"
+              >
+                No
+              </button>
+
+              <button
+                onClick={() => handleCancelOrder(cancelOrder)}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg"
+              >
+                Yes, Cancel
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
       )}
     </div>
 
