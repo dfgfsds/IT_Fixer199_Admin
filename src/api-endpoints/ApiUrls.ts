@@ -121,6 +121,11 @@ const notifications=`${baseUrl}/api/notifications`;
 const refundOtpRequest=`${baseUrl}/api/request/admin/refund/direct/request-otp`;
 const refundOtpVerify =`${baseUrl}/api/request/admin/refund/direct/verify`;
 
+// Order Cancel
+const orderCancel=`${baseUrl}/api/order/orders`;
+// requestSlotChange
+const requestSlotChange=`${baseUrl}/api/request/slot-change`;
+
 export default {
   login,
   allUsers,
@@ -178,6 +183,8 @@ export default {
   notifications,
   refundOtpRequest,
   refundOtpVerify,
+  orderCancel,
+  requestSlotChange,
 };
 
 
