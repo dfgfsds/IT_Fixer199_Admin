@@ -33,14 +33,13 @@ const RequestsLive: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
-    console.log(requests)
     const [selectedRequest, setSelectedRequest] = useState<any>(null);
     const [showModal, setShowModal] = useState(false);
 
     const wsRef = useRef<WebSocket | null>(null);
     const reconnectRef = useRef<any>(null);
     const socketRef = useRef<WebSocket | null>(null);
-
+console.log(requests)
 
     const [otpModalOpen, setOtpModalOpen] = useState(false);
     const [currentRefundId, setCurrentRefundId] = useState<string | null>(null);
@@ -147,14 +146,15 @@ const RequestsLive: React.FC = () => {
             ws.onmessage = (event) => {
                 try {
                     const message = JSON.parse(event.data);
-
-                    if (message.type === "initial_data" && message.requests) {
-                        setRequests(message.requests);
-                        setLoading(false);
+                    console.log(message)
+                    if (message.type === "initial_data" && message?.data) {
+                        setRequests(message?.data);
+                        setLoading(false)
                     }
 
-                    if (message.type === "update" && message.request) {
-                        const updatedRequest = message.request;
+                    if (message.type === "update" && message?.data) {
+                        const updatedRequest = message?.data;
+                        setLoading(false)
 
                         setRequests((prev) => {
                             const index = prev.findIndex((r) => r.id === updatedRequest.id);

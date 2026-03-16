@@ -101,7 +101,7 @@ const ToolInventoryModal: React.FC<Props> = ({
                             }
                             className="w-full border px-3 py-2 rounded-lg"
                         >
-                            <option value="">Select Product</option>
+                            <option value="">Select Tool</option>
                             {products?.filter((i: any) => i?.status === "ACTIVE")?.map((p) => (
                                 <option key={p.id} value={p.id}>
                                     {p.name}
