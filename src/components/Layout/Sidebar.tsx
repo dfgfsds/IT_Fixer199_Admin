@@ -125,7 +125,7 @@ const Sidebar: React.FC = () => {
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
     {
-      name: 'Requests',
+      name: 'Live Requests',
       icon: Users,
       children: [
         { name: 'Services', path: '/servicesRequest' },
@@ -157,10 +157,20 @@ const Sidebar: React.FC = () => {
         // { name: 'Inventory', path: '/inventory' },
       ],
     },
-    { name: 'Requests', icon: Store, path: '/requests' },
-    { name: 'Services Request', icon: Store, path: '/services-Request' },
-    { name: 'Tools Inventory Movement', icon: Store, path: '/toolsInventoryMovement' },
-    { name: 'Product Inventory Movement', icon: Store, path: '/productInventoryMovement' },
+        {
+      name: 'Requests',
+      icon: Users,
+      children: [
+        { name: 'Services', path: '/services-Request' },
+        { name: 'Requests', path: '/requests' },
+        { name: 'Tools Inventory Movement', path: '/toolsInventoryMovement' },
+        { name: 'Product Inventory Movement', path: '/productInventoryMovement' }
+      ],
+    },
+    // { name: 'Requests', icon: Store, path: '/requests' },
+    // { name: 'Services Request', icon: Store, path: '/services-Request' },
+    // { name: 'Tools Inventory Movement', icon: Store, path: '/toolsInventoryMovement' },
+    // { name: 'Product Inventory Movement', icon: Store, path: '/productInventoryMovement' },
     { name: 'Hubs', icon: Store, path: '/hubs' },
     { name: 'Tools', icon: Wrench, path: '/tools' },
     { name: 'Tools Inventory',icon: Store, path: '/toolsInventory' },

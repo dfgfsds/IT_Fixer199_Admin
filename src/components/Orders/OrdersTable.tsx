@@ -1,6 +1,6 @@
-import { Copy, Eye, MapPin, SearchX } from "lucide-react";
+import { Copy, Eye, MapPin, MoreVertical, SearchX } from "lucide-react";
 import { Order } from '../../types';
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import OrderViewModal from "./OrderViewModal";
 import OrderLocationModal from "./OrderLocationModal";
 import RefundModal from "./RefundModal";
@@ -103,6 +103,27 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
     navigator.clipboard.writeText(id);
     toast.success("Order ID copied");
   };
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+  const handleClickOutside = (event: any) => {
+    if (
+      dropdownRef.current &&
+      !dropdownRef.current.contains(event.target)
+    ) {
+      setOpenDropdown(null);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
+
+
   return (
     <div className="bg-white border border-gray-200">
       <div className="overflow-x-auto">
@@ -180,7 +201,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                   </td>
 
                   {/* STATUS */}
-                  <td className="px-6 py-4">
+                  {/* <td className="px-6 py-4">
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded 
               ${statusColors[order?.order_status]}`}
@@ -218,7 +239,16 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
 
                     </div>
 
-                  </td>
+                  </td> */}
+
+<td className="px-6 py-4">
+  <span
+    className={`px-3 py-1 text-xs font-semibold rounded-full
+    ${statusColors[order?.order_status]}`}
+  >
+    {order?.order_status}
+  </span>
+</td>
 
                   {/* AMOUNT */}
                   <td className="px-6 py-4 font-semibold text-gray-900">
@@ -226,7 +256,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                   </td>
 
                   {/* ACTIONS */}
-                  <td className="px-6 py-4 text-right">
+                  {/* <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-4">
 
                       <button
@@ -244,8 +274,84 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                       </button>
 
                     </div>
-                  </td>
+                  </td> */}
 
+<td className="px-6 py-4 text-right">
+  <div 
+    ref={dropdownRef}
+  className="flex justify-end items-center gap-3 relative">
+
+    <button
+      onClick={() => handleViewOrder(order)}
+      className="text-gray-600 hover:text-black"
+    >
+      <Eye className="w-4 h-4" />
+    </button>
+
+    <button
+      onClick={() => handleMap(order)}
+      className="text-blue-600 hover:text-blue-800"
+    >
+      <MapPin className="w-4 h-4" />
+    </button>
+
+    {/* Dropdown trigger */}
+    <button
+      onClick={() =>
+        setOpenDropdown(openDropdown === order.id ? null : order.id)
+      }
+      className="text-gray-600 hover:text-black"
+    >
+      <MoreVertical className="w-4 h-4" />
+    </button>
+
+    {/* Dropdown menu */}
+    {openDropdown === order.id && (
+      <div className="absolute right-0 top-8 bg-white border rounded-lg shadow-lg w-40 z-10">
+
+        {order?.order_status !== "CANCELLED" &&
+          order?.order_status !== "COMPLETED" && (
+            <button
+              onClick={() => {
+                setCancelOrder(order);
+                setOpenDropdown(null);
+              }}
+              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+            >
+              Cancel Order
+            </button>
+          )}
+
+        {canChangeSlot(order?.order_status) && (
+          <button
+            onClick={() => {
+              openSlotChange(order);
+              setOpenDropdown(null);
+            }}
+            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+          >
+            Change Slot
+          </button>
+        )}
+
+        {order?.order_status === "CANCELLED" &&
+          order?.payment_status === "SUCCESS" && (
+            <button
+              onClick={() => {
+                handleRefund(order);
+                setOpenDropdown(null);
+              }}
+              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
+            >
+              Refund
+            </button>
+          )}
+
+      </div>
+    )}
+
+  </div>
+</td>
                 </tr>
               ))
             ) : (
