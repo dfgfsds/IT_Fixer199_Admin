@@ -51,15 +51,21 @@ const ProductInventoryMovementLive: React.FC = () => {
         ws.onmessage = (event) => {
 
             const data = JSON.parse(event.data);
+            console.log("WS DATA:", data);
 
-            // INITIAL DATA
-            if (data.type === "initial_data") {
-                setMovements(data.movements || []);
+            // 🔵 Initial load
+            if (data.type === "initial_data" && data.movements) {
+                setMovements(data.movements);
                 setLoading(false);
             }
 
-            // LIVE UPDATE
-            if (data.type === "update") {
+            // 🟢 movement_update (MOST IMPORTANT)
+            if (data.type === "movement_update" && data.movements) {
+                setMovements(data.movements);
+            }
+
+            // 🟡 fallback single update
+            if (data.type === "update" && data.movement) {
 
                 const updated = data.movement;
 

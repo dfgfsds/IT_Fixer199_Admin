@@ -36,44 +36,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (storedToken && storedUser) {
       setToken(storedToken);
 
-      // setUser(JSON.parse(storedUser));
       setUser(JSON.parse(storedUser));
     }
 
     setIsLoading(false);
   }, []);
 
-  // const login = async (email: string, password: string) => {
+  // const login = async (email: string, password: string, role: string) => {
   //   try {
-  //     // const response = await fetch(baseUrl?.login, {
+  //     setIsLoading(true);
 
-  //     //   method: 'POST',
-  //     //   headers: {
-  //     //     'Content-Type': 'application/json',
-  //     //   },
-  //     //   body: JSON.stringify({ email, password }),
-  //     // });
-  //     const response: any = await axios.post('ghfhgf', { email, password })
+  //     const response = await axios.post(Api.login, {
+  //       username: email,
+  //       password,
+  //       role,
+  //       login_type: "PASSWORD",
+  //       device_type: "ANDROID",
+  //       device_id: "web",
+  //       device_name: "Chrome",
+  //       ip_address: "127.0.0.1"
+  //     });
+  //     console.log(response)
+  //     const user = response.data?.data?.user;
+  //     const token = response.data?.data?.tokens?.access;
+  //     const refresh = response.data?.data?.tokens?.refresh;
 
-  //     if (!response.ok) {
-  //       const errorData = await response.json();
-  //       throw new Error(errorData.error || 'Login failed');
+  //     if (!token) {
+  //       throw new Error("Token not received");
   //     }
 
-  //     if (response) {
-  //       const data = await response.json();
-  //       setToken(data.token);
-  //       setUser(data.user);
-  //       localStorage.setItem('token', data.token);
-  //       localStorage.setItem('user', JSON.stringify(data.user));
-  //     }
-  //   } catch (error) {
-  //     // console.error('Login error:', error);
-  //     // throw error;
-  //     setToken("data.token");
-  //     setUser("data.user");
-  //     localStorage.setItem('token', "data.token");
-  //     localStorage.setItem('user', "data.user");
+  //     setToken(token);
+  //     setUser(user);
+
+  //     localStorage.setItem("token", token);
+  //     localStorage.setItem("refresh", refresh);
+
+  //     localStorage.setItem("user", JSON.stringify(user));
+
+  //   } catch (error: any) {
+  //     console.error("Login error:", error.response?.data || error.message);
+  //   } finally {
+  //     setIsLoading(false);
   //   }
   // };
 
@@ -91,7 +94,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         device_name: "Chrome",
         ip_address: "127.0.0.1"
       });
-      console.log(response)
+
       const user = response.data?.data?.user;
       const token = response.data?.data?.tokens?.access;
       const refresh = response.data?.data?.tokens?.refresh;
@@ -105,17 +108,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       localStorage.setItem("token", token);
       localStorage.setItem("refresh", refresh);
-
       localStorage.setItem("user", JSON.stringify(user));
 
     } catch (error: any) {
-      console.error("Login error:", error.response?.data || error.message);
+
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        "Login failed";
+
+      throw new Error(message);   // ⭐ IMPORTANT
     } finally {
       setIsLoading(false);
     }
   };
-
-
 
   const logout = () => {
     setUser(null);

@@ -111,20 +111,20 @@ const requestTracking = `${baseUrl}/api/request/tracking`;
 // Tracking Delivery Verify OTP
 const deliveryVerifyOtp = `${baseUrl}/api/request/delivery/verify-otp`;
 // /api/app-settings
-const appSettings =`${baseUrl}/api/app-settings`;
+const appSettings = `${baseUrl}/api/app-settings`;
 // /api/tools/inventory/
-const toolsInventory=`${baseUrl}/api/tools/inventory`;
+const toolsInventory = `${baseUrl}/api/tools/inventory`;
 // api/notifications
-const notifications=`${baseUrl}/api/notifications`;
+const notifications = `${baseUrl}/api/notifications`;
 
 // refund/direct/request-otp
-const refundOtpRequest=`${baseUrl}/api/request/admin/refund/direct/request-otp`;
-const refundOtpVerify =`${baseUrl}/api/request/admin/refund/direct/verify`;
+const refundOtpRequest = `${baseUrl}/api/request/admin/refund/direct/request-otp`;
+const refundOtpVerify = `${baseUrl}/api/request/admin/refund/direct/verify`;
 
 // Order Cancel
-const orderCancel=`${baseUrl}/api/order/orders`;
+const orderCancel = `${baseUrl}/api/order/orders`;
 // requestSlotChange
-const requestSlotChange=`${baseUrl}/api/request/slot-change`;
+const requestSlotChange = `${baseUrl}/api/request/slot-change`;
 
 export default {
   login,

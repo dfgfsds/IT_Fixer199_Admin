@@ -1,6 +1,32 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axiosInstance from "../../configs/axios-middleware";
+import Api from "../../api-endpoints/ApiUrls";
 
 const OrderViewModal = ({ order, onClose }: any) => {
+  const [payments, setPayments] = useState<any[]>([]);
+  const [refunds, setRefunds] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (order?.id) {
+      fetchPayments();
+    }
+  }, [order]);
+
+  const fetchPayments = async () => {
+    try {
+
+      const res = await axiosInstance.get(
+        `${Api?.orderCancel}/${order?.id}/payments-refunds/`
+      );
+
+      setPayments(res.data?.order_payments?.payments || []);
+      setRefunds(res.data?.order_payments?.refunds || []);
+
+    } catch (error) {
+      console.error("Payments fetch failed:", error);
+    }
+  };
+
   if (!order) return null;
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -141,6 +167,103 @@ const OrderViewModal = ({ order, onClose }: any) => {
           </section>
 
         </div>
+
+        <section className="bg-purple-50 border border-purple-100 rounded-xl p-6">
+
+          <h3 className="text-lg font-semibold text-purple-600 mb-5">
+            Payments & Refunds
+          </h3>
+
+          {/* PAYMENTS */}
+
+          <div className="mb-6">
+
+
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">
+              Payments
+            </h4>
+
+            {payments.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                No payments found
+              </p>
+            ) : (
+              payments?.map((payment: any) => (
+                <div
+                  key={payment.id}
+                  className="border rounded-lg p-4 mb-3 bg-white"
+                >
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+
+                    <Info label="Transaction ID" value={payment?.transaction_id} />
+
+                    <Info label="Payment Method" value={payment?.payment_method} />
+
+                    <Info label="Amount" value={`₹${payment?.amount}`} />
+
+                    <Info label="Payment Status" value={payment?.payment_status} />
+
+                    <Info
+                      label="Date"
+                      value={new Date(payment?.created_at).toLocaleDateString()}
+                    />
+
+                    <Info
+                      label="Time"
+                      value={new Date(payment?.created_at).toLocaleTimeString()}
+                    />
+
+                  </div>
+
+                </div>
+              ))
+            )}
+
+
+          </div>
+
+          {/* REFUNDS */}
+
+          <div>
+
+
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">
+              Refunds
+            </h4>
+
+            {refunds.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                No refunds issued
+              </p>
+            ) : (
+              refunds.map((refund: any) => (
+                <div
+                  key={refund.id}
+                  className="border rounded-lg p-4 mb-3 bg-white"
+                >
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+
+                    <Info label="Refund Amount" value={`₹${refund.refund_amount}`} />
+
+                    <Info label="Refund Status" value={refund.refund_status} />
+
+                    <Info label="Reason" value={refund.reason || "-"} />
+
+                    <Info label="Created At" value={refund.created_at} />
+
+                  </div>
+
+                </div>
+              ))
+            )}
+
+
+          </div>
+
+        </section>
+
 
         {/* FOOTER */}
         <div className="px-8 py-5 bg-gray-50 border-t flex justify-end rounded-b-2xl">
