@@ -32,81 +32,143 @@ const ToolsInventoryMovementLive: React.FC = () => {
         setShowModal(true);
     };
 
-    const wsRef = useRef<WebSocket | null>(null);
+    // const wsRef = useRef<WebSocket | null>(null);
 
-    const connectWebSocket = () => {
+    // const connectWebSocket = () => {
 
-        const token = localStorage.getItem("token");
-        const today = new Date().toISOString().split("T")[0];
+    //     const token = localStorage.getItem("token");
 
-        const ws = new WebSocket(
-            `wss://api.itfixer199.com/ws/tool-movements/?token=${token}&date=${today}&size=1000`
-        );
+    //     const ws = new WebSocket(
+    //         `wss://api.itfixer199.com/ws/tool-movements/?token=${token}&size=1000`
+    //     );
 
-        socketRef.current = ws;
+    //     socketRef.current = ws;
 
-        ws.onopen = () => {
-            console.log("Tool Movement WS Connected");
-        };
+    //     ws.onopen = () => {
+    //         console.log("Tool Movement WS Connected");
+    //     };
 
-        ws.onmessage = (event) => {
+    //     ws.onmessage = (event) => {
 
-            const data = JSON.parse(event.data);
+    //         const message = JSON.parse(event?.data);
+    //         console.log("WS DATA:", message);
 
-            if (data.type === "initial_data") {
-                setMovements(data.movements || []);
-                setLoading(false);
-            }
+    //         // 🔵 Initial data
+    //         if (message.type === "initial_data" && message?.movements) {
+    //             setMovements(message?.movements);
+    //             setLoading(false);
+    //         }
 
-            if (data.type === "update") {
+    //         // 🟢 Update single movement
+    //         if (message?.type === "update" && message?.movement) {
+    //             const updatedItem = message?.movement;
+    //             setMovements((prev) => {
+    //                 const index = prev?.findIndex(
+    //                     (item: any) => item?.tools_id === updatedItem?.tools_id
+    //                 );
+    //                 if (index !== -1) {
+    //                     const updated = [...prev];
+    //                     updated[index] = updatedItem;
+    //                     return updated;
+    //                 }
+    //                 return [updatedItem, ...prev];
+    //             });
+    //         }
 
-                const updated = data.movement;
+    //         // 🟣 Update multiple movements (THIS WAS MISSING)
+    //         // if (message?.type === "update" && message?.movements) {
+    //         //     setMovements(message?.movements);
+    //         // }
 
-                setMovements(prev => {
+    //     };
 
-                    const index = prev.findIndex(i => i.id === updated.id);
+    //     ws.onclose = () => {
+    //         console.log("Tool Movement WS Closed");
+    //     };
+    // };
 
-                    if (index !== -1) {
-                        const copy = [...prev];
-                        copy[index] = updated;
-                        return copy;
-                    }
 
-                    return [updated, ...prev];
-                });
+    // useEffect(() => {
 
-            }
+    //     connectWebSocket();
 
-        };
+    //     return () => {
+    //         socketRef.current?.close();
+    //     };
 
-        ws.onclose = () => {
-            console.log("Tool Movement WS Closed");
-        };
-    };
+    // }, []);
 
 
     useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-        connectWebSocket();
+        const connect = () => {
+            const ws = new WebSocket(
+                `wss://api.itfixer199.com/ws/tool-movements/?token=${token}&size=1000`
+            );
 
+            socketRef.current = ws;
+            ws.onopen = () => {
+                console.log("Tool Movement WS Connected");
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                console.log("WS DATA:", message);
+
+                // 🔵 Initial load
+                if (message.type === "initial_data" && message.movements) {
+                    setMovements(message.movements);
+                    setLoading(false);
+                }
+
+                // 🟢 movement_update (THIS IS YOUR CASE)
+                if (message.type === "movement_update" && message.movements) {
+                    setMovements(message.movements);
+                    setLoading(false);
+                }
+
+                // 🟡 fallback single update
+                if (message.type === "update" && message.movement) {
+                    const updatedItem = message.movement;
+
+                    setMovements((prev) => {
+                        const index = prev.findIndex(
+                            (item) => item.id === updatedItem.id
+                        );
+
+                        if (index !== -1) {
+                            const updated = [...prev];
+                            updated[index] = updatedItem;
+                            return updated;
+                        }
+
+                        return [updatedItem, ...prev];
+                    });
+                }
+            };
+
+            ws.onclose = () => {
+                console.log("Tool Movement WS reconnecting...");
+                setTimeout(connect, 3000);
+            };
+
+        };
+        connect();
         return () => {
             socketRef.current?.close();
         };
-
     }, []);
 
     const handleAdminApproval = async (id: string, action: "approve" | "reject") => {
         try {
-
             setLoadingId(id);
-
             await axiosInstance.post(
                 `${Api?.toolsInventoryMovement}/${id}/${action}/`
             );
-
             socketRef.current?.close();
-            connectWebSocket();
-
+            // connectWebSocket();
         } catch (error) {
             console.error(error);
         } finally {
@@ -530,4 +592,4 @@ ${selectedItem.approved_status === "APPROVED"
     );
 };
 
-export default  ToolsInventoryMovementLive;
+export default ToolsInventoryMovementLive;

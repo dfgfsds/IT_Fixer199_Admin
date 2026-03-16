@@ -117,7 +117,6 @@ const RequestsLive: React.FC = () => {
 
     useEffect(() => {
         if (!token) return;
-
         const today = new Date().toISOString().split("T")[0];
 
         const connect = () => {
@@ -131,13 +130,43 @@ const RequestsLive: React.FC = () => {
                 console.log("WebSocket connected ✅");
             };
 
+            // ws.onmessage = (event) => {
+            //     try {
+            //         const message = JSON.parse(event.data);
+            //         console.log(message)
+            //         if (message.type === "initial_data" || message.type === "update") {
+            //             setRequests(message?.data || []);
+            //             setLoading(false);
+            //         }
+
+            //     } catch (err) {
+            //         console.error("WS parse error:", err);
+            //     }
+            // };
+
             ws.onmessage = (event) => {
                 try {
                     const message = JSON.parse(event.data);
-                    console.log(message)
-                    if (message.type === "initial_data" || message.type === "update") {
-                        setRequests(message?.data || []);
+
+                    if (message.type === "initial_data" && message.requests) {
+                        setRequests(message.requests);
                         setLoading(false);
+                    }
+
+                    if (message.type === "update" && message.request) {
+                        const updatedRequest = message.request;
+
+                        setRequests((prev) => {
+                            const index = prev.findIndex((r) => r.id === updatedRequest.id);
+
+                            if (index !== -1) {
+                                const updated = [...prev];
+                                updated[index] = updatedRequest;
+                                return updated;
+                            }
+
+                            return [updatedRequest, ...prev];
+                        });
                     }
 
                 } catch (err) {

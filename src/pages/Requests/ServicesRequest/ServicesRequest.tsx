@@ -36,11 +36,68 @@ const ServicesRequest: React.FC = () => {
 
 
     // ---------------- CONNECT SOCKET ----------------
+    // useEffect(() => {
+    //     const token = localStorage.getItem("token");
+
+    //     const ws = new WebSocket(
+    //         `wss://api.itfixer199.com/ws/service-modifications/?token=${token}&size=500`
+    //     );
+
+    //     socketRef.current = ws;
+
+    //     ws.onopen = () => {
+    //         console.log("WebSocket Connected");
+    //     };
+
+    //     // ws.onmessage = (event) => {
+    //     //     console.log(event)
+    //     //     const message = JSON.parse(event.data);
+
+    //     //     if (message.type === "initial_data") {
+    //     //         setData(message.modifications || []);
+    //     //         setLoading(false);
+    //     //     }
+
+    //     //     if (message.type === "update") {
+    //     //         const updatedItem = message?.modification;
+    //     //         console.log(updatedItem)
+    //     //         setData((prev) => {
+    //     //             const index = prev?.findIndex((item) => item?.id === updatedItem?.id);
+
+    //     //             if (index !== -1) {
+    //     //                 const updatedList = [...prev];
+    //     //                 updatedList[index] = updatedItem; // 🔥 replace existing
+    //     //                 return updatedList;
+    //     //             } else {
+    //     //                 return [updatedItem, ...prev];
+    //     //             }
+    //     //         });
+    //     //     }
+    //     // };
+
+    //     ws.onmessage = (event) => {
+    //         const message = JSON.parse(event.data);
+
+    //         if (message.type === "initial_data" || message.type === "update") {
+    //             setData(message.modifications || []);
+    //             setLoading(false);
+    //         }
+    //     };
+
+    //     ws.onclose = () => {
+    //         console.log("WebSocket Closed");
+    //     };
+
+    //     return () => {
+    //         ws.close();
+    //     };
+    // }, []);
+
     useEffect(() => {
         const token = localStorage.getItem("token");
 
         const ws = new WebSocket(
-            `wss://api.itfixer199.com/ws/service-modifications/?token=${token}&size=500`
+            `wss://api.itfixer199.com/ws/service-modifications/?token=${token}&size=50`
         );
 
         socketRef.current = ws;
@@ -49,38 +106,47 @@ const ServicesRequest: React.FC = () => {
             console.log("WebSocket Connected");
         };
 
-        // ws.onmessage = (event) => {
-        //     console.log(event)
-        //     const message = JSON.parse(event.data);
-
-        //     if (message.type === "initial_data") {
-        //         setData(message.modifications || []);
-        //         setLoading(false);
-        //     }
-
-        //     if (message.type === "update") {
-        //         const updatedItem = message?.modification;
-        //         console.log(updatedItem)
-        //         setData((prev) => {
-        //             const index = prev?.findIndex((item) => item?.id === updatedItem?.id);
-
-        //             if (index !== -1) {
-        //                 const updatedList = [...prev];
-        //                 updatedList[index] = updatedItem; // 🔥 replace existing
-        //                 return updatedList;
-        //             } else {
-        //                 return [updatedItem, ...prev];
-        //             }
-        //         });
-        //     }
-        // };
-
         ws.onmessage = (event) => {
             const message = JSON.parse(event.data);
 
-            if (message.type === "initial_data" || message.type === "update") {
-                setData(message.modifications || []);
+            console.log("WS:", message);
+
+            // 🔵 Initial data
+            if (message.type === "initial_data") {
+                if (Array.isArray(message.modifications)) {
+                    setData(message.modifications);
+                }
                 setLoading(false);
+            }
+
+            // 🟢 Update (single item)
+            if (message.type === "update" && message.modification) {
+
+                const updatedItem = message.modification;
+
+                setData((prev) => {
+                    const index = prev.findIndex((item) => item.id === updatedItem.id);
+
+                    if (index !== -1) {
+                        const updated = [...prev];
+                        updated[index] = updatedItem;
+                        return updated;
+                    }
+
+                    return [updatedItem, ...prev];
+                });
+            }
+
+            // 🟡 Update (array case)
+            if (message.type === "update" && Array.isArray(message.modifications)) {
+
+                setData((prev) => {
+                    const newItems = message.modifications.filter(
+                        (item: any) => !prev.some((p) => p.id === item.id)
+                    );
+
+                    return [...newItems, ...prev];
+                });
             }
         };
 
