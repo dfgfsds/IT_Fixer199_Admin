@@ -10,7 +10,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const { user, login } = useAuth();
   const [role, setRole] = useState("ADMIN");
-const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   if (user) {
     return <Navigate to="/" replace />;
@@ -24,7 +24,8 @@ const [showPassword, setShowPassword] = useState(false);
     try {
       await login(email, password, role);
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      console.log(err?.message)
+      setError(err?.message || 'Login failed');
     } finally {
       setLoading(false);
     }
