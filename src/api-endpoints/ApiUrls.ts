@@ -126,6 +126,21 @@ const orderCancel = `${baseUrl}/api/order/orders`;
 // requestSlotChange
 const requestSlotChange = `${baseUrl}/api/request/slot-change`;
 
+// dashboardStatus
+const dashboardStatus =`${baseUrl}/api/stats/dashboard`;
+
+// stats/order-trend
+const statsOrderTrend=`${baseUrl}/api/stats/order-trend`;
+
+// stats/revenue-trend
+const statsRevenueTrend=`${baseUrl}/api/stats/revenue-trend`;
+
+// stats/sales-distribution-percentage
+const statsSalesDistribution =`${baseUrl}/api/stats/sales-distribution-percentage`;
+
+// stats/zone-wise-trend
+const statsZoneWiseTrend = `${baseUrl}/api/stats/zone-wise-trend`;
+
 export default {
   login,
   allUsers,
@@ -185,6 +200,11 @@ export default {
   refundOtpVerify,
   orderCancel,
   requestSlotChange,
+  dashboardStatus,
+  statsOrderTrend,
+  statsRevenueTrend,
+  statsSalesDistribution,
+  statsZoneWiseTrend,
 };
 
 

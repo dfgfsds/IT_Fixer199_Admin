@@ -200,6 +200,7 @@ import RevenueChart from "../components/Dashboard/RevenueChart";
 import OrdersBarChart from "../components/Dashboard/OrdersBarChart";
 import SalesDistributionChart from "../components/Dashboard/SalesDistributionChart";
 import ZoneTrendChart from "../components/Dashboard/ZoneTrendChart";
+import Api from '../api-endpoints/ApiUrls';
 
 const Dashboard: React.FC = () => {
 
@@ -209,9 +210,9 @@ const Dashboard: React.FC = () => {
 
   const startDateDefault = last7.toISOString().split("T")[0];
 
-  const [startDate, setStartDate] = useState(startDateDefault);
+  const [startDate, setStartDate] = useState("");
 
-  const [endDate, setEndDate] = useState(today);
+  const [endDate, setEndDate] = useState("");
 
   const [type, setType] = useState("PRODUCT");
   const [zoneId, setZoneId] = useState("");
@@ -252,7 +253,7 @@ const Dashboard: React.FC = () => {
 
 
       const res = await axiosInstance.get(
-        `/api/stats/dashboard?start_date=${startDate}&end_date=${endDate}`
+        `${Api?.dashboardStatus}?start_date=${startDate}&end_date=${endDate}`
       );
 
       setStats(res.data?.data || {});
@@ -268,7 +269,7 @@ const Dashboard: React.FC = () => {
   const fetchOrderTrend = async () => {
     try {
       const res = await axiosInstance.get(
-        `/api/stats/order-trend?start_date=${startDate}&end_date=${endDate}`
+        `${Api?.statsOrderTrend}?start_date=${startDate}&end_date=${endDate}`
       );
 
 
@@ -283,7 +284,7 @@ const Dashboard: React.FC = () => {
   const fetchRevenueTrend = async () => {
     try {
       const res = await axiosInstance.get(
-        `/api/stats/revenue-trend?start_date=${startDate}&end_date=${endDate}`
+        `${Api?.statsRevenueTrend}?start_date=${startDate}&end_date=${endDate}`
       );
 
 
@@ -303,7 +304,7 @@ const Dashboard: React.FC = () => {
   const fetchSalesDistribution = async () => {
     try {
       const res = await axiosInstance.get(
-        `/api/stats/sales-distribution-percentage?start_date=${startDate}&end_date=${endDate}&type=${type}`
+        `${Api?.statsSalesDistribution}?start_date=${startDate}&end_date=${endDate}&type=${type}`
       );
 
 
@@ -321,7 +322,7 @@ const Dashboard: React.FC = () => {
 
     try {
       const res = await axiosInstance.get(
-        `/api/stats/zone-wise-trend?start_date=${startDate}&end_date=${endDate}&zone_id=${zoneId}`
+        `${Api?.statsZoneWiseTrend}?start_date=${startDate}&end_date=${endDate}&zone_id=${zoneId}`
       );
       console.log(res)
       setZoneTrend(res.data?.data || []);
