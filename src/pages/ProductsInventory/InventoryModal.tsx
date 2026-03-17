@@ -60,7 +60,7 @@ const InventoryModal: React.FC<Props> = ({
             setLoading(true);
 
             const updatedApi = await axiosInstance.post(
-              Api?.productInventory,
+              `${Api?.productInventory}/`,
                 form
             );
 
