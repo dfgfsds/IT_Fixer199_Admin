@@ -204,17 +204,30 @@ const Categories: React.FC = () => {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredCategories.map((cat, index) => (
+                                filteredCategories.map((cat: any, index) => (
                                     <tr key={cat.id} className="hover:bg-gray-50">
 
                                         <td className="px-6 py-4 text-sm font-medium">
                                             {index + 1}
                                         </td>
 
-                                        <td className="px-6 py-4 text-sm font-semibold">
-                                            {cat.name}
-                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
 
+                                                {/* IMAGE */}
+                                                <img
+                                                    src={cat.media?.[0]?.url || "https://via.placeholder.com/40"}
+                                                    alt={cat.name}
+                                                    className="w-10 h-10 object-cover rounded-lg border"
+                                                />
+
+                                                {/* NAME */}
+                                                <span className="text-sm font-semibold">
+                                                    {cat.name}
+                                                </span>
+
+                                            </div>
+                                        </td>
                                         <td className="px-6 py-4 text-sm">
                                             {cat.type}
                                         </td>

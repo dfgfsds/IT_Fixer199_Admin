@@ -499,6 +499,7 @@ const Agents: React.FC = () => {
   const [zoneApiErrors, setzoneApiErrors] = useState<string>("");
   const [trackingModal, setTrackingModal] = useState(false);
 
+  console.log(selectedAgent)
   const fetchUsers = async () => {
     try {
 
@@ -549,7 +550,7 @@ const Agents: React.FC = () => {
       const res = await axiosInstance.get(`${Api?.agentZones}/${agent?.id}`)
       setAgentZones(res?.data?.data)
 
-      const zonesRes = await axiosInstance.get(`${Api?.hubMapping}?hub=${selectedAgent?.hub}`);
+      const zonesRes = await axiosInstance.get(`${Api?.hubMapping}?hub=${agent?.hub}`);
       console.log(zonesRes)
       setAllZones(zonesRes?.data?.mappings)
     }
@@ -608,6 +609,34 @@ const Agents: React.FC = () => {
       setLoading(false)
     }
   }
+
+  const resetManagerModal = () => {
+  setSelectedAgent(null);
+  setSelectedManager('');
+  setUsers([]);
+  setApiErrors('');
+};
+
+useEffect(() => {
+  if (!managerModal) {
+    resetManagerModal();
+  }
+}, [managerModal]);
+
+const resetZoneModal = () => {
+  setSelectedAgent(null);
+  setSelectedZone('');
+  setAgentZones([]);
+  setAllZones([]);
+  setzoneApiErrors('');
+};
+
+useEffect(() => {
+  if (!zoneModal) {
+    resetZoneModal();
+  }
+}, [zoneModal]);
+
 
   const filteredAgents = agents?.filter(agent => {
     const matchesSearch =
@@ -876,7 +905,12 @@ const Agents: React.FC = () => {
             )}
             <div className="flex justify-end gap-3 mt-5">
               <button
-                onClick={() => { setManagerModal(false), setApiErrors('') }}
+                // onClick={() => { setManagerModal(false), setApiErrors('') }}
+                onClick={() => {
+                  setManagerModal(false);
+                  resetManagerModal();
+                }}
+
                 className="px-4 py-2 border rounded-lg"
               >
                 Cancel
@@ -921,7 +955,7 @@ const Agents: React.FC = () => {
 
                   {/* Avatar */}
                   <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-semibold text-lg">
-                    {agentZones?.agent_details?.name?.charAt(0) || "A"}
+                    {selectedAgent?.user_details?.name?.charAt(0) || "A"}
                   </div>
 
                   {/* Details */}
@@ -929,21 +963,21 @@ const Agents: React.FC = () => {
                     <div>
                       <span className="text-gray-500 font-medium">Name :</span>{" "}
                       <span className="font-semibold text-gray-900 capitalize">
-                        {agentZones?.agent_details?.name || "-"}
+                        {selectedAgent?.user_details?.name || "-"}
                       </span>
                     </div>
 
                     <div>
                       <span className="text-gray-500 font-medium">Mobile :</span>{" "}
                       <span className="text-gray-800">
-                        {agentZones?.agent_details?.mobile_number || "-"}
+                        {selectedAgent?.user_details?.mobile_number || "-"}
                       </span>
                     </div>
 
                     <div>
                       <span className="text-gray-500 font-medium">Email :</span>{" "}
                       <span className="text-gray-800 break-all">
-                        {agentZones?.agent_details?.email || "-"}
+                        {selectedAgent?.user_details?.email || "-"}
                       </span>
                     </div>
                   </div>

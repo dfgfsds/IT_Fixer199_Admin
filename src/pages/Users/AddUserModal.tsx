@@ -26,7 +26,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
         name: "",
         email: "",
         mobile_number: "",
-        role: "SUPER_ADMIN",
+        role: "",
         password: "",
         comments: "",
         hub_id: "",
@@ -50,7 +50,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                 name: editUser.name || "",
                 email: editUser.email || "",
                 mobile_number: editUser.mobile_number || "",
-                role: editUser.role || "ADMIN",
+                role: editUser.role || "",
                 password: "",
                 comments: editUser.comments || "",
                 hub_id: editUser?.hub_id,
@@ -73,7 +73,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             if (editUser) {
                 // EDIT MODE
                 response = await axiosInstance.put(
-                    `${Api.createUser}/${editUser.id}`, { cleanedUser }
+                    `${Api.createUser}/${editUser.id}`, cleanedUser 
                     // {
                     //     ...newUser,
                     //     ...(newUser.password ? {} : { password: undefined }),
@@ -91,7 +91,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                     name: "",
                     email: "",
                     mobile_number: "",
-                    role: "ADMIN",
+                    role: "",
                     password: "",
                     comments: "",
                     hub_id: "",
@@ -187,6 +187,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                             >
                                 {/* <option value="SUPER_ADMIN">SUPER ADMIN</option> */}
+                                <option value="">Select Role</option>
                                 <option value="ADMIN">ADMIN</option>
                                 <option value="MANAGER">MANAGER</option>
                                 <option value="HUB_MANAGER">HUB MANAGER</option>

@@ -278,7 +278,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
 
                   <td className="px-6 py-4 text-right">
                     <div
-                      ref={dropdownRef}
+                      // ref={dropdownRef}
                       className="flex justify-end items-center gap-3 relative">
 
                       <button
@@ -312,10 +312,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                           {order?.order_status !== "CANCELLED" &&
                             order?.order_status !== "COMPLETED" && (
                               <button
-                                onClick={() => {
-                                  setCancelOrder(order);
-                                  setOpenDropdown(null);
-                                }}
+                                 onClick={() => setCancelOrder(order)}
                                 className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                               >
                                 Cancel Order
@@ -324,10 +321,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
 
                           {canChangeSlot(order?.order_status) && (
                             <button
-                              onClick={() => {
-                                openSlotChange(order);
-                                setOpenDropdown(null);
-                              }}
+                               onClick={() => openSlotChange(order)}
                               className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                             >
                               Change Slot
@@ -337,10 +331,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                           {order?.order_status === "CANCELLED" &&
                             order?.payment_status === "SUCCESS" && (
                               <button
-                                onClick={() => {
-                                  handleRefund(order);
-                                  setOpenDropdown(null);
-                                }}
+                                onClick={() => handleRefund(order)}
                                 className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
                               >
                                 Refund
