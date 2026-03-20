@@ -58,6 +58,42 @@ const ProductModal: React.FC<Props> = ({
         fetchPriceTypes();
     }, []);
 
+    const getInitialForm = () => ({
+        name: "",
+        description: "",
+        brand_id: "",
+        model: "",
+        type: "PRODUCT",
+        sku: "",
+        specification: [{ key: "", value: "" }],
+        status: "ACTIVE",
+        category_ids: [],
+        attributes: [],
+        pricing_type: "",
+        price: ""
+    });
+
+    const resetAll = () => {
+        setForm(getInitialForm());
+
+        setBrands([]);
+        setCategories([]);
+        setAttributesList([]);
+        setPriceTypes([]);
+
+        setExistingImages([]);
+        setNewImages([]);
+        setPreviewUrls([]);
+        setMediaFiles([]);
+
+        setApiErrors("");
+        setLoading(false);
+    };
+
+    const handleClose = () => {
+        resetAll();
+        onClose();
+    };
 
     const fetchPriceTypes = async () => {
         const res = await axiosInstance.get(Api?.pricingType);
@@ -189,6 +225,7 @@ const ProductModal: React.FC<Props> = ({
             setExistingImages(editProduct.media);
             setPreviewUrls(editProduct.media.map((m: any) => m.url));
         }
+        
     }, [editProduct]);
 
 
@@ -309,17 +346,78 @@ const ProductModal: React.FC<Props> = ({
             formData.append("pricing", JSON.stringify(pricingPayload));
 
             if (isEdit) {
-                const updateApi = await axiosInstance.put(`${Api?.products}/${editProduct.id}`, formData);
-                if (updateApi) {
-                    onSuccess();
-                    onClose();
-                    setLoading(false);
+                // const updateApi = await axiosInstance.put(`${Api?.products}/${editProduct.id}`, formData);
+                // if (updateApi) {
+                //     onSuccess();
+                //     handleClose();
+                //     setLoading(false);
+                // }
+                if (isEdit) {
+                    const formData = new FormData();
+
+                    // 🔹 Basic fields
+                    formData.append("name", form.name);
+                    formData.append("description", form.description);
+                    formData.append("brand_id", form.brand_id);
+                    formData.append("model", form.model);
+                    formData.append("type", form.type);
+                    formData.append("sku", form.sku);
+                    formData.append("status", form.status);
+
+                    // 🔹 CATEGORY FORMAT ✅
+                    const categoryPayload = form.category_ids.map((id: string) => ({
+                        category_id: id
+                    }));
+                    formData.append("category_ids", JSON.stringify(categoryPayload));
+
+                    // 🔹 ATTRIBUTES FORMAT ✅
+                    const attributePayload = form.attributes.map((attr: any) => ({
+                        value_id: attr.id
+                    }));
+                    formData.append("attributes", JSON.stringify(attributePayload));
+
+                    // 🔹 SPECIFICATION (OBJECT format) ✅
+                    const specObject = form.specification
+                        .filter((item: any) => item.key && item.value)
+                        .reduce((acc: any, item: any) => {
+                            acc[item.key] = item.value;
+                            return acc;
+                        }, {});
+                    formData.append("specification", JSON.stringify(specObject));
+
+                    // 🔥 DELETE MEDIA (IMPORTANT)
+                    const originalIds = editProduct.media?.map((m: any) => m.id) || [];
+                    const remainingIds = existingImages.map((m: any) => m.id);
+
+                    const deleteMediaIds = originalIds.filter(
+                        (id: string) => !remainingIds.includes(id)
+                    );
+
+                    deleteMediaIds.forEach((id: string) => {
+                        formData.append("delete_media_ids", id);
+                    });
+
+                    // 🔹 NEW IMAGES
+                    newImages.forEach((file) => {
+                        formData.append("media_files", file);
+                    });
+
+                    const updateApi = await axiosInstance.put(
+                        `${Api?.products}/${editProduct.id}`,
+                        formData
+                    );
+
+                    if (updateApi) {
+                        onSuccess();
+                        handleClose();
+                        setLoading(false);
+                    }
                 }
             } else {
                 const updateApi = await axiosInstance.post(Api?.products, formData);
                 if (updateApi) {
                     onSuccess();
-                    onClose();
+                    handleClose();
                     setLoading(false);
                 }
             }
@@ -573,7 +671,7 @@ const ProductModal: React.FC<Props> = ({
                         <>
                             <div>
                                 <label className="block text-sm font-medium mb-1">
-                                    Product Type *
+                                    Pricing Type *
                                 </label>
                                 <select
                                     value={form.pricing_type}
@@ -637,7 +735,7 @@ const ProductModal: React.FC<Props> = ({
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="px-4 py-2 border rounded-lg"
                         >
                             Cancel

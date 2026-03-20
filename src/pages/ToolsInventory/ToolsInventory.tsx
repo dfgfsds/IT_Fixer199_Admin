@@ -271,10 +271,10 @@ const ToolsInventory: React.FC = () => {
                                                     </button>
 
                                                     {/* DIVIDER */}
-                                                    <div className="h-6 w-px bg-gray-300 mx-1" />
+                                                    
+                                                    {/* <div className="h-6 w-px bg-gray-300 mx-1" /> */}
 
-                                                    {/* DELETE */}
-                                                    <button
+                                                    {/* <button
                                                         onClick={() => {
                                                             setDeleteInventory(item);
                                                             setShowDeleteModal(true);
@@ -283,7 +283,7 @@ const ToolsInventory: React.FC = () => {
                                                         title="Delete Inventory"
                                                     >
                                                         <Trash2 size={16} />
-                                                    </button>
+                                                    </button> */}
 
                                                 </div>
 

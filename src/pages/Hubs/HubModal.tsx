@@ -180,6 +180,7 @@ const HubModal: React.FC<Props> = ({
                             <input
                                 type="text"
                                 value={form.latitude}
+                                required
                                 onChange={(e) => setForm({ ...form, latitude: e.target.value })}
                                 className="w-full border rounded-lg px-3 py-2"
                             />
@@ -190,6 +191,7 @@ const HubModal: React.FC<Props> = ({
                             <input
                                 type="text"
                                 value={form?.longitude}
+                                required
                                 onChange={(e) => setForm({ ...form, longitude: e.target.value })}
                                 className="w-full border rounded-lg px-3 py-2"
                             />
@@ -233,6 +235,8 @@ const HubModal: React.FC<Props> = ({
                                         contact_info: { ...form.contact_info, phone: e.target.value }
                                     })
                                 }
+                                required
+
                                 className="w-full border rounded-lg px-3 py-2"
                             />
                         </div>
@@ -248,6 +252,8 @@ const HubModal: React.FC<Props> = ({
                                         contact_info: { ...form.contact_info, email: e.target.value }
                                     })
                                 }
+                                required
+
                                 className="w-full border rounded-lg px-3 py-2"
                             />
                         </div>
@@ -307,7 +313,7 @@ const HubModal: React.FC<Props> = ({
                             className="px-4 py-2 bg-orange-600 text-white rounded-lg"
                         >
                             {/* {isEdit ? "Update Hub" : "Create Hub"} */}
-                            {isEdit ? "Edit User" :
+                            {isEdit ? "Edit Hub" :
                                 (<>
                                     {loading ? (
                                         <div className="flex gap-2 items-center "> <Loader size={16} className="animate-spin" />Creating... </div>) : "Create Hub"}

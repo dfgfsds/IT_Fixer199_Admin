@@ -23,7 +23,7 @@ const CategoryModal: React.FC<Props> = ({
         name: "",
         description: "",
         status: "ACTIVE",
-        type: "SERVICE",
+        type: "",
     });
 
     const [existingImages, setExistingImages] = useState<any[]>([]);
@@ -31,6 +31,7 @@ const CategoryModal: React.FC<Props> = ({
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [apiErrors, setApiErrors] = useState<string>("");
+    const [deletedMediaIds, setDeletedMediaIds] = useState<string[]>([]);
 
     // 🔥 Load Edit Data
     useEffect(() => {
@@ -39,7 +40,7 @@ const CategoryModal: React.FC<Props> = ({
                 name: editCategory.name || "",
                 description: editCategory.description || "",
                 status: editCategory.status || "ACTIVE",
-                type: editCategory.type || "SERVICE",
+                type: editCategory.type || "",
             });
 
             if (editCategory.media) {
@@ -56,11 +57,13 @@ const CategoryModal: React.FC<Props> = ({
             name: "",
             description: "",
             status: "ACTIVE",
-            type: "SERVICE",
+            type: "",
         });
         setExistingImages([]);
         setNewImages([]);
         setPreviewUrls([]);
+        setApiErrors('');
+        setDeletedMediaIds([]);
     };
 
     // 🔥 Add New Images
@@ -84,16 +87,29 @@ const CategoryModal: React.FC<Props> = ({
         updatedPreviews.splice(index, 1);
         setPreviewUrls(updatedPreviews);
 
+        // 🔥 Existing image remove
         if (index < existingImages.length) {
+            const removed = existingImages[index];
+
+            // ✅ store ID for backend delete
+            setDeletedMediaIds((prev) => [...prev, removed.id]);
+
             const updatedExisting = [...existingImages];
             updatedExisting.splice(index, 1);
             setExistingImages(updatedExisting);
-        } else {
+        }
+        // 🔥 New image remove
+        else {
             const newIndex = index - existingImages.length;
             const updatedNew = [...newImages];
             updatedNew.splice(newIndex, 1);
             setNewImages(updatedNew);
         }
+    };
+
+    const handleCloseModal = () => {
+        onClose();
+        resetForm();
     };
 
     // 🔥 Submit
@@ -114,19 +130,28 @@ const CategoryModal: React.FC<Props> = ({
                 formData?.append("media_files", file);
             });
 
+            deletedMediaIds.forEach((id) => {
+                formData.append("delete_media_ids", id);
+            });
+
             if (isEdit) {
-                await axiosInstance.put(
+                const updatedApi = await axiosInstance.put(
                     `${Api?.categories}/${editCategory.id}`,
                     formData
                 );
+                if (updatedApi) {
+                    handleCloseModal();
+                    onSuccess();
+                }
             } else {
-                await axiosInstance.post(Api?.categories,
+                const updatedApi = await axiosInstance.post(Api?.categories,
                     formData
                 );
+                if (updatedApi) {
+                    handleCloseModal();
+                    onSuccess();
+                }
             }
-            onSuccess();
-            onClose();
-            resetForm();
 
         } catch (error) {
             setApiErrors(extractErrorMessage(error));
@@ -212,7 +237,9 @@ const CategoryModal: React.FC<Props> = ({
                                     setForm({ ...form, type: e.target.value })
                                 }
                                 className="w-full border rounded-lg px-3 py-2"
+                                disabled={editCategory}
                             >
+                                <option value="">Select Type</option>
                                 <option value="SERVICE">SERVICE</option>
                                 <option value="PRODUCT">PRODUCT</option>
                                 <option value="TOOLS">TOOLS</option>

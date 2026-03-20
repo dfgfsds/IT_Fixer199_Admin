@@ -336,8 +336,8 @@ const Dashboard: React.FC = () => {
   const handleClearFilters = () => {
     const today = new Date().toISOString().split("T")[0];
 
-    setStartDate(today);
-    setEndDate(today);
+    setStartDate("");
+    setEndDate("");
     setType("PRODUCT");
     setZoneId("");
   };
