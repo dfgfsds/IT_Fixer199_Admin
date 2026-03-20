@@ -137,6 +137,7 @@ const ServiceModal: React.FC<Props> = ({
         });
     };
 
+    console.log(editService)
     // ---------------- EDIT MODE ----------------
     useEffect(() => {
         if (!editService) return;
@@ -175,12 +176,12 @@ const ServiceModal: React.FC<Props> = ({
             zone_hub_mappings: formattedZoneHub,
         });
 
-        // Fetch zones based on hub
-        editService.zone_hub_mappings?.forEach((z: any) => {
-            if (z.hub) {
-                fetchZones(z.hub);
-            }
-        });
+        if (editService?.media_files && editService.media_files.length > 0) {
+            setExistingMedia(editService.media_files);
+
+            const urls = editService.media_files.map((m: any) => m.image_url);
+            setPreviewUrls(urls);
+        }
 
     }, [editService]);
 
@@ -362,7 +363,7 @@ const ServiceModal: React.FC<Props> = ({
                 );
                 if (updateApi) {
                     onSuccess();
-                    onClose();
+                    handleClose();
                     setLoading(false);
 
                 }
@@ -373,7 +374,7 @@ const ServiceModal: React.FC<Props> = ({
                 );
                 if (updateApi) {
                     onSuccess();
-                    onClose();
+                    handleClose();
                     setLoading(false);
                 }
             }

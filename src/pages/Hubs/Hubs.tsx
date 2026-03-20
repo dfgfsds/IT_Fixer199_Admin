@@ -76,10 +76,12 @@ const Hubs: React.FC = () => {
     };
 
     const filteredHubs = hubs?.filter(
-        (hub) =>
+        (hub:any) =>
             hub?.name?.toLowerCase()?.includes(search?.toLowerCase()) ||
             hub?.primary_address?.toLowerCase()?.includes(search?.toLowerCase()) ||
-            hub?.contact_info?.toLowerCase()?.includes(search?.toLowerCase())
+            hub?.contact_info?.email?.toLowerCase()?.includes(search?.toLowerCase()) ||
+            hub?.phone?.toLowerCase()?.includes(search?.toLowerCase()) 
+
     );
 
     return (
