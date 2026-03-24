@@ -1,3 +1,59 @@
+// import {
+//     BarChart,
+//     Bar,
+//     XAxis,
+//     YAxis,
+//     Tooltip,
+//     ResponsiveContainer,
+//     CartesianGrid
+// } from "recharts";
+
+// const ZoneTrendChart = ({ data }: any) => {
+
+//     const formatted =
+//         data?.[0]?.trends?.map((item: any) => ({
+//             date: item.date,
+//             orders: item.order_count
+//         })) || [];
+
+//     return (<div className="bg-white rounded-lg p-6 border">
+
+
+//         <h3 className="text-lg font-semibold mb-4">
+//             Zone Orders Trend
+//         </h3>
+
+//         <ResponsiveContainer width="100%" height={300}>
+
+//             <BarChart data={formatted}>
+
+//                 <CartesianGrid strokeDasharray="3 3" />
+
+//                 <XAxis dataKey="date" />
+
+//                 <YAxis />
+
+//                 <Tooltip />
+
+//                 <Bar
+//                     dataKey="orders"
+//                     fill="#f97316"
+//                     radius={[4, 4, 0, 0]}
+//                 />
+
+//             </BarChart>
+
+//         </ResponsiveContainer>
+
+//     </div>
+
+
+//     );
+// };
+
+// export default ZoneTrendChart;
+
+
 import {
     BarChart,
     Bar,
@@ -5,7 +61,8 @@ import {
     YAxis,
     Tooltip,
     ResponsiveContainer,
-    CartesianGrid
+    CartesianGrid,
+    Legend
 } from "recharts";
 
 const ZoneTrendChart = ({ data }: any) => {
@@ -13,41 +70,81 @@ const ZoneTrendChart = ({ data }: any) => {
     const formatted =
         data?.[0]?.trends?.map((item: any) => ({
             date: item.date,
-            orders: item.order_count
+            orders: item.order_count,
+            revenue: item.revenue_amount
         })) || [];
 
-    return (<div className="bg-white rounded-lg p-6 border">
+    const formatDate = (date: string) =>
+        new Date(date).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short"
+        });
 
+    return (
+        <div className="bg-white rounded-lg p-6 border">
 
-        <h3 className="text-lg font-semibold mb-4">
-            Zone Orders Trend
-        </h3>
+            <h3 className="text-lg font-semibold mb-4">
+                Zone Orders & Revenue Trend
+            </h3>
 
-        <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={300}>
 
-            <BarChart data={formatted}>
+                <BarChart data={formatted}>
 
-                <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid strokeDasharray="3 3" />
 
-                <XAxis dataKey="date" />
+                    <XAxis
+                        dataKey="date"
+                        tickFormatter={formatDate}
+                    />
 
-                <YAxis />
+                    {/* LEFT → Orders */}
+                    <YAxis
+                        yAxisId="left"
+                        allowDecimals={false}
+                    />
 
-                <Tooltip />
+                    {/* RIGHT → Revenue */}
+                    <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                    />
 
-                <Bar
-                    dataKey="orders"
-                    fill="#f97316"
-                    radius={[4, 4, 0, 0]}
-                />
+                    <Tooltip
+                        formatter={(value: any, name: any) => [
+                            name === "revenue" ? `₹${value}` : value,
+                            name === "revenue" ? "Revenue" : "Orders"
+                        ]}
+                        labelFormatter={(label) =>
+                            `Date: ${formatDate(label)}`
+                        }
+                    />
 
-            </BarChart>
+                    <Legend />
 
-        </ResponsiveContainer>
+                    {/* Orders */}
+                    <Bar
+                        yAxisId="left"
+                        dataKey="orders"
+                        fill="#f97316"
+                        name="Orders"
+                        radius={[4, 4, 0, 0]}
+                    />
 
-    </div>
+                    {/* Revenue */}
+                    <Bar
+                        yAxisId="right"
+                        dataKey="revenue"
+                        fill="#22c55e"
+                        name="Revenue"
+                        radius={[4, 4, 0, 0]}
+                    />
 
+                </BarChart>
 
+            </ResponsiveContainer>
+
+        </div>
     );
 };
 
