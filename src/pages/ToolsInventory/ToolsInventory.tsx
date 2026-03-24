@@ -201,7 +201,8 @@ const ToolsInventory: React.FC = () => {
                                 <th className="px-4 py-3 text-left">S.No</th>
                                 <th className="px-4 py-3 text-left">Tool</th>
                                 <th className="px-4 py-3 text-left">Hub</th>
-                                <th className="px-4 py-3 text-left">Stock</th>
+                                <th className="px-4 py-3 text-left">Stock in hub</th>
+                                <th className="px-4 py-3 text-left">Total Stock</th>
                                 <th className="px-4 py-3 text-right">Action</th>
                             </tr>
                         </thead>
@@ -241,6 +242,7 @@ const ToolsInventory: React.FC = () => {
                                             </td>
                                             <td className="px-4 py-3">{item?.hub_name || "-"}</td>
                                             <td className="px-4 py-3">{item?.stock_in_hub}</td>
+                                            <td className="px-4 py-3">{item?.total_stock}</td>
 
                                             <td className="px-4 py-3 text-right">
 
@@ -271,7 +273,7 @@ const ToolsInventory: React.FC = () => {
                                                     </button>
 
                                                     {/* DIVIDER */}
-                                                    
+
                                                     {/* <div className="h-6 w-px bg-gray-300 mx-1" /> */}
 
                                                     {/* <button

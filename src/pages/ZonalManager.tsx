@@ -66,7 +66,7 @@ const ZonalManager: React.FC = () => {
   //   }
   // };
 
-  
+
   const fetchZones = async (pageNumber = page, size = pageSize) => {
     try {
       setLoading(true);
@@ -170,7 +170,7 @@ const ZonalManager: React.FC = () => {
 
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
@@ -204,7 +204,7 @@ const ZonalManager: React.FC = () => {
             </div>
           </div>
         </div>
-        {/* <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
@@ -214,8 +214,8 @@ const ZonalManager: React.FC = () => {
               <DollarSign className="w-6 h-6 text-white" />
             </div>
           </div>
-        </div> */}
-      </div>
+        </div>
+      </div> */}
 
       {/* Search */}
       <div className="bg-white p-4 rounded-lg border border-gray-200">
@@ -389,7 +389,7 @@ const ZonalManager: React.FC = () => {
                         }}
                         className="text-sm px-3 py-1 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200"
                       >
-                        View Slots
+                        View Slots   {zone?.slots_count}
                       </button>
 
                       <button

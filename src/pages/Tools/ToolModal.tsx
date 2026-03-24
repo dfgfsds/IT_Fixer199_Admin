@@ -254,10 +254,10 @@ const ToolModal: React.FC<Props> = ({
                             }
                             className="w-full border rounded-lg px-3 py-2"
                         >
-                            <option value="">Select Category</option>
+                            <option value="">Select Categorie</option>
 
                             {filteredCategories.length > 0 ? (
-                                filteredCategories.map((c) => (
+                                filteredCategories?.map((c) => (
                                     <option key={c.id} value={c.id}>
                                         {c.name}
                                     </option>
