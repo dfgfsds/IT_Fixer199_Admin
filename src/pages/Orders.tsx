@@ -10,9 +10,11 @@ const Orders: React.FC = () => {
   const [pagination, setPagination] = useState<PaginationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    status: '',
-    search: '',
-    page: 1
+    status: "",
+    search: "",
+    startDate: "",
+    endDate: "",
+    page: 1,
   });
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
 
@@ -23,31 +25,61 @@ const Orders: React.FC = () => {
     fetchOrders();
   }, [filters]);
 
+  // const fetchOrders = async () => {
+  //   try {
+  //     setLoading(true);
+
+  //     const params: any = {
+  //       page: filters.page,
+  //       limit: 20,
+  //     };
+
+  //     if (filters?.status) {
+  //       params.order_status = filters?.status;
+  //     }
+
+  //     if (filters?.search) {
+  //       params.search = filters?.search;
+  //     }
+
+  //     const response: any = await axiosInstance?.get(
+  //       `${Api?.orders}?is_active=true`);
+  //     if (response) {
+  //       setOrders(response?.data?.orders);
+  //       // setFilteredOrders(response?.data?.orders || []);
+  //       setPagination(response?.data?.pagination || null);
+  //     }
+
+
+  //   } catch (error) {
+  //     console.error("Failed to fetch orders:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchOrders = async () => {
     try {
       setLoading(true);
 
-      const params: any = {
-        page: filters.page,
-        limit: 20,
-      };
+      const params = new URLSearchParams();
 
-      if (filters?.status) {
-        params.order_status = filters?.status;
-      }
+      params.append("page", String(filters.page));
+      params.append("limit", "20");
+      params.append("is_active", "true");
 
-      if (filters?.search) {
-        params.search = filters?.search;
-      }
+      if (filters.status) params.append("status", filters.status);
+      if (filters.search) params.append("search", filters.search);
+      if (filters.startDate) params.append("start_date", filters.startDate);
+      if (filters.endDate) params.append("end_date", filters.endDate);
 
-      const response: any = await axiosInstance?.get(
-        `${Api?.orders}?is_active=true`);
-      if (response) {
-        setOrders(response?.data?.orders);
-        // setFilteredOrders(response?.data?.orders || []);
-        setPagination(response?.data?.pagination || null);
-      }
+      const response = await axiosInstance.get(
+        `${Api?.orders}?${params.toString()}`
+      );
 
+      setOrders(response?.data?.orders || []);
+      setFilteredOrders(response?.data?.orders || []); // 🔥 no frontend filter
+      setPagination(response?.data?.pagination || null);
 
     } catch (error) {
       console.error("Failed to fetch orders:", error);
@@ -184,12 +216,37 @@ const Orders: React.FC = () => {
               ))}
             </select>
           </div>
+          <div className="flex gap-4">
+
+            {/* START DATE */}
+            <input
+              type="date"
+              value={filters.startDate}
+              onChange={(e) =>
+                setFilters({ ...filters, startDate: e.target.value, page: 1 })
+              }
+              className="px-3 py-2 border rounded-lg"
+            />
+
+            {/* END DATE */}
+            <input
+              type="date"
+              value={filters.endDate}
+              onChange={(e) =>
+                setFilters({ ...filters, endDate: e.target.value, page: 1 })
+              }
+              className="px-3 py-2 border rounded-lg"
+            />
+
+          </div>
           <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
             onClick={() =>
               setFilters({
-                status: '',
-                search: '',
-                page: 1
+                status: "",
+                search: "",
+                startDate: "",
+                endDate: "",
+                page: 1,
               })
             }
 
