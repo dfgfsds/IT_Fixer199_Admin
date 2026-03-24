@@ -28,8 +28,8 @@ const AgentAssign: React.FC<Props> = ({ show, onClose, order }) => {
 
             const res = await axiosInstance.get(Api.zoneByLocation, {
                 params: {
-                    //   lat: order?.lat,
-                    lat: 5646546,
+                      lat: order?.lat,
+                    // lat: 5646546,
                     lng: order?.lng,
                 },
             });

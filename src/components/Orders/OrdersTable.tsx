@@ -31,6 +31,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
 
   const [slotChangeOrder, setSlotChangeOrder] = useState<any>(null);
 
+
   const openSlotChange = (order: any) => {
     setSlotChangeOrder(order);
   };
@@ -125,6 +126,8 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+
 
   return (
     <div className="bg-white border border-gray-200">
