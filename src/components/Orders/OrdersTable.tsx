@@ -104,14 +104,17 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
     toast.success("Order ID copied");
   };
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
-    const handleClickOutside = (event: any) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      const isInsideAnyDropdown = Object.values(dropdownRefs.current).some(
+        (ref) => ref && ref.contains(target)
+      );
+
+      if (!isInsideAnyDropdown) {
         setOpenDropdown(null);
       }
     };
@@ -122,7 +125,6 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
 
   return (
     <div className="bg-white border border-gray-200">
@@ -254,31 +256,10 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                   <td className="px-6 py-4 font-semibold text-gray-900">
                     ₹{order?.total_price}
                   </td>
-
-                  {/* ACTIONS */}
-                  {/* <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-4">
-
-                      <button
-                        onClick={() => handleViewOrder(order)}
-                        className="text-gray-600 hover:text-black transition"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => handleMap(order)}
-                        className="text-blue-600 hover:text-blue-800 transition"
-                      >
-                        <MapPin className="w-4 h-4" />
-                      </button>
-
-                    </div>
-                  </td> */}
-
                   <td className="px-6 py-4 text-right">
                     <div
                       // ref={dropdownRef}
+                      ref={(el) => (dropdownRefs.current[order.id] = el)}
                       className="flex justify-end items-center gap-3 relative">
 
                       <button
@@ -297,9 +278,13 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
 
                       {/* Dropdown trigger */}
                       <button
-                        onClick={() =>
-                          setOpenDropdown(openDropdown === order.id ? null : order.id)
-                        }
+                        // onClick={() =>
+                        //   setOpenDropdown(openDropdown === order.id ? null : order.id)
+                        // }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenDropdown(openDropdown === order.id ? null : order.id);
+                        }}
                         className="text-gray-600 hover:text-black"
                       >
                         <MoreVertical className="w-4 h-4" />
@@ -312,7 +297,12 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                           {order?.order_status !== "CANCELLED" &&
                             order?.order_status !== "COMPLETED" && (
                               <button
-                                 onClick={() => setCancelOrder(order)}
+                                // onClick={() => setCancelOrder(order)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCancelOrder(order);
+                                  setOpenDropdown(null);
+                                }}
                                 className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                               >
                                 Cancel Order
@@ -321,7 +311,12 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
 
                           {canChangeSlot(order?.order_status) && (
                             <button
-                               onClick={() => openSlotChange(order)}
+                              // onClick={() => openSlotChange(order)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openSlotChange(order);
+                                setOpenDropdown(null);
+                              }}
                               className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                             >
                               Change Slot
