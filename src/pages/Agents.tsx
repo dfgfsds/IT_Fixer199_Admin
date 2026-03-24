@@ -499,7 +499,7 @@ const Agents: React.FC = () => {
   const [zoneApiErrors, setzoneApiErrors] = useState<string>("");
   const [trackingModal, setTrackingModal] = useState(false);
 
-  console.log(selectedAgent)
+
   const fetchUsers = async () => {
     try {
 
@@ -515,11 +515,11 @@ const Agents: React.FC = () => {
   };
 
 
-  const handleOpenManagerModal = (agent: any) => {
-    setSelectedAgent(agent);
-    setManagerModal(true);
-    fetchUsers();
-  }
+  // const handleOpenManagerModal = (agent: any) => {
+  //   setSelectedAgent(agent);
+  //   setManagerModal(true);
+  //   fetchUsers();
+  // }
 
   const handleAssignManager = async () => {
     setLoading(true);
@@ -541,7 +541,6 @@ const Agents: React.FC = () => {
     }
   }
 
-  console.log(selectedAgent)
   // Zones
   const openZoneModal = async (agent: any) => {
     setSelectedAgent(agent)
@@ -578,6 +577,26 @@ const Agents: React.FC = () => {
 
   }
 
+  const handleOpenManagerModal = (agent: any) => {
+    setSelectedAgent(agent);
+    setSelectedManager(agent?.manager_details?.id || ""); // 🔥 important
+    setManagerModal(true);
+    fetchUsers();
+  };
+
+  const handleDeleteManager = async (agent: any) => {
+    try {
+      if (!window.confirm("Remove this manager?")) return;
+
+      await axiosInstance.delete(`${Api.allocations}manager/${agent.manager_details?.id}/`);
+
+      fetchAgents();
+    } catch (error) {
+      console.error("Delete failed", error);
+    }
+  };
+
+
   const handleDeleteZone = async (id: string) => {
     await axiosInstance.delete(`${Api?.addAgentZone}${selectedAgent.id}/${id}/`)
     openZoneModal(selectedAgent)
@@ -611,31 +630,31 @@ const Agents: React.FC = () => {
   }
 
   const resetManagerModal = () => {
-  setSelectedAgent(null);
-  setSelectedManager('');
-  setUsers([]);
-  setApiErrors('');
-};
+    setSelectedAgent(null);
+    setSelectedManager('');
+    setUsers([]);
+    setApiErrors('');
+  };
 
-useEffect(() => {
-  if (!managerModal) {
-    resetManagerModal();
-  }
-}, [managerModal]);
+  useEffect(() => {
+    if (!managerModal) {
+      resetManagerModal();
+    }
+  }, [managerModal]);
 
-const resetZoneModal = () => {
-  setSelectedAgent(null);
-  setSelectedZone('');
-  setAgentZones([]);
-  setAllZones([]);
-  setzoneApiErrors('');
-};
+  const resetZoneModal = () => {
+    setSelectedAgent(null);
+    setSelectedZone('');
+    setAgentZones([]);
+    setAllZones([]);
+    setzoneApiErrors('');
+  };
 
-useEffect(() => {
-  if (!zoneModal) {
-    resetZoneModal();
-  }
-}, [zoneModal]);
+  useEffect(() => {
+    if (!zoneModal) {
+      resetZoneModal();
+    }
+  }, [zoneModal]);
 
 
   const filteredAgents = agents?.filter(agent => {
@@ -787,36 +806,94 @@ useEffect(() => {
                     </td> */}
 
                     {user?.role !== 'HUB_MANAGER' && (
+                      // <td className="px-6 py-4">
+                      //   {agent?.manager_details ? (
+                      //     <div className="space-y-1 text-sm">
+
+                      //       <div>
+                      //         <span className="font-medium text-gray-500">Name :</span>{' '}
+                      //         <span className="font-semibold text-gray-900 capitalize">
+                      //           {agent.manager_details?.name || '-'}
+                      //         </span>
+                      //       </div>
+
+                      //       <div>
+                      //         <span className="font-medium text-gray-500">Email :</span>{' '}
+                      //         <span className="text-gray-800 break-all">
+                      //           {agent.manager_details?.email || '-'}
+                      //         </span>
+                      //       </div>
+
+                      //       <div>
+                      //         <span className="font-medium text-gray-500">Mobile :</span>{' '}
+                      //         <span className="text-gray-800">
+                      //           {agent.manager_details?.mobile_number || '-'}
+                      //         </span>
+                      //       </div>
+
+                      //     </div>
+                      //   ) : (
+                      //     <button
+                      //       onClick={() => handleOpenManagerModal(agent)}
+                      //       className="px-3 py-1.5 text-sm bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition font-medium"
+                      //     >
+                      //       + Add Manager
+                      //     </button>
+                      //   )}
+                      // </td>
+
                       <td className="px-6 py-4">
                         {agent?.manager_details ? (
-                          <div className="space-y-1 text-sm">
+                          <div className="space-y-2 text-sm">
 
+                            {/* Manager Info */}
                             <div>
-                              <span className="font-medium text-gray-500">Name :</span>{' '}
+                              <span className="font-medium text-gray-500">Name :</span>{" "}
                               <span className="font-semibold text-gray-900 capitalize">
-                                {agent.manager_details?.name || '-'}
+                                {agent.manager_details?.name || "-"}
                               </span>
                             </div>
 
                             <div>
-                              <span className="font-medium text-gray-500">Email :</span>{' '}
+                              <span className="font-medium text-gray-500">Email :</span>{" "}
                               <span className="text-gray-800 break-all">
-                                {agent.manager_details?.email || '-'}
+                                {agent.manager_details?.email || "-"}
                               </span>
                             </div>
 
                             <div>
-                              <span className="font-medium text-gray-500">Mobile :</span>{' '}
+                              <span className="font-medium text-gray-500">Mobile :</span>{" "}
                               <span className="text-gray-800">
-                                {agent.manager_details?.mobile_number || '-'}
+                                {agent.manager_details?.mobile_number || "-"}
                               </span>
+                            </div>
+
+                            {/* 🔥 ACTION BUTTONS */}
+                            <div className="flex gap-2 mt-2">
+
+                              {/* Update */}
+                              <button
+                                onClick={() => handleOpenManagerModal(agent)}
+                                className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+                              >
+                                Update
+                              </button>
+
+                              {/* Delete */}
+                              <button
+                                onClick={() => handleDeleteManager(agent)}
+                                className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200"
+                              >
+                                Remove
+                              </button>
+
                             </div>
 
                           </div>
                         ) : (
                           <button
                             onClick={() => handleOpenManagerModal(agent)}
-                            className="px-3 py-1.5 text-sm bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition font-medium"
+                            className="px-3 py-1.5 text-sm bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200"
                           >
                             + Add Manager
                           </button>

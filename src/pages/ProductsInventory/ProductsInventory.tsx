@@ -200,7 +200,8 @@ const ProductsInventory: React.FC = () => {
                                 <th className="px-4 py-3 text-left">S.No</th>
                                 <th className="px-4 py-3 text-left">Product</th>
                                 <th className="px-4 py-3 text-left">Hub</th>
-                                <th className="px-4 py-3 text-left">Stock</th>
+                                <th className="px-4 py-3 text-left">Stock in Hub</th>
+                                <th className="px-4 py-3 text-left">Total Stock</th>
                                 <th className="px-4 py-3 text-right">Action</th>
                             </tr>
                         </thead>
@@ -232,14 +233,16 @@ const ProductsInventory: React.FC = () => {
                             ) : (
                                 <>
                                     {filteredData.map((item: any, index: number) => (
-                                        <tr key={item.id} className="border-b hover:bg-gray-50">
+                                        <tr key={item?.id} className="border-b hover:bg-gray-50">
                                             <td className="px-4 py-3">{index + 1}</td>
                                             <td className="px-4 py-3">
-                                                {item.product?.name}
+                                                {item?.product?.name}
                                                 {/* {item.product?.name} */}
                                             </td>
-                                            <td className="px-4 py-3">{item.hub_name || "-"}</td>
-                                            <td className="px-4 py-3">{item.stock_in_hub}</td>
+                                            <td className="px-4 py-3">{item?.hub_name || "-"}</td>
+                                            <td className="px-4 py-3">{item?.stock_in_hub}</td>
+                                            <td className="px-4 py-3">{item?.total_stock}</td>
+
 
                                             <td className="px-4 py-3 text-right">
 
@@ -270,10 +273,10 @@ const ProductsInventory: React.FC = () => {
                                                     </button>
 
                                                     {/* DIVIDER */}
-                                                    <div className="h-6 w-px bg-gray-300 mx-1" />
+                                                    {/* <div className="h-6 w-px bg-gray-300 mx-1" /> */}
 
                                                     {/* DELETE */}
-                                                    <button
+                                                    {/* <button
                                                         onClick={() => {
                                                             setDeleteInventory(item);
                                                             setShowDeleteModal(true);
@@ -282,7 +285,7 @@ const ProductsInventory: React.FC = () => {
                                                         title="Delete Inventory"
                                                     >
                                                         <Trash2 size={16} />
-                                                    </button>
+                                                    </button> */}
 
                                                 </div>
 
