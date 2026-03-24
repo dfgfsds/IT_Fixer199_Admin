@@ -74,7 +74,7 @@ const Agents360: React.FC = () => {
 
             account_number: agent?.account_number || "",
             ifsc_code: agent?.ifsc_code || "",
-            status:agent?.user_details?.status,
+            status: agent?.user_details?.status,
         });
 
         setShowEditModal(true);
@@ -615,14 +615,14 @@ const Agents360: React.FC = () => {
                                         onUpdate={handleKycUpdate}
                                     />
                                     <DocumentCard
-                                        title="rc_doc_url"
+                                        title="Rc Document"
                                         url={agent?.rc_doc_url}
                                         verified={agent?.is_rc_verified}
                                         field="is_rc_verified"
                                         onUpdate={handleKycUpdate}
                                     />
                                     <DocumentCard
-                                        title="Video KYC"
+                                        title="License Document"
                                         url={agent?.license_doc_url}
                                         verified={agent?.is_license_verified}
                                         field="is_license_verified"
