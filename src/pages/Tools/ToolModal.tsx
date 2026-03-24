@@ -130,9 +130,17 @@ const ToolModal: React.FC<Props> = ({
         ?.filter((b) => b?.type === "TOOLS")
         ?.filter((b) => b?.status === "ACTIVE");
 
+    // const filteredCategories = categories
+    //     ?.filter((c) => c?.type === "TOOLS")
+    //     ?.filter((c) => c?.status === "ACTIVE");
+
     const filteredCategories = categories
         ?.filter((c) => c?.type === "TOOLS")
-        ?.filter((c) => c?.status === "ACTIVE");
+        ?.filter(
+            (c) =>
+                c?.status === "ACTIVE" ||
+                c?.id === form.category_id // 👈 IMPORTANT
+        );
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -258,8 +266,11 @@ const ToolModal: React.FC<Props> = ({
 
                             {filteredCategories.length > 0 ? (
                                 filteredCategories?.map((c) => (
+                                    // <option key={c.id} value={c.id}>
+                                    //     {c.name}
+                                    // </option>
                                     <option key={c.id} value={c.id}>
-                                        {c.name}
+                                        {c.name} {c.status !== "ACTIVE" ? "(Inactive)" : ""}
                                     </option>
                                 ))
                             ) : (

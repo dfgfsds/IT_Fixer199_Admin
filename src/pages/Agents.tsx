@@ -503,7 +503,7 @@ const Agents: React.FC = () => {
   const fetchUsers = async () => {
     try {
 
-      const response = await axiosInstance.get(`${Api.allUsers}`,
+      const response = await axiosInstance.get(`${Api.allUsers}?role=MANAGER&size=10000`,
       );
       console.log(response)
       setUsers(response.data?.users);
@@ -525,16 +525,26 @@ const Agents: React.FC = () => {
     setLoading(true);
 
     try {
-      const updatedApi = await axiosInstance.post(Api?.allocations, {
-        agent: selectedAgent.id,
-        manager: selectedManager
-      })
-      if (updatedApi) {
+      if (selectedManager) {
+        const updatedApi = await axiosInstance.put(`${Api?.allocations}${selectedManager}`)
+        if (updatedApi) {
+          setLoading(false);
+          setManagerModal(false);
+          fetchAgents();
+        }
+      } else {
+        const updatedApi = await axiosInstance.post(Api?.allocations, {
+          agent: selectedAgent.id,
+          manager: selectedManager
+        })
+        if (updatedApi) {
 
+          setLoading(false);
+          setManagerModal(false);
+          fetchAgents();
+        }
       }
-      setLoading(false);
-      setManagerModal(false);
-      fetchAgents();
+
     } catch (error) {
       setLoading(false);
       setApiErrors(extractErrorMessage(error));
@@ -579,7 +589,7 @@ const Agents: React.FC = () => {
 
   const handleOpenManagerModal = (agent: any) => {
     setSelectedAgent(agent);
-    setSelectedManager(agent?.manager_details?.id || ""); // 🔥 important
+    setSelectedManager(String(agent?.manager_details?.id || ""));
     setManagerModal(true);
     fetchUsers();
   };
@@ -872,12 +882,12 @@ const Agents: React.FC = () => {
                             <div className="flex gap-2 mt-2">
 
                               {/* Update */}
-                              <button
+                              {/* <button
                                 onClick={() => handleOpenManagerModal(agent)}
                                 className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
                               >
                                 Update
-                              </button>
+                              </button> */}
 
                               {/* Delete */}
                               <button
