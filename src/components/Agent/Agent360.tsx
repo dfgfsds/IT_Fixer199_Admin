@@ -4,6 +4,7 @@ import Api from '../../api-endpoints/ApiUrls';
 import axiosInstance from '../../configs/axios-middleware';
 import { ArrowLeft, ArrowLeftIcon, Bike, Calendar, CheckCircle, CreditCard, Mail, MapPin, Palette, Phone, ServerCog, Star, User, XCircle } from 'lucide-react';
 import Pagination from '../Pagination';
+import { extractErrorMessage } from '../../utils/extractErrorMessage ';
 
 
 const Agents360: React.FC = () => {
@@ -34,7 +35,8 @@ const Agents360: React.FC = () => {
         vehicle_type: "",
         vehicle_number: "",
         account_number: "",
-        ifsc_code: ""
+        ifsc_code: "",
+        status: ""
     });
 
     // ---------------- FETCH MASTER DATA ----------------
@@ -71,12 +73,15 @@ const Agents360: React.FC = () => {
             vehicle_number: agent?.vehicle_number || "",
 
             account_number: agent?.account_number || "",
-            ifsc_code: agent?.ifsc_code || ""
+            ifsc_code: agent?.ifsc_code || "",
+            status:agent?.user_details?.status,
         });
 
         setShowEditModal(true);
 
     };
+    const [apiErrors, setApiErrors] = useState<string>("");
+
 
     const handleUpdateAgent = async () => {
         try {
@@ -93,11 +98,11 @@ const Agents360: React.FC = () => {
             );
             if (updatedApi) {
                 setShowEditModal(false);
-                fetchAgent();
+                fetchAgentProduct();
             }
 
         } catch (err) {
-            console.log(err);
+            setApiErrors(extractErrorMessage(err));
         }
     };
 
@@ -116,7 +121,7 @@ const Agents360: React.FC = () => {
                 form
             );
 
-            fetchAgent();
+            fetchAgentProduct();
 
         } catch (err) {
             console.log(err);
@@ -138,7 +143,7 @@ const Agents360: React.FC = () => {
                 form
             );
 
-            fetchAgent();
+            fetchAgentProduct();
 
         } catch (err) {
             console.error("KYC Update Error:", err);
@@ -609,6 +614,20 @@ const Agents360: React.FC = () => {
                                         field="is_video_kyc_verified"
                                         onUpdate={handleKycUpdate}
                                     />
+                                    <DocumentCard
+                                        title="rc_doc_url"
+                                        url={agent?.rc_doc_url}
+                                        verified={agent?.is_rc_verified}
+                                        field="is_rc_verified"
+                                        onUpdate={handleKycUpdate}
+                                    />
+                                    <DocumentCard
+                                        title="Video KYC"
+                                        url={agent?.license_doc_url}
+                                        verified={agent?.is_license_verified}
+                                        field="is_license_verified"
+                                        onUpdate={handleKycUpdate}
+                                    />
 
                                 </div>
                             </div>
@@ -1002,7 +1021,30 @@ const Agents360: React.FC = () => {
 
                             </div>
 
+                            <div>
+                                <label className="text-xs font-semibold text-gray-600 mb-1">
+                                    Status
+                                </label>
+
+                                <select
+                                    value={formData.status}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, status: e.target.value })
+                                    }
+                                    className="px-3 py-2 border rounded-lg w-full"
+                                >
+                                    <option value="">Select Status</option>
+                                    <option value="ACTIVE">ACTIVE</option>
+                                    <option value="INACTIVE">INACTIVE</option>
+                                </select>
+                            </div>
+
                         </div>
+                        {apiErrors && (
+                            <p className="text-red-500 mt-2 text-end px-6">
+                                {apiErrors}
+                            </p>
+                        )}
 
                         {/* FOOTER */}
                         <div className="border-t px-6 py-4 flex justify-end gap-3 bg-white">
