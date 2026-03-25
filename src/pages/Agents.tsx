@@ -499,6 +499,9 @@ const Agents: React.FC = () => {
   const [zoneApiErrors, setzoneApiErrors] = useState<string>("");
   const [trackingModal, setTrackingModal] = useState(false);
 
+  const managerList = users
+    ?.filter((item: any) => item?.role === "MANAGER")
+    ?.filter((i: any) => i?.hub_id === selectedAgent?.hub);
 
   const fetchUsers = async () => {
     try {
@@ -978,11 +981,16 @@ const Agents: React.FC = () => {
               className="w-full border px-3 py-2 rounded-lg"
             >
               <option value="">Select Manager</option>
-              {users.filter((item: any) => item?.role === 'MANAGER')?.map((mgr) => (
-                <option key={mgr.id} value={mgr.id}>
-                  {mgr.name}
-                </option>
-              ))}
+
+              {managerList?.length > 0 ? (
+                managerList?.map((mgr: any) => (
+                  <option key={mgr?.id} value={mgr?.id}>
+                    {mgr?.name}
+                  </option>
+                ))
+              ) : (
+                <option disabled>No Manager Available in this location</option>
+              )}
             </select>
             {/* Error */}
             {apiErrors && (
