@@ -150,6 +150,13 @@ const orderModification=`${baseUrl}/api/order/order-item-modification/request/`;
 // orderItemModifications
 const orderItemModifications=`${baseUrl}/api/order/order-item-modifications/`;
 
+// toolMovementDirect
+const toolMovementDirect=`${baseUrl}/api/tools/movement/direct/`;
+
+// productMovementDirect
+const productMovementDirect =`${baseUrl}/api/product-inventory/movements/direct/`;
+
+
 export default {
   login,
   allUsers,
@@ -217,6 +224,8 @@ export default {
   HubServiceRequest,
   orderModification,
   orderItemModifications,
+  toolMovementDirect,
+  productMovementDirect,
 };
 
 

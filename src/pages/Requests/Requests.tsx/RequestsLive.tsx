@@ -39,7 +39,7 @@ const RequestsLive: React.FC = () => {
     const wsRef = useRef<WebSocket | null>(null);
     const reconnectRef = useRef<any>(null);
     const socketRef = useRef<WebSocket | null>(null);
-console.log(requests)
+
 
     const [otpModalOpen, setOtpModalOpen] = useState(false);
     const [currentRefundId, setCurrentRefundId] = useState<string | null>(null);
@@ -143,36 +143,65 @@ console.log(requests)
             //     }
             // };
 
-            ws.onmessage = (event) => {
-                try {
-                    const message = JSON.parse(event.data);
-                    console.log(message)
-                    if (message.type === "initial_data" && message?.data) {
-                        setRequests(message?.data);
-                        setLoading(false)
-                    }
+//             ws.onmessage = (event) => {
+//                 try {
+//                     const message = JSON.parse(event.data);
+//                     console.log(message)
+//                     if (message.type === "initial_data" && message?.data) {
+//                         setRequests(message?.data);
+//                         setLoading(false)
+//                     }
 
-                    if (message.type === "update" && message?.data) {
-                        const updatedRequest = message?.data;
-                        setLoading(false)
+//                     // if (message.type === "update" && message?.data) {
+//                     //     const updatedRequest = message?.data;
+//                     //     setLoading(false)
 
-                        setRequests((prev) => {
-                            const index = prev.findIndex((r) => r.id === updatedRequest.id);
+//                     //     setRequests((prev) => {
+//                     //         const index = prev.findIndex((r) => r.id === updatedRequest.id);
 
-                            if (index !== -1) {
-                                const updated = [...prev];
-                                updated[index] = updatedRequest;
-                                return updated;
-                            }
+//                     //         if (index !== -1) {
+//                     //             const updated = [...prev];
+//                     //             updated[index] = updatedRequest;
+//                     //             return updated;
+//                     //         }
 
-                            return [updatedRequest, ...prev];
-                        });
-                    }
+//                     //         return [updatedRequest, ...prev];
+//                     //     });
+//                     // }
 
-                } catch (err) {
-                    console.error("WS parse error:", err);
-                }
-            };
+//                     if (message.type === "update" && message?.data) {
+//   const updatedList = message.data;
+
+//   setRequests((prev) => {
+//     const map = new Map(prev.map((item) => [item.id, item]));
+
+//     updatedList.forEach((item: any) => {
+//       map.set(item.id, item); // update or insert
+//     });
+
+//     return Array.from(map.values());
+//   });
+// }
+
+//                 } catch (err) {
+//                     console.error("WS parse error:", err);
+//                 }
+//             };
+
+ws.onmessage = (event) => {
+  try {
+    const message = JSON.parse(event.data);
+    console.log(message);
+
+    if ((message.type === "initial_data" || message.type === "update") && message?.data) {
+      setRequests(message.data); // 🔥 FULL REPLACE
+      setLoading(false);
+    }
+
+  } catch (err) {
+    console.error("WS parse error:", err);
+  }
+};
 
             ws.onclose = () => {
                 console.log("WS reconnecting...");
@@ -456,6 +485,7 @@ console.log(requests)
                 show={assignModalOpen}
                 onClose={() => setAssignModalOpen(false)}
                 order={selectedRequest?.order_details}
+                  socketRef={socketRef}
             />
 
             <TrackingModal
