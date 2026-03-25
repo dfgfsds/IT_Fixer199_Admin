@@ -8,6 +8,8 @@ import Api from '../../api-endpoints/ApiUrls';
 import axiosInstance from "../../configs/axios-middleware";
 import toast from "react-hot-toast";
 import SlotChangeModal from "./SlotChangeModal";
+import HubServiceModal from "./HubServiceModal";
+import OrderModificationModal from "./OrderModificationModal";
 
 interface OrdersTableProps {
   orders: Order[];
@@ -30,7 +32,8 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
   const [cancelOrder, setCancelOrder] = useState<any>(null);
 
   const [slotChangeOrder, setSlotChangeOrder] = useState<any>(null);
-
+  const [hubServiceOrder, setHubServiceOrder] = useState<any>(null);
+  const [modificationOrder, setModificationOrder] = useState<any>(null);
 
   const openSlotChange = (order: any) => {
     setSlotChangeOrder(order);
@@ -335,7 +338,30 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                                 Refund
                               </button>
                             )}
-
+                          {order?.order_status === "IN_PROGRESS" && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setHubServiceOrder(order);
+                                setOpenDropdown(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-orange-600"
+                            >
+                              Hub Service
+                            </button>
+                          )}
+                          {order?.order_status === "IN_PROGRESS" && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setModificationOrder(order);
+                                setOpenDropdown(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                            >
+                              Order Modification
+                            </button>
+                          )}
                         </div>
                       )}
 
@@ -406,6 +432,31 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
           }}
         />
       )}
+
+      {hubServiceOrder && (
+        <HubServiceModal
+          order={hubServiceOrder}
+          onClose={() => setHubServiceOrder(null)}
+          onSuccess={() => {
+            setHubServiceOrder(null);
+            fetchOrders();
+            toast.success("Hub service requested");
+          }}
+        />
+      )}
+
+      {modificationOrder && (
+  <OrderModificationModal
+    order={modificationOrder}
+    onClose={() => setModificationOrder(null)}
+    onSuccess={() => {
+      setModificationOrder(null);
+      fetchOrders();
+      toast.success("Order modified successfully");
+    }}
+  />
+)}
+
 
       {cancelOrder && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">

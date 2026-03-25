@@ -5,6 +5,26 @@ import Api from "../../api-endpoints/ApiUrls";
 const OrderViewModal = ({ order, onClose }: any) => {
   const [payments, setPayments] = useState<any[]>([]);
   const [refunds, setRefunds] = useState<any[]>([]);
+  const [modifications, setModifications] = useState<any[]>([]);
+
+  const fetchModifications = async () => {
+    try {
+      const res = await axiosInstance.get(
+        `${Api.orderItemModifications}?order_id=${order?.id}`
+      );
+
+      setModifications(res?.data?.order_item_modifications || []);
+    } catch (err) {
+      console.error("Modification fetch failed:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (order?.id) {
+      fetchPayments();
+      fetchModifications(); // 👈 ADD THIS
+    }
+  }, [order]);
 
   useEffect(() => {
     if (order?.id) {
@@ -263,7 +283,105 @@ const OrderViewModal = ({ order, onClose }: any) => {
           </div>
 
         </section>
+        {/* ORDER MODIFICATIONS */}
+        {modifications.length > 0 && (
+          <section className="bg-yellow-50 border border-yellow-100 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-yellow-700 mb-5">
+              Order Modifications
+            </h3>
 
+            {modifications.map((mod: any) => (
+              <div
+                key={mod.id}
+                className="border rounded-xl p-5 mb-5 bg-white shadow-sm"
+              >
+
+                {/* HEADER */}
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-sm text-gray-600">
+                    Status:{" "}
+                    <span className="font-semibold text-orange-600">
+                      {mod.status}
+                    </span>
+                  </p>
+
+                  <p className="text-xs text-gray-400">
+                    {new Date(mod.created_at).toLocaleString()}
+                  </p>
+                </div>
+
+                {/* ITEMS */}
+                {mod.modification_items.map((item: any) => (
+                  <div
+                    key={item.id}
+                    className="border rounded-lg p-4 mb-4 bg-gray-50"
+                  >
+
+                    {/* TYPE BADGE */}
+                    <div className="mb-2">
+                      <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 font-medium">
+                        {item.modification_type}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+
+                      {/* ORIGINAL */}
+                      <div>
+                        <p className="text-gray-400 text-xs mb-1">Original</p>
+                        <p className="font-medium">
+                          {item.original_entity_details?.name || "-"}
+                        </p>
+                      </div>
+
+                      {/* NEW */}
+                      <div>
+                        <p className="text-gray-400 text-xs mb-1">New</p>
+                        <p className="font-medium">
+                          {item.new_entity_details?.name || "-"}
+                        </p>
+                      </div>
+
+                      {/* TYPE */}
+                      <div>
+                        <p className="text-gray-400 text-xs mb-1">Item Type</p>
+                        <p>{item.item_type}</p>
+                      </div>
+
+                      {/* QTY */}
+                      <div>
+                        <p className="text-gray-400 text-xs mb-1">Quantity</p>
+                        <p>{item.quantity}</p>
+                      </div>
+
+                      {/* PRICE CHANGE */}
+                      <div>
+                        <p className="text-gray-400 text-xs mb-1">Old Price</p>
+                        <p>₹{item.original_price}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-gray-400 text-xs mb-1">New Price</p>
+                        <p className="text-green-600 font-semibold">
+                          ₹{item.new_price}
+                        </p>
+                      </div>
+
+                    </div>
+                  </div>
+                ))}
+
+                {/* REASON */}
+                {mod.reason && (
+                  <div className="mt-2">
+                    <p className="text-gray-400 text-xs">Reason</p>
+                    <p className="text-sm">{mod.reason}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </section>
+        )}
 
         {/* FOOTER */}
         <div className="px-8 py-5 bg-gray-50 border-t flex justify-end rounded-b-2xl">
