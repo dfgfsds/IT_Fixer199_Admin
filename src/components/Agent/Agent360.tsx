@@ -145,6 +145,7 @@ const Agents360: React.FC = () => {
     // };
 
     const handleUpdateAgent = async () => {
+        setApiErrors('')
         try {
 
             const payload = {
@@ -156,7 +157,7 @@ const Agents360: React.FC = () => {
                 // BASIC
                 hub: formData.hub_id,
                 agent_type: formData.agent_type,
-                status: formData.status,
+                status: "ACTIVE",
 
                 start_time: formData.start_time,
                 end_time: formData.end_time,
@@ -188,7 +189,8 @@ const Agents360: React.FC = () => {
             setShowEditModal(false);
 
         } catch (error: any) {
-            setApiErrors(error?.response?.data?.message || "Update failed");
+            setApiErrors(extractErrorMessage(error));
+            // setApiErrors(error?.response?.data?.message || "Update failed");
         }
     };
 
@@ -234,7 +236,7 @@ const Agents360: React.FC = () => {
             fetchAgentProduct();
 
         } catch (err) {
-            console.log(err);
+            toast.error(extractErrorMessage(err))
         }
     };
 
@@ -1222,7 +1224,7 @@ const Agents360: React.FC = () => {
 
                             </div>
 
-                            <div>
+                            {/* <div>
                                 <label className="text-xs font-semibold text-gray-600 mb-1">
                                     Status
                                 </label>
@@ -1238,7 +1240,7 @@ const Agents360: React.FC = () => {
                                     <option value="ACTIVE">ACTIVE</option>
                                     <option value="INACTIVE">INACTIVE</option>
                                 </select>
-                            </div>
+                            </div> */}
 
                         </div>
                         {apiErrors && (

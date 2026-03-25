@@ -462,6 +462,7 @@ import Api from '../api-endpoints/ApiUrls';
 import { useAuth } from '../contexts/AuthContext';
 import { extractErrorMessage } from '../utils/extractErrorMessage ';
 import AgentTrackingModal from '../components/Modals/AgentTrackingModal';
+import toast from 'react-hot-toast';
 interface AgentResponse {
   id: string
   user_name: string
@@ -622,7 +623,6 @@ const Agents: React.FC = () => {
 
   const fetchAgents = async () => {
     try {
-      const token = localStorage.getItem('token')
       const params = new URLSearchParams({
         ...(filters.search && { search: filters.search }),
         ...(filters.status !== 'all' && { status: filters.status })
@@ -685,6 +685,32 @@ const Agents: React.FC = () => {
 
     return matchesSearch && matchesStatus
   })
+
+  const handleStatusToggle = async (agent: any) => {
+    const form = new FormData();
+
+    try {
+
+      const dataStatus = agent.user_details?.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+
+      form.append("status", dataStatus);
+
+      const updatedApi = await axiosInstance.put(
+        `${Api?.agentUser}${agent?.user}`,
+        {
+          status: dataStatus
+        }
+      );
+      if (updatedApi) {
+        toast.success("User status updated");
+        fetchAgents();
+      }
+
+    } catch (error) {
+      console.error("Status update failed:", error);
+      toast.error("Failed to update status");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -926,14 +952,78 @@ const Agents: React.FC = () => {
 
                     {/* Status */}
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${agent.user_details?.status === 'ACTIVE'
+                      {/* <span className={`px-2 py-1 rounded-full text-xs font-medium ${agent.user_details?.status === 'ACTIVE'
                         ? 'bg-green-100 text-green-700'
                         : agent.user_details?.status === 'PENDING'
                           ? 'bg-yellow-100 text-yellow-700'
                           : 'bg-red-100 text-red-700'
                         }`}>
                         {agent.user_details?.status}
-                      </span>
+                      </span> */}
+                      {/* <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => handleStatusToggle(agent)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${agent.user_details?.status === "ACTIVE"
+                            ? "bg-green-500"
+                            : "bg-gray-300"
+                            }`}
+                          disabled={agent.user_details?.status === "PENDING"}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${agent.user_details?.status === "ACTIVE"
+                              ? "translate-x-6"
+                              : "translate-x-1"
+                              }`}
+                          />
+                        </button>
+                        {agent.user_details?.status === "PENDING" && (<div>Please verify agents</div>)}
+                      </div> */}
+
+                      <div className="flex items-center gap-3">
+
+                        {/* TOGGLE */}
+                        <button
+                          onClick={() => handleStatusToggle(agent)}
+                          disabled={agent.user_details?.status === "PENDING"}
+                          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-300 
+      ${agent.user_details?.status === "ACTIVE"
+                              ? "bg-green-500 shadow-md"
+                              : "bg-gray-300"}
+      ${agent.user_details?.status === "PENDING" && "opacity-50 cursor-not-allowed"}
+    `}
+                        >
+                          <span
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-all duration-300
+        ${agent.user_details?.status === "ACTIVE"
+                                ? "translate-x-6"
+                                : "translate-x-1"}
+      `}
+                          />
+                        </button>
+
+                        {/* STATUS TEXT */}
+                        <div className="flex flex-col leading-tight">
+                          <span
+                            className={`text-sm font-medium
+        ${agent.user_details?.status === "ACTIVE"
+                                ? "text-green-600"
+                                : agent.user_details?.status === "PENDING"
+                                  ? "text-orange-500"
+                                  : "text-gray-500"}
+      `}
+                          >
+                            {agent.user_details?.status}
+                          </span>
+
+                          {/* SUB TEXT */}
+                          {agent.user_details?.status === "PENDING" && (
+                            <span className="text-xs text-gray-400">
+                              Verification required
+                            </span>
+                          )}
+                        </div>
+
+                      </div>
                     </td>
 
                     {/* Actions */}
