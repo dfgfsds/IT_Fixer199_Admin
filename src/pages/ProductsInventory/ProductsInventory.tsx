@@ -4,6 +4,7 @@ import { Search, Trash2, Plus, Loader2 } from "lucide-react";
 import InventoryModal from "./InventoryModal";
 import Api from '../../api-endpoints/ApiUrls';
 import Pagination from "../../components/Pagination";
+import ProductAllocateModal from "./ProductAllocateModal";
 
 const ProductsInventory: React.FC = () => {
     const [data, setData] = useState<any[]>([]);
@@ -27,6 +28,7 @@ const ProductsInventory: React.FC = () => {
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const [pagination, setPagination] = useState<any>(null);
+    const [productModal, setProductModal] = useState(false);
 
     const fetchInventory = async (pageNumber = page, size = pageSize) => {
         try {
@@ -271,7 +273,15 @@ const ProductsInventory: React.FC = () => {
                                                     >
                                                         − Remove
                                                     </button>
-
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedItem(item);
+                                                            setProductModal(true);
+                                                        }}
+                                                        className="px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg text-xs"
+                                                    >
+                                                        📦 Allocate
+                                                    </button>
                                                     {/* DIVIDER */}
                                                     {/* <div className="h-6 w-px bg-gray-300 mx-1" /> */}
 
@@ -470,6 +480,12 @@ const ProductsInventory: React.FC = () => {
                 </div>
             )}
 
+            <ProductAllocateModal
+                show={productModal}
+                onClose={() => setProductModal(false)}
+                selectedItem={selectedItem}
+                onSuccess={fetchInventory}
+            />
         </div>
     );
 };

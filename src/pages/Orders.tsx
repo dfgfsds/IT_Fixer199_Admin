@@ -378,6 +378,42 @@ const Orders: React.FC = () => {
 
   const [agents, setAgents] = useState<any[]>([]);
   const [selectedAgent, setSelectedAgent] = useState("");
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    let data = [...orders];
+
+    // 🔍 SEARCH
+    if (filters?.search.trim() !== '') {
+      const searchValue = filters?.search?.toLowerCase();
+
+      data = data?.filter((order: any) =>
+        order?.customer_name?.toLowerCase()?.includes(searchValue) ||
+        order?.customer_number?.includes(searchValue) ||
+        order?.id?.toLowerCase().includes(searchValue)
+      );
+    }
+
+    // // 📂 STATUS
+    // if (filters.status !== '') {
+    //   data = data.filter(
+    //     (order: any) => order.order_status === filters.status
+    //   );
+    // }
+
+    // // 🧑‍🔧 AGENT FILTER ✅ ADD THIS
+    // if (selectedAgent) {
+    //   data = data.filter(
+    //     (order: any) =>
+    //       order?.agent_id === selectedAgent ||
+    //       order?.agent?.id === selectedAgent // fallback
+    //   );
+    // }
+
+    setFilteredOrders(data);
+
+  }, [filters, orders, selectedAgent]);
+
 
   // ✅ FETCH ORDERS (API FILTER)
   const fetchOrders = async () => {
@@ -452,121 +488,121 @@ const Orders: React.FC = () => {
       </div>
 
       {/* FILTER UI */}
- <div className="bg-white border rounded-2xl p-6 shadow-sm">
+      <div className="bg-white border rounded-2xl p-6 shadow-sm">
 
-  {/* TITLE */}
-  <div className="flex items-center justify-between mb-5">
-    <h2 className="text-lg font-semibold text-gray-800">
-      Filters
-    </h2>
+        {/* TITLE */}
+        <div className="flex items-center justify-between mb-5 ">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Filters
+          </h2>
 
-    <button
-      onClick={() => {
-        setFilters({
-          status: "",
-          search: "",
-          startDate: "",
-          endDate: "",
-          page: 1,
-        });
-        setSelectedAgent("");
-      }}
-      className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
-    >
-      <ListRestart size={16} />
-      Reset
-    </button>
-  </div>
+          <button
+            onClick={() => {
+              setFilters({
+                status: "",
+                search: "",
+                startDate: "",
+                endDate: "",
+                page: 1,
+              });
+              setSelectedAgent("");
+            }}
+            className="flex  items-center gap-2 text-sm px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
+          >
+            <ListRestart size={16} />
+            Reset
+          </button>
+        </div>
 
-  {/* FILTER GRID */}
-  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* FILTER GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
-    {/* SEARCH */}
-    <div className="relative">
-      <label className="text-xs text-gray-500 mb-1 block">
-        Search
-      </label>
-      <Search className="absolute left-3 top-[38px] text-gray-400 w-4 h-4" />
-      <input
-        type="text"
-        placeholder="Order / Customer"
-        value={filters.search}
-        onChange={(e) =>
-          setFilters({ ...filters, search: e.target.value, page: 1 })
-        }
-        className="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
-      />
-    </div>
+          {/* SEARCH */}
+          <div className="relative">
+            <label className="text-xs text-gray-500 mb-1 block">
+              Search
+            </label>
+            <Search className="absolute left-3 top-[38px] text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Order / Customer"
+              value={filters.search}
+              onChange={(e) =>
+                setFilters({ ...filters, search: e.target.value, page: 1 })
+              }
+              className="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
 
-    {/* STATUS */}
-    <div>
-      <label className="text-xs text-gray-500 mb-1 block">
-        Status
-      </label>
-      <select
-        value={filters.status}
-        onChange={(e) =>
-          setFilters({ ...filters, status: e.target.value, page: 1 })
-        }
-        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
-      >
-        {statusOptions.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    </div>
+          {/* STATUS */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">
+              Status
+            </label>
+            <select
+              value={filters.status}
+              onChange={(e) =>
+                setFilters({ ...filters, status: e.target.value, page: 1 })
+              }
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+            >
+              {statusOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
-    {/* AGENT */}
-    <div>
-      <label className="text-xs text-gray-500 mb-1 block">
-        Agent
-      </label>
-      <select
-        value={selectedAgent}
-        onChange={(e) => {
-          setSelectedAgent(e.target.value);
-          setFilters(prev => ({ ...prev, page: 1 }));
-        }}
-        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
-      >
-        <option value="">All Agents</option>
-        {agents.map((a: any) => (
-          <option key={a.id} value={a.id}>
-            {a.user_name}
-          </option>
-        ))}
-      </select>
-    </div>
+          {/* AGENT */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">
+              Agent
+            </label>
+            <select
+              value={selectedAgent}
+              onChange={(e) => {
+                setSelectedAgent(e.target.value);
+                setFilters(prev => ({ ...prev, page: 1 }));
+              }}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="">All Agents</option>
+              {agents.map((a: any) => (
+                <option key={a.id} value={a.id}>
+                  {a.user_name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-    {/* DATE */}
-    <div>
-      <label className="text-xs text-gray-500 mb-1 block">
-        Date Range
-      </label>
-      <div className="flex gap-2">
-        <input
-          type="date"
-          value={filters.startDate}
-          onChange={(e) =>
-            setFilters({ ...filters, startDate: e.target.value, page: 1 })
-          }
-          className="w-full border rounded-lg px-2 py-2"
-        />
-        <input
-          type="date"
-          value={filters.endDate}
-          onChange={(e) =>
-            setFilters({ ...filters, endDate: e.target.value, page: 1 })
-          }
-          className="w-full border rounded-lg px-2 py-2"
-        />
+          {/* DATE */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">
+              Date Range
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={filters.startDate}
+                onChange={(e) =>
+                  setFilters({ ...filters, startDate: e.target.value, page: 1 })
+                }
+                className="w-full border rounded-lg px-2 py-2"
+              />
+              <input
+                type="date"
+                value={filters.endDate}
+                onChange={(e) =>
+                  setFilters({ ...filters, endDate: e.target.value, page: 1 })
+                }
+                className="w-full border rounded-lg px-2 py-2"
+              />
+            </div>
+          </div>
+
+        </div>
       </div>
-    </div>
-
-  </div>
-</div>
 
       {/* TABLE */}
       {loading ? (
@@ -575,10 +611,10 @@ const Orders: React.FC = () => {
         </div>
       ) : (
         <OrdersTable
-          orders={orders} // ✅ directly orders
-          onViewOrder={() => {}}
-          onEditOrder={() => {}}
-          onAssignAgent={() => {}}
+          orders={filteredOrders} // ✅ directly orders
+          onViewOrder={() => { }}
+          onEditOrder={() => { }}
+          onAssignAgent={() => { }}
           fetchOrders={fetchOrders}
         />
       )}

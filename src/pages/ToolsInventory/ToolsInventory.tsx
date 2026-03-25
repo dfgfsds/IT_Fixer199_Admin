@@ -5,6 +5,7 @@ import { Search, Trash2, Plus, Loader2 } from "lucide-react";
 import Api from '../../api-endpoints/ApiUrls';
 import Pagination from "../../components/Pagination";
 import ToolInventoryModal from "./ToolInventoryModal";
+import ToolAllocateModal from "./ToolAllocateModal";
 
 const ToolsInventory: React.FC = () => {
     const [data, setData] = useState<any[]>([]);
@@ -28,6 +29,8 @@ const ToolsInventory: React.FC = () => {
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const [pagination, setPagination] = useState<any>(null);
+    const [toolModal, setToolModal] = useState(false);
+
 
     const fetchInventory = async (pageNumber = page, size = pageSize) => {
         try {
@@ -248,29 +251,56 @@ const ToolsInventory: React.FC = () => {
 
                                                 <div className="flex justify-end items-center gap-2">
 
-                                                    {/* ADD STOCK */}
-                                                    <button
-                                                        onClick={() => {
-                                                            setSelectedItem(item);
-                                                            setStockType("add");
-                                                            setStockModal(true);
-                                                        }}
-                                                        className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition shadow-sm"
-                                                    >
-                                                        + Add
-                                                    </button>
+                                                    <div className="flex items-center gap-2">
 
-                                                    {/* REMOVE STOCK */}
-                                                    <button
-                                                        onClick={() => {
-                                                            setSelectedItem(item);
-                                                            setStockType("remove");
-                                                            setStockModal(true);
-                                                        }}
-                                                        className="flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium rounded-lg transition shadow-sm"
-                                                    >
-                                                        − Remove
-                                                    </button>
+                                                        {/* ADD STOCK */}
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedItem(item);
+                                                                setStockType("add");
+                                                                setStockModal(true);
+                                                            }}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg 
+    bg-emerald-50 text-emerald-700 border border-emerald-200 
+    hover:bg-emerald-100 transition"
+                                                        >
+                                                            <span className="text-sm">＋</span>
+                                                            Add
+                                                        </button>
+
+                                                        {/* REMOVE STOCK */}
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedItem(item);
+                                                                setStockType("remove");
+                                                                setStockModal(true);
+                                                            }}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg 
+    bg-rose-50 text-rose-700 border border-rose-200 
+    hover:bg-rose-100 transition"
+                                                        >
+                                                            <span className="text-sm">−</span>
+                                                            Remove
+                                                        </button>
+
+                                                        {/* DIVIDER */}
+                                                        <div className="h-5 w-px bg-gray-300 mx-1" />
+
+                                                        {/* TOOL ALLOCATE */}
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedItem(item);
+                                                                setToolModal(true);
+                                                            }}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg 
+    bg-indigo-50 text-indigo-700 border border-indigo-200 
+    hover:bg-indigo-100 transition"
+                                                        >
+                                                            <span>🔧</span>
+                                                            Allocate
+                                                        </button>
+
+                                                    </div>
 
                                                     {/* DIVIDER */}
 
@@ -469,6 +499,13 @@ const ToolsInventory: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <ToolAllocateModal
+                show={toolModal}
+                onClose={() => setToolModal(false)}
+                selectedItem={selectedItem}
+                onSuccess={fetchInventory}
+            />
 
         </div>
     );

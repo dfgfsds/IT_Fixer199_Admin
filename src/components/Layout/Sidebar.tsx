@@ -128,7 +128,7 @@ const Sidebar: React.FC = () => {
       name: 'Live Requests',
       icon: Users,
       children: [
-        { name: 'Services', path: '/servicesRequest' },
+        // { name: 'Services', path: '/servicesRequest' },
         { name: 'Requests', path: '/requestsLive' },
         { name: 'Tools Inventory Movement', path: '/toolsInventoryMovementLive' },
         { name: 'Product Inventory Movement', path: '/productInventoryMovementLive' }
@@ -157,11 +157,11 @@ const Sidebar: React.FC = () => {
         // { name: 'Inventory', path: '/inventory' },
       ],
     },
-        {
+    {
       name: 'Requests',
       icon: Users,
       children: [
-        { name: 'Services', path: '/services-Request' },
+        // { name: 'Services', path: '/services-Request' },
         { name: 'Requests', path: '/requests' },
         { name: 'Tools Inventory Movement', path: '/toolsInventoryMovement' },
         { name: 'Product Inventory Movement', path: '/productInventoryMovement' }
@@ -173,7 +173,7 @@ const Sidebar: React.FC = () => {
     // { name: 'Product Inventory Movement', icon: Store, path: '/productInventoryMovement' },
     { name: 'Hubs', icon: Store, path: '/hubs' },
     { name: 'Tools', icon: Wrench, path: '/tools' },
-    { name: 'Tools Inventory',icon: Store, path: '/toolsInventory' },
+    { name: 'Tools Inventory', icon: Store, path: '/toolsInventory' },
     { name: 'Services', icon: UserCog, path: '/services' },
     { name: 'Zonal Manager Panel', icon: MapPin, path: '/zones' },
     // { name: 'Slots', icon: Users, path: '/slots' },
