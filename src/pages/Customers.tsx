@@ -86,6 +86,47 @@ const Customers: React.FC = () => {
     }
   };
 
+  const handleExport = () => {
+    if (!customers || customers.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const headers = [
+      "Name",
+      "Email",
+      "Phone",
+      "Joined Date",
+      "Status"
+    ];
+
+    const rows = customers.map((c: any) => [
+      c.name || "",
+      c.email || "",
+      c.mobile_number || "",
+      c.date_joined
+        ? new Date(c.date_joined).toLocaleDateString()
+        : "",
+      c.status || ""
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers, ...rows]
+        .map((row) => row.join(","))
+        .join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "customers.csv");
+    document.body.appendChild(link);
+
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
     fetchCustomers(newPage, pageSize);
@@ -135,6 +176,13 @@ const Customers: React.FC = () => {
             Add Customer
           </button>
         </div> */}
+        <button
+          onClick={handleExport}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          Export
+        </button>
       </div>
 
       {/* Filters */}
@@ -147,7 +195,7 @@ const Customers: React.FC = () => {
                 type="text"
                 placeholder="Search by name, email, phone..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) =>{setSearch(e.target.value)} }
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>

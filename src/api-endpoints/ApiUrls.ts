@@ -141,6 +141,24 @@ const statsSalesDistribution =`${baseUrl}/api/stats/sales-distribution-percentag
 // stats/zone-wise-trend
 const statsZoneWiseTrend = `${baseUrl}/api/stats/zone-wise-trend`;
 
+// HubServiceRequest
+const HubServiceRequest =`${baseUrl}/api/request/hub-service/`;
+
+// orderModification
+const orderModification=`${baseUrl}/api/order/order-item-modification/request/`;
+
+// orderItemModifications
+const orderItemModifications=`${baseUrl}/api/order/order-item-modifications/`;
+
+// toolMovementDirect
+const toolMovementDirect=`${baseUrl}/api/tools/movement/direct/`;
+
+// productMovementDirect
+const productMovementDirect =`${baseUrl}/api/product-inventory/movements/direct/`;
+
+// UserAgent
+const userAgent=`${baseUrl}/api/user/agent`;
+
 export default {
   login,
   allUsers,
@@ -205,6 +223,12 @@ export default {
   statsRevenueTrend,
   statsSalesDistribution,
   statsZoneWiseTrend,
+  HubServiceRequest,
+  orderModification,
+  orderItemModifications,
+  toolMovementDirect,
+  productMovementDirect,
+  userAgent,
 };
 
 

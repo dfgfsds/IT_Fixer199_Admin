@@ -169,7 +169,9 @@ const AttributeModal: React.FC<Props> = ({
 
   const [loading, setLoading] = useState(false);
   const [apiErrors, setApiErrors] = useState("");
-
+  const [originalValues, setOriginalValues] = useState<any[]>([]);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  console.log(deletedIds)
   const [form, setForm] = useState({
     name: "",
     value: [] as string[],
@@ -179,25 +181,47 @@ const AttributeModal: React.FC<Props> = ({
 
   // ---------------- EDIT LOAD ----------------
 
-  useEffect(() => {
+  // useEffect(() => {
 
+  //   if (editAttribute) {
+
+  //     setForm({
+  //       name: editAttribute?.attribute_name || "",
+  //       value: editAttribute?.attribute_values?.map((v: any) => v?.value) || [],
+  //     });
+
+  //   } else {
+
+  //     setForm({
+  //       name: "",
+  //       value: [],
+  //     });
+
+  //   }
+
+  // }, [editAttribute]);
+
+  useEffect(() => {
     if (editAttribute) {
+      setOriginalValues(editAttribute?.attribute_values || []);
 
       setForm({
         name: editAttribute?.attribute_name || "",
         value: editAttribute?.attribute_values?.map((v: any) => v?.value) || [],
       });
-
     } else {
-
       setForm({
         name: "",
         value: [],
       });
-
+      setOriginalValues([]);
     }
-
   }, [editAttribute]);
+
+  const newValues = form.value.filter(
+    (val) =>
+      !originalValues.some((orig: any) => orig.value === val)
+  );
 
   // ---------------- ADD VALUE ----------------
 
@@ -216,16 +240,37 @@ const AttributeModal: React.FC<Props> = ({
 
   // ---------------- REMOVE VALUE ----------------
 
+  // const removeValue = (index: number) => {
+
+  //   const updated = [...form.value];
+  //   updated.splice(index, 1);
+
+  //   setForm(prev => ({
+  //     ...prev,
+  //     value: updated
+  //   }));
+
+  // };
+
   const removeValue = (index: number) => {
+    const valueToRemove = form.value[index];
+
+    const found = originalValues.find(
+      (v: any) => v.value === valueToRemove
+    );
+    console.log(found)
+    // ✅ ONLY PUSH IF ID EXISTS
+    if (found?.value_id) {
+      setDeletedIds((prev) => [...prev, found?.value_id]);
+    }
 
     const updated = [...form.value];
     updated.splice(index, 1);
 
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
-      value: updated
+      value: updated,
     }));
-
   };
 
   // ---------------- SUBMIT ----------------
@@ -245,6 +290,17 @@ const AttributeModal: React.FC<Props> = ({
 
       if (isEdit) {
 
+        const newValues = form.value.filter(
+          (val) =>
+            !originalValues.some((orig: any) => orig.value === val)
+        );
+
+        const payload = {
+          name: form.name,
+          delete_values: deletedIds,
+          new_values: newValues,
+        };
+
         await axiosInstance.put(
           `${Api?.attribute}/${editAttribute.attribute_id}`,
           payload
@@ -252,13 +308,12 @@ const AttributeModal: React.FC<Props> = ({
 
       } else {
 
-        await axiosInstance.post(
-          `${Api?.attribute}`,
-          payload
-        );
+        await axiosInstance.post(`${Api?.attribute}`, {
+          name: form.name,
+          value: form.value,
+        });
 
       }
-
       onSuccess();
       onClose();
 

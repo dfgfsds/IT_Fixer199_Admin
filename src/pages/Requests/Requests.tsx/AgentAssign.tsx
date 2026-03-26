@@ -8,9 +8,10 @@ interface Props {
     show: boolean;
     onClose: () => void;
     order: any;
+    socketRef?: any;
 }
 
-const AgentAssign: React.FC<Props> = ({ show, onClose, order }) => {
+const AgentAssign: React.FC<Props> = ({ show, onClose, order, socketRef }) => {
     const [loading, setLoading] = useState(false);
     const [slots, setSlots] = useState<any[]>([]);
     const [selectedSlot, setSelectedSlot] = useState("");
@@ -28,8 +29,8 @@ const AgentAssign: React.FC<Props> = ({ show, onClose, order }) => {
 
             const res = await axiosInstance.get(Api.zoneByLocation, {
                 params: {
-                    //   lat: order?.lat,
-                    lat: 5646546,
+                    lat: order?.lat,
+                    // lat: 5646546,
                     lng: order?.lng,
                 },
             });
@@ -64,15 +65,23 @@ const AgentAssign: React.FC<Props> = ({ show, onClose, order }) => {
         try {
             setLoading(true);
 
-            await axiosInstance.post(Api.directSlotChange, {
+            const updatedApi = await axiosInstance.post(Api.directSlotChange, {
                 order_id: order?.id,
                 slot_id: selectedSlot,
                 requested_date: new Date().toISOString().split("T")[0],
             });
+            if (updatedApi) {
+                if (socketRef?.current && socketRef.current.readyState === WebSocket.OPEN) {
+                    socketRef.current.send(
+                        JSON.stringify({
+                            action: "refresh_requests", // or refresh_modifications
+                        })
+                    );
+                }
+                toast.success("Slot assigned successfully 🎉");
+                onClose();
+            }
 
-            toast.success("Slot assigned successfully 🎉");
-
-            onClose();
         } catch (err) {
             console.error(err);
             toast.error("Failed to assign slot");

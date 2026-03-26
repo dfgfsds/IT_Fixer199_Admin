@@ -4,6 +4,8 @@ import Api from '../../api-endpoints/ApiUrls';
 import axiosInstance from '../../configs/axios-middleware';
 import { ArrowLeft, ArrowLeftIcon, Bike, Calendar, CheckCircle, CreditCard, Mail, MapPin, Palette, Phone, ServerCog, Star, User, XCircle } from 'lucide-react';
 import Pagination from '../Pagination';
+import { extractErrorMessage } from '../../utils/extractErrorMessage ';
+import toast from 'react-hot-toast';
 
 
 const Agents360: React.FC = () => {
@@ -28,13 +30,17 @@ const Agents360: React.FC = () => {
         mobile_number: "",
         hub_id: "",
         agent_type: "",
-        is_admin_permission_required: false,
         start_time: "",
         end_time: "",
         vehicle_type: "",
         vehicle_number: "",
         account_number: "",
-        ifsc_code: ""
+        ifsc_code: "",
+        bank_name: "",
+        upi_id: "",
+        cumulative_rating: "",
+        is_admin_permission_required: false,
+        status: ""
     });
 
     // ---------------- FETCH MASTER DATA ----------------
@@ -50,54 +56,117 @@ const Agents360: React.FC = () => {
     const handleEditOpen = () => {
 
         setFormData({
+            // name: agent?.user_details?.name || "",
+            // email: agent?.user_details?.email || "",
+            // mobile_number: agent?.user_details?.mobile_number || "",
+
+            // hub_id: agent?.user_details?.hub_id || "",
+
+            // agent_type: agent?.agent_type || "",
+            // is_admin_permission_required: agent?.is_admin_permission_required || false,
+
+            // start_time: agent?.start_time
+            //     ? agent.start_time.substring(0, 5)
+            //     : "",
+
+            // end_time: agent?.end_time
+            //     ? agent.end_time.substring(0, 5)
+            //     : "",
+
+            // vehicle_type: agent?.vehicle_type || "",
+            // vehicle_number: agent?.vehicle_number || "",
+
+            // account_number: agent?.account_number || "",
+            // ifsc_code: agent?.ifsc_code || "",
+            // status: agent?.user_details?.status,
+            // ✅ USER DETAILS
             name: agent?.user_details?.name || "",
             email: agent?.user_details?.email || "",
             mobile_number: agent?.user_details?.mobile_number || "",
 
-            hub_id: agent?.user_details?.hub_id || "",
-
+            // ✅ BASIC
+            hub_id: agent?.hub || "",
             agent_type: agent?.agent_type || "",
-            is_admin_permission_required: agent?.is_admin_permission_required || false,
+            status: agent?.user_details?.status || "",
 
+            // ✅ TIME (format fix)
             start_time: agent?.start_time
-                ? agent.start_time.substring(0, 5)
+                ? agent.start_time.slice(0, 5)
                 : "",
-
             end_time: agent?.end_time
-                ? agent.end_time.substring(0, 5)
+                ? agent.end_time.slice(0, 5)
                 : "",
 
+            // ✅ VEHICLE
             vehicle_type: agent?.vehicle_type || "",
             vehicle_number: agent?.vehicle_number || "",
 
+            // ✅ BANK
+            bank_name: agent?.bank_name || "",
             account_number: agent?.account_number || "",
-            ifsc_code: agent?.ifsc_code || ""
+            ifsc_code: agent?.ifsc_code || "",
+            upi_id: agent?.upi_id || "",
+
+            // ✅ RATING
+            cumulative_rating: agent?.cumulative_rating || "0.00",
+
+            // ✅ PERMISSION
+            is_admin_permission_required:
+                agent?.is_admin_permission_required || false,
         });
 
         setShowEditModal(true);
 
     };
+    const [apiErrors, setApiErrors] = useState<string>("");
 
     const handleUpdateAgent = async () => {
+        setApiErrors('')
         try {
 
-            const form = new FormData();
+            const payload = {
+                // USER DETAILS
+                name: formData.name,
+                email: formData.email,
+                mobile_number: formData.mobile_number,
 
-            Object.entries(formData).forEach(([key, value]) => {
-                form.append(key, String(value));
-            });
+                // BASIC
+                hub: formData.hub_id,
+                agent_type: formData.agent_type,
+                status: "ACTIVE",
 
-            const updatedApi = await axiosInstance.put(
+                start_time: formData.start_time,
+                end_time: formData.end_time,
+
+                // VEHICLE
+                vehicle_type: formData.vehicle_type,
+                vehicle_number: formData.vehicle_number,
+
+                // BANK
+                bank_name: formData.bank_name,
+                account_number: formData.account_number,
+                ifsc_code: formData.ifsc_code,
+                upi_id: formData.upi_id,
+
+                // PERMISSION
+                is_admin_permission_required:
+                    formData.is_admin_permission_required,
+
+                // RATING (optional)
+                cumulative_rating: formData.cumulative_rating,
+            };
+
+            await axiosInstance.put(
                 `${Api?.agentUser}${agent?.user}`,
-                form
+                payload
             );
-            if (updatedApi) {
-                setShowEditModal(false);
-                fetchAgent();
-            }
 
-        } catch (err) {
-            console.log(err);
+            toast.success("Agent updated successfully");
+            setShowEditModal(false);
+
+        } catch (error: any) {
+            setApiErrors(extractErrorMessage(error));
+            // setApiErrors(error?.response?.data?.message || "Update failed");
         }
     };
 
@@ -116,10 +185,34 @@ const Agents360: React.FC = () => {
                 form
             );
 
-            fetchAgent();
+            fetchAgentProduct();
 
         } catch (err) {
             console.log(err);
+        }
+    };
+
+    const handleAccountStatusToggle = async () => {
+        try {
+
+            const form = new FormData();
+
+            const newStatus =
+                agent?.user_details?.status === "ACTIVE"
+                    ? "INACTIVE"
+                    : "ACTIVE";
+
+            form.append("status", newStatus);
+
+            await axiosInstance.put(
+                `${Api?.agentUser}${agent?.user}`, // 🔥 slash important
+                form
+            );
+
+            fetchAgentProduct();
+
+        } catch (err) {
+            toast.error(extractErrorMessage(err))
         }
     };
 
@@ -138,7 +231,7 @@ const Agents360: React.FC = () => {
                 form
             );
 
-            fetchAgent();
+            fetchAgentProduct();
 
         } catch (err) {
             console.error("KYC Update Error:", err);
@@ -254,19 +347,39 @@ const Agents360: React.FC = () => {
                                 Email: <span className="font-medium text-gray-700">{agent?.user_details?.email}</span>
                             </p>
 
-                            {/* STATUS BADGE */}
-                            <div className="mt-4">
-                                {agent?.user_details?.is_active ? (
-                                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm bg-green-100 text-green-700 font-medium">
-                                        <CheckCircle size={16} />
-                                        Active
-                                    </span>
-                                ) : (
-                                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm bg-red-100 text-red-600 font-medium">
-                                        <XCircle size={16} />
-                                        Inactive
-                                    </span>
-                                )}
+
+                            <div className="flex items-center gap-3 py-2">
+
+                                {/* STATUS LABEL */}
+                                <span
+                                    className={`text-sm font-medium ${agent?.user_details?.status === "ACTIVE"
+                                        ? "text-green-600"
+                                        : "text-red-500"
+                                        }`}
+                                >
+                                    {agent?.user_details?.status === "ACTIVE"
+                                        ? "Active"
+                                        : "Inactive"}
+                                </span>
+
+                                {/* TOGGLE */}
+                                <button
+                                    onClick={handleAccountStatusToggle}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition
+            ${agent?.user_details?.status === "ACTIVE"
+                                            ? "bg-green-500"
+                                            : "bg-gray-300"
+                                        }`}
+                                >
+                                    <span
+                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition
+                ${agent?.user_details?.status === "ACTIVE"
+                                                ? "translate-x-6"
+                                                : "translate-x-1"
+                                            }`}
+                                    />
+                                </button>
+
                             </div>
                         </div>
                     </div>
@@ -607,6 +720,20 @@ const Agents360: React.FC = () => {
                                         url={agent?.video_kyc_url}
                                         verified={agent?.is_video_kyc_verified}
                                         field="is_video_kyc_verified"
+                                        onUpdate={handleKycUpdate}
+                                    />
+                                    <DocumentCard
+                                        title="Rc Document"
+                                        url={agent?.rc_doc_url}
+                                        verified={agent?.is_rc_verified}
+                                        field="is_rc_verified"
+                                        onUpdate={handleKycUpdate}
+                                    />
+                                    <DocumentCard
+                                        title="License Document"
+                                        url={agent?.license_doc_url}
+                                        verified={agent?.is_license_verified}
+                                        field="is_license_verified"
                                         onUpdate={handleKycUpdate}
                                     />
 
@@ -960,6 +1087,14 @@ const Agents360: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                                     <FormInput
+                                        label="Bank Name"
+                                        value={formData.bank_name}
+                                        onChange={(v: any) =>
+                                            setFormData({ ...formData, bank_name: v })
+                                        }
+                                    />
+
+                                    <FormInput
                                         label="Account Number"
                                         value={formData.account_number}
                                         onChange={(v: any) =>
@@ -970,11 +1105,30 @@ const Agents360: React.FC = () => {
                                     <FormInput
                                         label="IFSC Code"
                                         value={formData.ifsc_code}
-                                        onChange={(v: any) => setFormData({ ...formData, ifsc_code: v })}
+                                        onChange={(v: any) =>
+                                            setFormData({ ...formData, ifsc_code: v })
+                                        }
+                                    />
+
+                                    <FormInput
+                                        label="UPI ID"
+                                        value={formData.upi_id}
+                                        onChange={(v: any) =>
+                                            setFormData({ ...formData, upi_id: v })
+                                        }
                                     />
 
                                 </div>
                             </div>
+
+                            <FormInput
+                                label="Rating"
+                                type="number"
+                                value={formData.cumulative_rating}
+                                onChange={(v: any) =>
+                                    setFormData({ ...formData, cumulative_rating: v })
+                                }
+                            />
 
                             {/* PERMISSIONS */}
                             <div>
@@ -1003,6 +1157,11 @@ const Agents360: React.FC = () => {
                             </div>
 
                         </div>
+                        {apiErrors && (
+                            <p className="text-red-500 mt-2 text-end px-6">
+                                {apiErrors}
+                            </p>
+                        )}
 
                         {/* FOOTER */}
                         <div className="border-t px-6 py-4 flex justify-end gap-3 bg-white">

@@ -8,6 +8,9 @@ import Api from '../../api-endpoints/ApiUrls';
 import axiosInstance from "../../configs/axios-middleware";
 import toast from "react-hot-toast";
 import SlotChangeModal from "./SlotChangeModal";
+import HubServiceModal from "./HubServiceModal";
+import OrderModificationModal from "./OrderModificationModal";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 interface OrdersTableProps {
   orders: Order[];
@@ -28,8 +31,11 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [locationOrder, setLocationOrder] = useState(null);
   const [cancelOrder, setCancelOrder] = useState<any>(null);
+  const [unassignOrder, setUnassignOrder] = useState<any>(null);
 
   const [slotChangeOrder, setSlotChangeOrder] = useState<any>(null);
+  const [hubServiceOrder, setHubServiceOrder] = useState<any>(null);
+  const [modificationOrder, setModificationOrder] = useState<any>(null);
 
   const openSlotChange = (order: any) => {
     setSlotChangeOrder(order);
@@ -68,6 +74,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
         setRefundOrder(order);
       }
     } catch (error) {
+      toast.error(extractErrorMessage(error))
       console.error("OTP request failed", error);
     }
   };
@@ -84,6 +91,24 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
     return !blocked.includes(status);
   };
 
+  const canUnassignAgent = (order: any) => {
+    const blockedStatuses = ["COMPLETED", "CANCELLED", "REFUNDED", "SERVICE_IN_PROGRESS"];
+    return !!order?.assigned_agent_id && !blockedStatuses.includes(order?.order_status);
+  };
+
+  const handleUnassignAgent = async (order: any) => {
+    try {
+      await axiosInstance.post(
+        `${Api?.adminCancelOrder}/${order?.id}/unassign-agent/`
+      );
+      toast.success("Agent unassigned successfully");
+      fetchOrders();
+      setUnassignOrder(null);
+    } catch (error: any) {
+      toast.error(extractErrorMessage(error));
+    }
+  };
+
 
   const handleCancelOrder = async (order: any) => {
     try {
@@ -95,7 +120,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
       setCancelOrder(null);
 
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "something went wrong, please try again later")
+      toast.error(extractErrorMessage(error))
     }
   };
 
@@ -104,14 +129,17 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
     toast.success("Order ID copied");
   };
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
-    const handleClickOutside = (event: any) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      const isInsideAnyDropdown = Object.values(dropdownRefs.current).some(
+        (ref) => ref && ref.contains(target)
+      );
+
+      if (!isInsideAnyDropdown) {
         setOpenDropdown(null);
       }
     };
@@ -122,6 +150,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
 
 
   return (
@@ -254,31 +283,10 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                   <td className="px-6 py-4 font-semibold text-gray-900">
                     ₹{order?.total_price}
                   </td>
-
-                  {/* ACTIONS */}
-                  {/* <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-4">
-
-                      <button
-                        onClick={() => handleViewOrder(order)}
-                        className="text-gray-600 hover:text-black transition"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => handleMap(order)}
-                        className="text-blue-600 hover:text-blue-800 transition"
-                      >
-                        <MapPin className="w-4 h-4" />
-                      </button>
-
-                    </div>
-                  </td> */}
-
                   <td className="px-6 py-4 text-right">
                     <div
-                      ref={dropdownRef}
+                      // ref={dropdownRef}
+                      ref={(el) => (dropdownRefs.current[order.id] = el)}
                       className="flex justify-end items-center gap-3 relative">
 
                       <button
@@ -297,9 +305,13 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
 
                       {/* Dropdown trigger */}
                       <button
-                        onClick={() =>
-                          setOpenDropdown(openDropdown === order.id ? null : order.id)
-                        }
+                        // onClick={() =>
+                        //   setOpenDropdown(openDropdown === order.id ? null : order.id)
+                        // }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenDropdown(openDropdown === order.id ? null : order.id);
+                        }}
                         className="text-gray-600 hover:text-black"
                       >
                         <MoreVertical className="w-4 h-4" />
@@ -312,7 +324,9 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                           {order?.order_status !== "CANCELLED" &&
                             order?.order_status !== "COMPLETED" && (
                               <button
-                                onClick={() => {
+                                // onClick={() => setCancelOrder(order)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setCancelOrder(order);
                                   setOpenDropdown(null);
                                 }}
@@ -324,7 +338,9 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
 
                           {canChangeSlot(order?.order_status) && (
                             <button
-                              onClick={() => {
+                              // onClick={() => openSlotChange(order)}
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 openSlotChange(order);
                                 setOpenDropdown(null);
                               }}
@@ -337,16 +353,49 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                           {order?.order_status === "CANCELLED" &&
                             order?.payment_status === "SUCCESS" && (
                               <button
-                                onClick={() => {
-                                  handleRefund(order);
-                                  setOpenDropdown(null);
-                                }}
+                                onClick={() => handleRefund(order)}
                                 className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
                               >
                                 Refund
                               </button>
                             )}
+                          {order?.order_status === "IN_PROGRESS" && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setHubServiceOrder(order);
+                                setOpenDropdown(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-orange-600"
+                            >
+                              Hub Service
+                            </button>
+                          )}
+                          {order?.order_status === "IN_PROGRESS" && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setModificationOrder(order);
+                                setOpenDropdown(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                            >
+                              Order Modification
+                            </button>
+                          )}
 
+                          {canUnassignAgent(order) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setUnassignOrder(order);
+                                setOpenDropdown(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                            >
+                              Unassign Agent
+                            </button>
+                          )}
                         </div>
                       )}
 
@@ -416,6 +465,65 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
             toast.success("Slot changed successfully");
           }}
         />
+      )}
+
+      {hubServiceOrder && (
+        <HubServiceModal
+          order={hubServiceOrder}
+          onClose={() => setHubServiceOrder(null)}
+          onSuccess={() => {
+            setHubServiceOrder(null);
+            fetchOrders();
+            toast.success("Hub service requested");
+          }}
+        />
+      )}
+
+      {modificationOrder && (
+        <OrderModificationModal
+          order={modificationOrder}
+          onClose={() => setModificationOrder(null)}
+          onSuccess={() => {
+            setModificationOrder(null);
+            fetchOrders();
+            toast.success("Order modified successfully");
+          }}
+        />
+      )}
+
+
+      {unassignOrder && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+
+            <h2 className="text-lg font-semibold mb-4">
+              Unassign Agent
+            </h2>
+
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to unassign the agent from order{" "}
+              <span className="font-semibold">{unassignOrder.id}</span>?{" "}
+              The order will move back to <span className="font-semibold text-yellow-600">PENDING</span> status.
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setUnassignOrder(null)}
+                className="px-4 py-2 border rounded-lg"
+              >
+                No
+              </button>
+
+              <button
+                onClick={() => handleUnassignAgent(unassignOrder)}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg"
+              >
+                Yes, Unassign
+              </button>
+            </div>
+
+          </div>
+        </div>
       )}
 
       {cancelOrder && (

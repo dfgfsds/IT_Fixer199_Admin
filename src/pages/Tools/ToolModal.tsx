@@ -47,6 +47,7 @@ const ToolModal: React.FC<Props> = ({
 
     const fetchCategories = async () => {
         const res = await axiosInstance.get(Api?.categories);
+        console.log(res)
         setCategories(res?.data?.data || []);
     };
 
@@ -125,7 +126,21 @@ const ToolModal: React.FC<Props> = ({
         setForm({ ...form, specification: updatedSpecs });
     };
 
+    const filteredBrands = brands
+        ?.filter((b) => b?.type === "TOOLS")
+        ?.filter((b) => b?.status === "ACTIVE");
 
+    // const filteredCategories = categories
+    //     ?.filter((c) => c?.type === "TOOLS")
+    //     ?.filter((c) => c?.status === "ACTIVE");
+
+    const filteredCategories = categories
+        ?.filter((c) => c?.type === "TOOLS")
+        ?.filter(
+            (c) =>
+                c?.status === "ACTIVE" ||
+                c?.id === form.category_id // 👈 IMPORTANT
+        );
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -223,17 +238,22 @@ const ToolModal: React.FC<Props> = ({
                             className="w-full border rounded-lg px-3 py-2"
                         >
                             <option value="">Select Brand</option>
-                            {brands?.filter((brand) => brand?.type === "TOOLS")?.filter((i) => i?.status === "ACTIVE")?.map((b) => (
-                                <option key={b.id} value={b.id}>
-                                    {b.name}
-                                </option>
-                            ))}
+
+                            {filteredBrands.length > 0 ? (
+                                filteredBrands.map((b) => (
+                                    <option key={b.id} value={b.id}>
+                                        {b.name}
+                                    </option>
+                                ))
+                            ) : (
+                                <option disabled>Not Available</option>
+                            )}
                         </select>
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium mb-1">
-                            Brand *
+                            categorie *
                         </label>
                         <select
                             value={form.category_id}
@@ -242,12 +262,20 @@ const ToolModal: React.FC<Props> = ({
                             }
                             className="w-full border rounded-lg px-3 py-2"
                         >
-                            <option value="">Select category</option>
-                            {categories?.filter((category) => category?.type === "TOOLS")?.filter((i) => i?.status === "ACTIVE")?.map((b) => (
-                                <option key={b?.id} value={b?.id}>
-                                    {b?.name}
-                                </option>
-                            ))}
+                            <option value="">Select Categorie</option>
+
+                            {filteredCategories.length > 0 ? (
+                                filteredCategories?.map((c) => (
+                                    // <option key={c.id} value={c.id}>
+                                    //     {c.name}
+                                    // </option>
+                                    <option key={c.id} value={c.id}>
+                                        {c.name} {c.status !== "ACTIVE" ? "(Inactive)" : ""}
+                                    </option>
+                                ))
+                            ) : (
+                                <option disabled>Not Available</option>
+                            )}
                         </select>
                     </div>
 

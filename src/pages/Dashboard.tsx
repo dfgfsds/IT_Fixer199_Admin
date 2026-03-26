@@ -240,7 +240,7 @@ const Dashboard: React.FC = () => {
 
   const fetchZones = async () => {
     try {
-      const res = await axiosInstance.get(api.allZone);
+      const res = await axiosInstance.get(`${api.allZone}?size=10000`);
       setZones(res.data?.zones || res.data?.data || []);
     } catch (error) {
       console.error("Zone fetch error", error);
@@ -336,8 +336,8 @@ const Dashboard: React.FC = () => {
   const handleClearFilters = () => {
     const today = new Date().toISOString().split("T")[0];
 
-    setStartDate(today);
-    setEndDate(today);
+    setStartDate("");
+    setEndDate("");
     setType("PRODUCT");
     setZoneId("");
   };

@@ -101,9 +101,18 @@ const ServiceModal: React.FC<Props> = ({
         setPriceTypes(res?.data?.data || []);
     };
 
-    const fetchZones = async (id: any) => {
-        const res = await axiosInstance.get(`${Api?.hubMapping}?hub=${id}`);
-        setZones(res?.data?.mappings || []);
+    // const fetchZones = async (id: any) => {
+    //     const res = await axiosInstance.get(`${Api?.hubMapping}?hub=${id}`);
+    //     setZones(res?.data?.mappings || []);
+    // };
+
+    const fetchZones = async (hubId: any, index: number) => {
+        const res = await axiosInstance.get(`${Api?.hubMapping}?hub=${hubId}`);
+
+        setZones((prev: any) => ({
+            ...prev,
+            [index]: res?.data?.mappings || []
+        }));
     };
 
     const fetchHubsByZone = async () => {
@@ -137,6 +146,7 @@ const ServiceModal: React.FC<Props> = ({
         });
     };
 
+    console.log(editService)
     // ---------------- EDIT MODE ----------------
     useEffect(() => {
         if (!editService) return;
@@ -150,14 +160,32 @@ const ServiceModal: React.FC<Props> = ({
                 }))
                 : [{ price_type_id: "", price: "" }];
 
+        // const formattedZoneHub =
+        //     editService.zone_hub_mappings?.length > 0
+        //         ? editService.zone_hub_mappings.map((z: any) => ({
+        //             id: z.id,
+        //             zone_id: z.zone,
+        //             hub_id: z.hub,
+        //         }))
+        //         : [{ zone_id: "", hub_id: "" }];
+
         const formattedZoneHub =
             editService.zone_hub_mappings?.length > 0
-                ? editService.zone_hub_mappings.map((z: any) => ({
-                    id: z.id,
-                    zone_id: z.zone,
-                    hub_id: z.hub,
-                }))
+                ? editService.zone_hub_mappings.map((z: any, index: number) => {
+
+                    // 🔥 fetch zones for each hub
+                    if (z.hub) {
+                        fetchZones(z.hub, index);
+                    }
+
+                    return {
+                        id: z.id,
+                        zone_id: z.zone,
+                        hub_id: z.hub,
+                    };
+                })
                 : [{ zone_id: "", hub_id: "" }];
+
 
         setForm({
             name: editService.name || "",
@@ -172,15 +200,16 @@ const ServiceModal: React.FC<Props> = ({
                 editService.categories?.map((c: any) => c.category) || [],
 
             pricing_models: formattedPricing,
+            // zone_hub_mappings: formattedZoneHub,
             zone_hub_mappings: formattedZoneHub,
         });
 
-        // Fetch zones based on hub
-        editService.zone_hub_mappings?.forEach((z: any) => {
-            if (z.hub) {
-                fetchZones(z.hub);
-            }
-        });
+        if (editService?.media_files && editService.media_files.length > 0) {
+            setExistingMedia(editService.media_files);
+
+            const urls = editService.media_files.map((m: any) => m.image_url);
+            setPreviewUrls(urls);
+        }
 
     }, [editService]);
 
@@ -256,6 +285,20 @@ const ServiceModal: React.FC<Props> = ({
         setForm({ ...form, zone_hub_mappings: updated });
     };
 
+    // const handleZoneHubChange = async (
+    //     index: number,
+    //     field: string,
+    //     value: string
+    // ) => {
+    //     const updated = [...form.zone_hub_mappings];
+    //     updated[index][field] = value;
+    //     setForm({ ...form, zone_hub_mappings: updated });
+
+    //     if (field === "hub_id") {
+    //         await fetchZones(value);
+    //     }
+    // };
+
     const handleZoneHubChange = async (
         index: number,
         field: string,
@@ -263,10 +306,15 @@ const ServiceModal: React.FC<Props> = ({
     ) => {
         const updated = [...form.zone_hub_mappings];
         updated[index][field] = value;
+
         setForm({ ...form, zone_hub_mappings: updated });
 
         if (field === "hub_id") {
-            await fetchZones(value);
+            // reset zone when hub changes
+            updated[index].zone_id = "";
+            setForm({ ...form, zone_hub_mappings: updated });
+
+            await fetchZones(value, index);
         }
     };
 
@@ -362,7 +410,7 @@ const ServiceModal: React.FC<Props> = ({
                 );
                 if (updateApi) {
                     onSuccess();
-                    onClose();
+                    handleClose();
                     setLoading(false);
 
                 }
@@ -373,7 +421,7 @@ const ServiceModal: React.FC<Props> = ({
                 );
                 if (updateApi) {
                     onSuccess();
-                    onClose();
+                    handleClose();
                     setLoading(false);
                 }
             }
@@ -619,7 +667,7 @@ const ServiceModal: React.FC<Props> = ({
 
                                     <div>
                                         <label className="text-sm text-gray-600">Zone</label>
-                                        <select
+                                        {/* <select
                                             value={item.zone_id}
                                             onChange={(e) =>
                                                 handleZoneHubChange(index, "zone_id", e.target.value)
@@ -628,6 +676,20 @@ const ServiceModal: React.FC<Props> = ({
                                         >
                                             <option value="">Select Zone</option>
                                             {zones?.map((z: any) => (
+                                                <option key={z.zone} value={z.zone}>
+                                                    {z.zone_name}
+                                                </option>
+                                            ))}
+                                        </select> */}
+                                        <select
+                                            value={item.zone_id}
+                                            onChange={(e) =>
+                                                handleZoneHubChange(index, "zone_id", e.target.value)
+                                            }
+                                            className="mt-1 w-full border rounded-lg px-3 py-2"
+                                        >
+                                            <option value="">Select Zone</option>
+                                            {zones[index]?.map((z: any) => (
                                                 <option key={z.zone} value={z.zone}>
                                                     {z.zone_name}
                                                 </option>

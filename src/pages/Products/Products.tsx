@@ -81,8 +81,9 @@ const Products: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchProducts();
-    }, []);
+        setPage(1); // reset page when filter changes
+        fetchProducts(1, pageSize);
+    }, [search, selectedBrand, selectedCategory]);
 
     const handlePageSizeChange = (size: number) => {
         setPageSize(size);
@@ -96,16 +97,52 @@ const Products: React.FC = () => {
     };
 
 
+    // const fetchProducts = async (pageNumber = page, size = pageSize) => {
+    //     try {
+    //         const res = await axiosInstance.get(`${Api?.products}?page=${pageNumber}&size=${size}&include_attribute=true&include_category=true&include_media=true&include_brand=true&include_pricing=true&search=${search}`);
+    //         // setProducts(res?.data?.data || []);
+    //         setProducts(res?.data?.products);
+
+    //         const pagination = res?.data?.pagination;
+    //         setPagination(pagination);
+    //         setPage(pagination?.page);
+    //         setTotalPages(pagination?.total_pages);
+    //     } catch (err) {
+    //         console.error(err);
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
     const fetchProducts = async (pageNumber = page, size = pageSize) => {
         try {
-            const res = await axiosInstance.get(`${Api?.products}?page=${pageNumber}&size=${size}&include_attribute=true&include_category=true&include_media=true&include_brand=true&include_pricing=true`);
-            // setProducts(res?.data?.data || []);
-            setProducts(res?.data?.products);
+            setLoading(true);
+
+            const params = new URLSearchParams();
+
+            params.append("page", String(pageNumber));
+            params.append("size", String(size));
+
+            params.append("include_attribute", "true");
+            params.append("include_category", "true");
+            params.append("include_media", "true");
+            params.append("include_brand", "true");
+            params.append("include_pricing", "true");
+
+            if (search) params.append("search", search);
+            if (selectedBrand) params.append("brand_id", selectedBrand);
+            if (selectedCategory) params.append("category_id", selectedCategory);
+
+            const res = await axiosInstance.get(
+                `${Api?.products}?${params.toString()}`
+            );
+
+            setProducts(res?.data?.products || []);
 
             const pagination = res?.data?.pagination;
             setPagination(pagination);
             setPage(pagination?.page);
             setTotalPages(pagination?.total_pages);
+
         } catch (err) {
             console.error(err);
         } finally {

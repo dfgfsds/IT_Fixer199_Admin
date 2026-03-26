@@ -4,6 +4,7 @@ import { Search, Trash2, Plus, Loader2 } from "lucide-react";
 import InventoryModal from "./InventoryModal";
 import Api from '../../api-endpoints/ApiUrls';
 import Pagination from "../../components/Pagination";
+import ProductAllocateModal from "./ProductAllocateModal";
 
 const ProductsInventory: React.FC = () => {
     const [data, setData] = useState<any[]>([]);
@@ -27,6 +28,7 @@ const ProductsInventory: React.FC = () => {
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const [pagination, setPagination] = useState<any>(null);
+    const [productModal, setProductModal] = useState(false);
 
     const fetchInventory = async (pageNumber = page, size = pageSize) => {
         try {
@@ -200,7 +202,8 @@ const ProductsInventory: React.FC = () => {
                                 <th className="px-4 py-3 text-left">S.No</th>
                                 <th className="px-4 py-3 text-left">Product</th>
                                 <th className="px-4 py-3 text-left">Hub</th>
-                                <th className="px-4 py-3 text-left">Stock</th>
+                                <th className="px-4 py-3 text-left">Stock in Hub</th>
+                                <th className="px-4 py-3 text-left">Total Stock</th>
                                 <th className="px-4 py-3 text-right">Action</th>
                             </tr>
                         </thead>
@@ -232,14 +235,16 @@ const ProductsInventory: React.FC = () => {
                             ) : (
                                 <>
                                     {filteredData.map((item: any, index: number) => (
-                                        <tr key={item.id} className="border-b hover:bg-gray-50">
+                                        <tr key={item?.id} className="border-b hover:bg-gray-50">
                                             <td className="px-4 py-3">{index + 1}</td>
                                             <td className="px-4 py-3">
-                                                {item.product?.name}
+                                                {item?.product?.name}
                                                 {/* {item.product?.name} */}
                                             </td>
-                                            <td className="px-4 py-3">{item.hub_name || "-"}</td>
-                                            <td className="px-4 py-3">{item.stock_in_hub}</td>
+                                            <td className="px-4 py-3">{item?.hub_name || "-"}</td>
+                                            <td className="px-4 py-3">{item?.stock_in_hub}</td>
+                                            <td className="px-4 py-3">{item?.total_stock}</td>
+
 
                                             <td className="px-4 py-3 text-right">
 
@@ -268,12 +273,20 @@ const ProductsInventory: React.FC = () => {
                                                     >
                                                         − Remove
                                                     </button>
-
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedItem(item);
+                                                            setProductModal(true);
+                                                        }}
+                                                        className="px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg text-xs"
+                                                    >
+                                                        📦 Allocate
+                                                    </button>
                                                     {/* DIVIDER */}
-                                                    <div className="h-6 w-px bg-gray-300 mx-1" />
+                                                    {/* <div className="h-6 w-px bg-gray-300 mx-1" /> */}
 
                                                     {/* DELETE */}
-                                                    <button
+                                                    {/* <button
                                                         onClick={() => {
                                                             setDeleteInventory(item);
                                                             setShowDeleteModal(true);
@@ -282,7 +295,7 @@ const ProductsInventory: React.FC = () => {
                                                         title="Delete Inventory"
                                                     >
                                                         <Trash2 size={16} />
-                                                    </button>
+                                                    </button> */}
 
                                                 </div>
 
@@ -467,6 +480,12 @@ const ProductsInventory: React.FC = () => {
                 </div>
             )}
 
+            <ProductAllocateModal
+                show={productModal}
+                onClose={() => setProductModal(false)}
+                selectedItem={selectedItem}
+                onSuccess={fetchInventory}
+            />
         </div>
     );
 };

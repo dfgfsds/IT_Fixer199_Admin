@@ -23,7 +23,7 @@ const BrandModal: React.FC<Props> = ({
         name: "",
         status: "ACTIVE",
         is_featured: false,
-        type: "PRODUCT",
+        type: "",
     });
 
     const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -42,6 +42,24 @@ const BrandModal: React.FC<Props> = ({
             setPreview(editBrand.logo_url);
         }
     }, [editBrand]);
+
+    const resetForm = () => {
+        setForm({
+            name: "",
+            status: "ACTIVE",
+            is_featured: false,
+            type: "",
+        });
+
+        setLogoFile(null);
+        setPreview("");
+        setApiErrors("");
+    };
+
+    const handleClose = () => {
+        resetForm();
+        onClose();
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,13 +84,14 @@ const BrandModal: React.FC<Props> = ({
                 );
                 if (updateApi) {
                     onSuccess();
-                    onClose();
+                    handleClose();
+                    setLoading(false);
                 }
             } else {
                 const updateApi = await axiosInstance.post(Api?.Brands, formData);
                 if (updateApi) {
                     onSuccess();
-                    onClose();
+                    handleClose();
                     setLoading(false);
                 }
             }
@@ -83,7 +102,7 @@ const BrandModal: React.FC<Props> = ({
         }
     };
 
-    
+
 
     if (!show) return null;
 
@@ -96,7 +115,9 @@ const BrandModal: React.FC<Props> = ({
                     <h2 className="text-lg font-semibold">
                         {isEdit ? "Edit Brand" : "Create Brand"}
                     </h2>
-                    <button onClick={() => { onClose(), setApiErrors('') }} className="text-xl">×</button>
+                    <button
+                        onClick={handleClose}
+                        className="text-xl">×</button>
                 </div>
 
                 {/* Body */}
@@ -125,6 +146,7 @@ const BrandModal: React.FC<Props> = ({
                             }
                             className="w-full border rounded-lg px-3 py-2"
                         >
+                            <option value="">Select Type</option>
                             <option value="PRODUCT">PRODUCT</option>
                             <option value="TOOLS">TOOLS</option>
                         </select>
@@ -191,7 +213,7 @@ const BrandModal: React.FC<Props> = ({
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <button
                             type="button"
-                            onClick={() => { onClose(), setApiErrors('') }}
+                            onClick={handleClose}
                             className="px-4 py-2 border rounded-lg"
                         >
                             Cancel
