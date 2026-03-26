@@ -127,7 +127,6 @@ const Customers: React.FC = () => {
     document.body.removeChild(link);
   };
 
-
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
     fetchCustomers(newPage, pageSize);
@@ -196,7 +195,7 @@ const Customers: React.FC = () => {
                 type="text"
                 placeholder="Search by name, email, phone..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) =>{setSearch(e.target.value)} }
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>

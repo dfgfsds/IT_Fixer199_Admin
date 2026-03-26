@@ -120,30 +120,6 @@ const Agents360: React.FC = () => {
     };
     const [apiErrors, setApiErrors] = useState<string>("");
 
-
-    // const handleUpdateAgent = async () => {
-    //     try {
-
-    //         const form = new FormData();
-
-    //         Object.entries(formData).forEach(([key, value]) => {
-    //             form.append(key, String(value));
-    //         });
-
-    //         const updatedApi = await axiosInstance.put(
-    //             `${Api?.agentUser}${agent?.user}`,
-    //             form
-    //         );
-    //         if (updatedApi) {
-    //             setShowEditModal(false);
-    //             fetchAgentProduct();
-    //         }
-
-    //     } catch (err) {
-    //         setApiErrors(extractErrorMessage(err));
-    //     }
-    // };
-
     const handleUpdateAgent = async () => {
         setApiErrors('')
         try {
@@ -371,51 +347,7 @@ const Agents360: React.FC = () => {
                                 Email: <span className="font-medium text-gray-700">{agent?.user_details?.email}</span>
                             </p>
 
-                            {/* STATUS BADGE */}
-                            {/* <div className="mt-4">
-                                {agent?.user_details?.status ? (
-                                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm bg-green-100 text-green-700 font-medium">
-                                        <CheckCircle size={16} />
-                                        Active
-                                    </span>
-                                ) : (
-                                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm bg-red-100 text-red-600 font-medium">
-                                        <XCircle size={16} />
-                                        Inactive
-                                    </span>
-                                )}
-                            </div> */}
-                            {/* <div>
-                                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
-                                            Account Status
-                                        </p>
 
-                                        <div className="flex items-center gap-3">
-
-                                            {agent?.user_details?.status === "ACTIVE" ? (
-                                                <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-medium">
-                                                    Active
-                                                </span>
-                                            ) : (
-                                                <span className="px-3 py-1 rounded-full bg-red-100 text-red-600 text-sm font-medium">
-                                                    Inactive
-                                                </span>
-                                            )}
-
-                         
-                                            <button
-                                                onClick={handleAccountStatusToggle}
-                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition
-          ${agent?.user_details?.status ? "bg-green-500" : "bg-gray-300"}`}
-                                            >
-                                                <span
-                                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition
-            ${agent?.user_details?.status ? "translate-x-6" : "translate-x-1"}`}
-                                                />
-                                            </button>
-
-                                        </div>
-                                    </div> */}
                             <div className="flex items-center gap-3 py-2">
 
                                 {/* STATUS LABEL */}
@@ -1223,24 +1155,6 @@ const Agents360: React.FC = () => {
                                 </label>
 
                             </div>
-
-                            {/* <div>
-                                <label className="text-xs font-semibold text-gray-600 mb-1">
-                                    Status
-                                </label>
-
-                                <select
-                                    value={formData.status}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, status: e.target.value })
-                                    }
-                                    className="px-3 py-2 border rounded-lg w-full"
-                                >
-                                    <option value="">Select Status</option>
-                                    <option value="ACTIVE">ACTIVE</option>
-                                    <option value="INACTIVE">INACTIVE</option>
-                                </select>
-                            </div> */}
 
                         </div>
                         {apiErrors && (
