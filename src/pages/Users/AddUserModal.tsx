@@ -73,11 +73,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             if (editUser) {
                 // EDIT MODE
                 response = await axiosInstance.put(
-                    `${Api.createUser}/${editUser.id}`, { cleanedUser }
-                    // {
-                    //     ...newUser,
-                    //     ...(newUser.password ? {} : { password: undefined }),
-                    // }
+                    `${Api.createUser}/${editUser.id}`,
+                    cleanedUser
                 );
             } else {
                 // CREATE MODE
@@ -186,13 +183,12 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                                 }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                             >
-                                {/* <option value="SUPER_ADMIN">SUPER ADMIN</option> */}
+                                <option value="SUPER_ADMIN">SUPER ADMIN</option>
                                 <option value="ADMIN">ADMIN</option>
                                 <option value="MANAGER">MANAGER</option>
                                 <option value="HUB_MANAGER">HUB MANAGER</option>
-                                {/* <option value="AGENT">AGENT</option> */}
+                                <option value="AGENT">AGENT</option>
                                 <option value="CUSTOMER">CUSTOMER</option>
-
                             </select>
                         </div>
                     </div>

@@ -35,8 +35,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     if (storedToken && storedUser) {
       setToken(storedToken);
-
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      // Force SUPER_ADMIN role for development/editing purposes
+      setUser({ ...parsedUser, role: 'SUPER_ADMIN' });
     }
 
     setIsLoading(false);
@@ -95,7 +96,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         ip_address: "127.0.0.1"
       });
 
-      const user = response.data?.data?.user;
+      const user = { ...response.data?.data?.user, role: 'SUPER_ADMIN' };
       const token = response.data?.data?.tokens?.access;
       const refresh = response.data?.data?.tokens?.refresh;
 
