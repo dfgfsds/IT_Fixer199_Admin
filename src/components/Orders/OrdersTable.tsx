@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import SlotChangeModal from "./SlotChangeModal";
 import HubServiceModal from "./HubServiceModal";
 import OrderModificationModal from "./OrderModificationModal";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 interface OrdersTableProps {
   orders: Order[];
@@ -72,6 +73,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
         setRefundOrder(order);
       }
     } catch (error) {
+      toast.error(extractErrorMessage(error))
       console.error("OTP request failed", error);
     }
   };
@@ -99,7 +101,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
       setCancelOrder(null);
 
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "something went wrong, please try again later")
+      toast.error(extractErrorMessage(error))
     }
   };
 
@@ -446,16 +448,16 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
       )}
 
       {modificationOrder && (
-  <OrderModificationModal
-    order={modificationOrder}
-    onClose={() => setModificationOrder(null)}
-    onSuccess={() => {
-      setModificationOrder(null);
-      fetchOrders();
-      toast.success("Order modified successfully");
-    }}
-  />
-)}
+        <OrderModificationModal
+          order={modificationOrder}
+          onClose={() => setModificationOrder(null)}
+          onSuccess={() => {
+            setModificationOrder(null);
+            fetchOrders();
+            toast.success("Order modified successfully");
+          }}
+        />
+      )}
 
 
       {cancelOrder && (

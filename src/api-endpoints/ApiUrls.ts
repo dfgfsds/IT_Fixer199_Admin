@@ -156,6 +156,8 @@ const toolMovementDirect=`${baseUrl}/api/tools/movement/direct/`;
 // productMovementDirect
 const productMovementDirect =`${baseUrl}/api/product-inventory/movements/direct/`;
 
+// UserAgent
+const userAgent=`${baseUrl}/api/user/agent`;
 
 export default {
   login,
@@ -226,6 +228,7 @@ export default {
   orderItemModifications,
   toolMovementDirect,
   productMovementDirect,
+  userAgent,
 };
 
 
