@@ -31,6 +31,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [locationOrder, setLocationOrder] = useState(null);
   const [cancelOrder, setCancelOrder] = useState<any>(null);
+  const [unassignOrder, setUnassignOrder] = useState<any>(null);
 
   const [slotChangeOrder, setSlotChangeOrder] = useState<any>(null);
   const [hubServiceOrder, setHubServiceOrder] = useState<any>(null);
@@ -88,6 +89,24 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
       "REFUNDED"
     ];
     return !blocked.includes(status);
+  };
+
+  const canUnassignAgent = (order: any) => {
+    const blockedStatuses = ["COMPLETED", "CANCELLED", "REFUNDED", "SERVICE_IN_PROGRESS"];
+    return !!order?.assigned_agent_id && !blockedStatuses.includes(order?.order_status);
+  };
+
+  const handleUnassignAgent = async (order: any) => {
+    try {
+      await axiosInstance.post(
+        `${Api?.adminCancelOrder}/${order?.id}/unassign-agent/`
+      );
+      toast.success("Agent unassigned successfully");
+      fetchOrders();
+      setUnassignOrder(null);
+    } catch (error: any) {
+      toast.error(extractErrorMessage(error));
+    }
   };
 
 
@@ -364,6 +383,19 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                               Order Modification
                             </button>
                           )}
+
+                          {canUnassignAgent(order) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setUnassignOrder(order);
+                                setOpenDropdown(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                            >
+                              Unassign Agent
+                            </button>
+                          )}
                         </div>
                       )}
 
@@ -459,6 +491,40 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
         />
       )}
 
+
+      {unassignOrder && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+
+            <h2 className="text-lg font-semibold mb-4">
+              Unassign Agent
+            </h2>
+
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to unassign the agent from order{" "}
+              <span className="font-semibold">{unassignOrder.id}</span>?{" "}
+              The order will move back to <span className="font-semibold text-yellow-600">PENDING</span> status.
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setUnassignOrder(null)}
+                className="px-4 py-2 border rounded-lg"
+              >
+                No
+              </button>
+
+              <button
+                onClick={() => handleUnassignAgent(unassignOrder)}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg"
+              >
+                Yes, Unassign
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {cancelOrder && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">

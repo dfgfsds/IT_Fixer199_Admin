@@ -3,7 +3,8 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'admin' | 'zonal_manager' | 'agent' | 'customer';
+  // role: 'admin' | 'zonal_manager' | 'agent' | 'customer';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'HUB_MANAGER' | 'AGENT' | 'CUSTOMER';
   status: 'active' | 'inactive' | 'suspended';
 }
 

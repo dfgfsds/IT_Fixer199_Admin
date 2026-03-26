@@ -8,6 +8,7 @@ import HubMappingModal from "./HubMappingModal";
 import HubModal from "./HubModal";
 import HubZoneViewModal from "./HubZoneViewModal";
 import HubManagersModal from "./HubManagersModal";
+import { useAuth } from "../../contexts/AuthContext";
 
 
 interface HubType {
@@ -24,6 +25,9 @@ interface HubType {
 }
 
 const Hubs: React.FC = () => {
+    const { user } = useAuth();
+    const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
     const [hubs, setHubs] = useState<HubType[]>([]);
     const [loading, setLoading] = useState(true);
     const [editHub, setEditHub] = useState<any>("");
@@ -34,7 +38,7 @@ const Hubs: React.FC = () => {
     const [search, setSearch] = useState("");
     const [showZoneModal, setShowZoneModal] = useState(false);
     const [zonesData, setZonesData] = useState<any[]>([]);
-    const [showManagerModal, setShowManagerModal] = useState(false)
+    const [showManagerModal, setShowManagerModal] = useState(false);
 
     const fetchZonesForHub = async (hubId: string) => {
         try {
@@ -76,11 +80,11 @@ const Hubs: React.FC = () => {
     };
 
     const filteredHubs = hubs?.filter(
-        (hub:any) =>
+        (hub: any) =>
             hub?.name?.toLowerCase()?.includes(search?.toLowerCase()) ||
             hub?.primary_address?.toLowerCase()?.includes(search?.toLowerCase()) ||
             hub?.contact_info?.email?.toLowerCase()?.includes(search?.toLowerCase()) ||
-            hub?.phone?.toLowerCase()?.includes(search?.toLowerCase()) 
+            hub?.phone?.toLowerCase()?.includes(search?.toLowerCase())
 
     );
 
@@ -225,12 +229,14 @@ const Hubs: React.FC = () => {
                                                 <Edit className="w-4 h-4" />
                                             </button>
 
-                                            <button
-                                                onClick={() => setDeleteHubId(hub.id)}
-                                                className="text-red-600 hover:text-red-800 p-1"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                            {isSuperAdmin && (
+                                                <button
+                                                    onClick={() => setDeleteHubId(hub.id)}
+                                                    className="text-red-600 hover:text-red-800 p-1"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
 
@@ -266,11 +272,11 @@ const Hubs: React.FC = () => {
                 zones={zonesData}
             />
 
-<HubManagersModal
-  show={showManagerModal}
-  onClose={()=>setShowManagerModal(false)}
-  hub={selectedHub}
-/>
+            <HubManagersModal
+                show={showManagerModal}
+                onClose={() => setShowManagerModal(false)}
+                hub={selectedHub}
+            />
 
             {deleteHubId && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
