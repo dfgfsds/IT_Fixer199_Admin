@@ -9,9 +9,10 @@ interface Props {
     onClose: () => void;
     order: any;
     socketRef?: any;
+    refresh?: any;
 }
 
-const AgentAssign: React.FC<Props> = ({ show, onClose, order, socketRef }) => {
+const AgentAssign: React.FC<Props> = ({ show, onClose, order, socketRef, refresh }) => {
     const [loading, setLoading] = useState(false);
     const [slots, setSlots] = useState<any[]>([]);
     const [selectedSlot, setSelectedSlot] = useState("");
@@ -29,9 +30,9 @@ const AgentAssign: React.FC<Props> = ({ show, onClose, order, socketRef }) => {
 
             const res = await axiosInstance.get(Api.zoneByLocation, {
                 params: {
-                    lat: order?.lat,
+                    lat: order?.lat ? order?.lat : order?.latitude,
                     // lat: 5646546,
-                    lng: order?.lng,
+                    lng: order?.lng ? order?.lng : order?.longitude,
                 },
             });
 
@@ -71,6 +72,9 @@ const AgentAssign: React.FC<Props> = ({ show, onClose, order, socketRef }) => {
                 requested_date: new Date().toISOString().split("T")[0],
             });
             if (updatedApi) {
+                if (refresh) {
+                    refresh();
+                }
                 if (socketRef?.current && socketRef.current.readyState === WebSocket.OPEN) {
                     socketRef.current.send(
                         JSON.stringify({

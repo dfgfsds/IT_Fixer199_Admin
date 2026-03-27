@@ -49,70 +49,6 @@ const RequestsLive: React.FC = () => {
     const [assignModalOpen, setAssignModalOpen] = useState(false);
     const [trackingModal, setTrackingModal] = useState(false)
 
-    // ---------------- SOCKET ----------------
-    // useEffect(() => {
-    //     if (!token) return;
-
-    //     const today = new Date().toISOString().split("T")[0];
-
-    //     const connect = () => {
-    //         const ws = new WebSocket(
-    //             `wss://api.itfixer199.com/ws/requests/?token=${token}&date=${today}`
-    //         );
-
-    //         socketRef.current = ws;
-
-    //         wsRef.current = ws;
-
-    //         ws.onopen = () => {
-    //             console.log("WebSocket connected ✅");
-    //         };
-
-    //         ws.onmessage = (event) => {
-    //             try {
-    //                 const data = JSON.parse(event.data);
-
-    //                 if (data.type === "initial_data") {
-    //                     setRequests(data.requests || []);
-    //                     setLoading(false);
-    //                 }
-
-    //                 if (data.type === "update") {
-    //                     const updatedRequest = data.request;
-    //                     if (!updatedRequest?.id) return;
-
-    //                     setRequests((prev) => {
-    //                         const index = prev.findIndex(
-    //                             (r) => r.id === updatedRequest.id
-    //                         );
-
-    //                         if (index !== -1) {
-    //                             const updated = [...prev];
-    //                             updated[index] = updatedRequest;
-    //                             return updated;
-    //                         }
-
-    //                         return [updatedRequest, ...prev];
-    //                     });
-    //                 }
-    //             } catch (err) {
-    //                 console.error("WebSocket parse error ❌", err);
-    //             }
-    //         };
-
-    //         ws.onclose = () => {
-    //             reconnectRef.current = setTimeout(connect, 3000);
-    //         };
-    //     };
-
-    //     connect();
-
-    //     return () => {
-    //         if (wsRef.current) wsRef.current.close();
-    //         if (reconnectRef.current) clearTimeout(reconnectRef.current);
-    //     };
-    // }, [token]);
-
 
     useEffect(() => {
         if (!token) return;
@@ -143,65 +79,65 @@ const RequestsLive: React.FC = () => {
             //     }
             // };
 
-//             ws.onmessage = (event) => {
-//                 try {
-//                     const message = JSON.parse(event.data);
-//                     console.log(message)
-//                     if (message.type === "initial_data" && message?.data) {
-//                         setRequests(message?.data);
-//                         setLoading(false)
-//                     }
+            //             ws.onmessage = (event) => {
+            //                 try {
+            //                     const message = JSON.parse(event.data);
+            //                     console.log(message)
+            //                     if (message.type === "initial_data" && message?.data) {
+            //                         setRequests(message?.data);
+            //                         setLoading(false)
+            //                     }
 
-//                     // if (message.type === "update" && message?.data) {
-//                     //     const updatedRequest = message?.data;
-//                     //     setLoading(false)
+            //                     // if (message.type === "update" && message?.data) {
+            //                     //     const updatedRequest = message?.data;
+            //                     //     setLoading(false)
 
-//                     //     setRequests((prev) => {
-//                     //         const index = prev.findIndex((r) => r.id === updatedRequest.id);
+            //                     //     setRequests((prev) => {
+            //                     //         const index = prev.findIndex((r) => r.id === updatedRequest.id);
 
-//                     //         if (index !== -1) {
-//                     //             const updated = [...prev];
-//                     //             updated[index] = updatedRequest;
-//                     //             return updated;
-//                     //         }
+            //                     //         if (index !== -1) {
+            //                     //             const updated = [...prev];
+            //                     //             updated[index] = updatedRequest;
+            //                     //             return updated;
+            //                     //         }
 
-//                     //         return [updatedRequest, ...prev];
-//                     //     });
-//                     // }
+            //                     //         return [updatedRequest, ...prev];
+            //                     //     });
+            //                     // }
 
-//                     if (message.type === "update" && message?.data) {
-//   const updatedList = message.data;
+            //                     if (message.type === "update" && message?.data) {
+            //   const updatedList = message.data;
 
-//   setRequests((prev) => {
-//     const map = new Map(prev.map((item) => [item.id, item]));
+            //   setRequests((prev) => {
+            //     const map = new Map(prev.map((item) => [item.id, item]));
 
-//     updatedList.forEach((item: any) => {
-//       map.set(item.id, item); // update or insert
-//     });
+            //     updatedList.forEach((item: any) => {
+            //       map.set(item.id, item); // update or insert
+            //     });
 
-//     return Array.from(map.values());
-//   });
-// }
+            //     return Array.from(map.values());
+            //   });
+            // }
 
-//                 } catch (err) {
-//                     console.error("WS parse error:", err);
-//                 }
-//             };
+            //                 } catch (err) {
+            //                     console.error("WS parse error:", err);
+            //                 }
+            //             };
 
-ws.onmessage = (event) => {
-  try {
-    const message = JSON.parse(event.data);
-    console.log(message);
+            ws.onmessage = (event) => {
+                try {
+                    const message = JSON.parse(event.data);
+                    console.log(message);
 
-    if ((message.type === "initial_data" || message.type === "update") && message?.data) {
-      setRequests(message.data); // 🔥 FULL REPLACE
-      setLoading(false);
-    }
+                    if ((message.type === "initial_data" || message.type === "update") && message?.data) {
+                        setRequests(message.data); // 🔥 FULL REPLACE
+                        setLoading(false);
+                    }
 
-  } catch (err) {
-    console.error("WS parse error:", err);
-  }
-};
+                } catch (err) {
+                    console.error("WS parse error:", err);
+                }
+            };
 
             ws.onclose = () => {
                 console.log("WS reconnecting...");
@@ -485,7 +421,7 @@ ws.onmessage = (event) => {
                 show={assignModalOpen}
                 onClose={() => setAssignModalOpen(false)}
                 order={selectedRequest?.order_details}
-                  socketRef={socketRef}
+                socketRef={socketRef}
             />
 
             <TrackingModal

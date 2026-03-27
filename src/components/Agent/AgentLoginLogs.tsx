@@ -3,8 +3,10 @@ import axiosInstance from "../../configs/axios-middleware";
 import Api from "../../api-endpoints/ApiUrls";
 import { useParams } from "react-router-dom";
 import Pagination from "../Pagination";
+import AgentTrackingModal from "../Modals/AgentTrackingModal";
+import { MapPin } from "lucide-react";
 
-const AgentActiveLogs: React.FC<{ userId: string }> = ({ userId }) => {
+const AgentLoginLogs: React.FC<{ userId: string }> = ({ userId }) => {
     const { id } = useParams();
 
     const [logs, setLogs] = useState<any[]>([]);
@@ -14,6 +16,8 @@ const AgentActiveLogs: React.FC<{ userId: string }> = ({ userId }) => {
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const [pagination, setPagination] = useState<any>(null);
+    const [trackingModal, setTrackingModal] = useState(false);
+    const [selectedDate, setSelectedDate] = useState("");
 
     const [dateRange, setDateRange] = useState({
         start_date: "",
@@ -27,10 +31,10 @@ const AgentActiveLogs: React.FC<{ userId: string }> = ({ userId }) => {
         setLoading(true);
         try {
             const res = await axiosInstance.get(
-                `${Api.activeLogs}${userId}?start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&page=${page}&size=${pageSize}`
+                `${Api.loginLogs}${userId}?start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&page=${page}&size=${pageSize}`
             );
             const data = res?.data;
-            setLogs(data?.active_logs || []);
+            setLogs(data?.logs || []);
             if (data?.pagination) {
                 setPagination(data.pagination);
                 setTotalPages(data.pagination.total_pages);
@@ -77,7 +81,7 @@ const AgentActiveLogs: React.FC<{ userId: string }> = ({ userId }) => {
 
             {/* HEADER */}
             <div className="flex flex-col sm:flex-row justify-between gap-4 sm:items-center mb-5">
-                <h2 className="text-lg font-semibold">Active Logs</h2>
+                <h2 className="text-lg font-semibold">Login Logs</h2>
 
                 {/* DATE FILTER */}
                 <div className="flex gap-2">
@@ -110,8 +114,11 @@ const AgentActiveLogs: React.FC<{ userId: string }> = ({ userId }) => {
                     <thead className="bg-gray-100 text-gray-600 text-xs uppercase">
                         <tr>
                             <th className="px-4 py-3 text-left">S.No</th>
+                            <th className="px-4 py-3 text-left">Device</th>
+                            <th className="px-4 py-3 text-left">Device ID</th>
+                            <th className="px-4 py-3 text-left">IP Address</th>
                             <th className="px-4 py-3 text-left">Login Time</th>
-                            <th className="px-4 py-3 text-left">Status</th>
+                            <th className="px-4 py-3 text-left">Tracking</th>
                         </tr>
                     </thead>
 
@@ -138,33 +145,59 @@ const AgentActiveLogs: React.FC<{ userId: string }> = ({ userId }) => {
                                         {i + 1}
                                     </td>
 
+                                    {/* DEVICE */}
+                                    <td className="px-4 py-4">
+                                        <div className="flex flex-col">
+                                            <span className="font-medium">
+                                                {log.device_name || "-"}
+                                            </span>
+                                            <span className="text-xs text-gray-400">
+                                                {log.device_type}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    {/* DEVICE ID */}
+                                    <td className="px-4 py-4 text-gray-700">
+                                        {log.device_id || "-"}
+                                    </td>
+
+                                    {/* IP */}
+                                    <td className="px-4 py-4 text-gray-700">
+                                        {log.ip_address || "-"}
+                                    </td>
 
                                     {/* TIME */}
                                     <td className="px-4 py-4 text-gray-700">
-                                        {log?.created_at
-                                            ? new Date(log?.created_at).toLocaleString()
+                                        {log.logged_in_at
+                                            ? new Date(log.logged_in_at).toLocaleString()
                                             : "-"}
                                     </td>
 
-
                                     <td className="px-4 py-4">
-                                        <span
-                                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium
-      ${log?.is_active
-                                                    ? "bg-green-100 text-green-700"
-                                                    : "bg-red-100 text-red-600"
-                                                }`}
+                                        {/* <button
+                                            onClick={() => {
+                                                const date = log.logged_in_at?.split("T")[0]; // ✅ extract date
+
+                                                setSelectedDate(date);
+                                                setTrackingModal(true);
+                                            }}
+                                            className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
                                         >
-                                            <span
-                                                className={`w-2 h-2 rounded-full ${log?.is_active ? "bg-green-500" : "bg-red-500"
-                                                    }`}
-                                            ></span>
-
-                                            {log?.is_active ? "Active" : "Inactive"}
-                                        </span>
+                                            Track
+                                        </button> */}
+                                        <button
+                                            onClick={() => {
+                                                const date = log.logged_in_at?.split("T")[0];
+                                                setSelectedDate(date);
+                                                setTrackingModal(true);
+                                            }}
+                                            className="flex items-center gap-1 px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
+                                        >
+                                            Tracking
+                                            <MapPin className="w-3 h-3" />
+                                        </button>
                                     </td>
-
-
 
                                 </tr>
                             ))
@@ -186,8 +219,16 @@ const AgentActiveLogs: React.FC<{ userId: string }> = ({ userId }) => {
                 />
             )}
 
+            <AgentTrackingModal
+                isOpen={trackingModal}
+                onClose={() => setTrackingModal(false)}
+                agentId={id}
+                agentName="Agent"
+                selectedDate={selectedDate} // ✅ PASS DATE
+            />
+
         </div>
     );
 };
 
-export default AgentActiveLogs;
+export default AgentLoginLogs;
