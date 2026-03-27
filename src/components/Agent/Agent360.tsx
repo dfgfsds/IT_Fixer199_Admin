@@ -131,7 +131,7 @@ const Agents360: React.FC = () => {
                 mobile_number: formData.mobile_number,
 
                 // BASIC
-                hub: formData.hub_id,
+                hub_id: formData.hub_id,
                 agent_type: formData.agent_type,
                 status: "ACTIVE",
 
@@ -156,14 +156,16 @@ const Agents360: React.FC = () => {
                 cumulative_rating: formData.cumulative_rating,
             };
 
-            await axiosInstance.put(
+            const updatedApi = await axiosInstance.put(
                 `${Api?.agentUser}${agent?.user}`,
                 payload
             );
 
-            toast.success("Agent updated successfully");
-            setShowEditModal(false);
-
+            if (updatedApi) {
+                fetchAgentProduct();
+                toast.success("Agent updated successfully");
+                setShowEditModal(false);
+            }
         } catch (error: any) {
             setApiErrors(extractErrorMessage(error));
             // setApiErrors(error?.response?.data?.message || "Update failed");
