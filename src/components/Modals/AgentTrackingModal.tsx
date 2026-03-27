@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Polyline, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { Loader } from "lucide-react";
@@ -8,8 +8,9 @@ import Api from '../../api-endpoints/ApiUrls';
 interface Props {
     isOpen: boolean;
     onClose: () => void;
-    agentId: string;
+    agentId: any;
     agentName: string;
+    selectedDate?: string;
 }
 
 const AgentTrackingModal: React.FC<Props> = ({
@@ -17,13 +18,21 @@ const AgentTrackingModal: React.FC<Props> = ({
     onClose,
     agentId,
     agentName,
+    selectedDate,
 }) => {
     const [date, setDate] = useState("");
     const [trackingData, setTrackingData] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
+    useEffect(() => {
+        if (selectedDate) {
+            setDate(selectedDate);
+            fetchTracking(); // 🔥 auto call
+        }
+    }, [selectedDate]);
+
     const fetchTracking = async () => {
-        if (!date) return;
+        // if (!date) return;
 
         try {
             setLoading(true);
@@ -64,21 +73,24 @@ const AgentTrackingModal: React.FC<Props> = ({
                 </div>
 
                 {/* Controls */}
-                <div className="p-4 border-b flex gap-3 items-center">
-                    <input
-                        type="date"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        className="border px-3 py-2 rounded-lg"
-                    />
+                {!selectedDate && (
+                    <div className="p-4 border-b flex gap-3 items-center">
+                        <input
+                            type="date"
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
+                            className="border px-3 py-2 rounded-lg"
+                        />
 
-                    <button
-                        onClick={fetchTracking}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-                    >
-                        Fetch
-                    </button>
-                </div>
+                        <button
+                            onClick={fetchTracking}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+                        >
+                            Fetch
+                        </button>
+                    </div>
+                )}
+
 
                 {/* Map Section */}
                 <div className="h-[500px]">
