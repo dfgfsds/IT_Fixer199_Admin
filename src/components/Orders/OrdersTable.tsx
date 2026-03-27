@@ -12,6 +12,7 @@ import HubServiceModal from "./HubServiceModal";
 import OrderModificationModal from "./OrderModificationModal";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 import ManualActivateModal from "./ManualActivateModal";
+import AgentAssign from "../../pages/Requests/Requests.tsx/AgentAssign";
 
 interface OrdersTableProps {
   orders: Order[];
@@ -38,6 +39,8 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
   const [hubServiceOrder, setHubServiceOrder] = useState<any>(null);
   const [modificationOrder, setModificationOrder] = useState<any>(null);
   const [manualActivateOrder, setManualActivateOrder] = useState<any>(null);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
 
   const openSlotChange = (order: any) => {
     setSlotChangeOrder(order);
@@ -367,9 +370,21 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                               Unassign Agent
                             </button>
                           )}
+
+                          {order?.order_status !== "CANCELLED" && order?.order_status !== "COMPLETED" && order?.order_status !== "REFUNDED" && order?.order_status !== "IN_PROGRESS" && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setManualActivateOrder(order); // ✅ correct
+                                setOpenDropdown(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                            >
+                              Manual Order Activation
+                            </button>
+                          )}
                         </div>
                       )}
-
                     </div>
                   </td>
                 </tr>
@@ -407,6 +422,13 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
           onClose={() => setSelectedOrder(null)}
         />
       )}
+
+      <AgentAssign
+        show={assignModalOpen}
+        onClose={() => setAssignModalOpen(false)}
+        order={selectedRequest}
+        refresh={fetchOrders}
+      />
 
       {locationOrder && (
         <OrderLocationModal
