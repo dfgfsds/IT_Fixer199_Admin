@@ -83,9 +83,13 @@ const ZoneTrendChart = ({ data }: any) => {
     return (
         <div className="bg-white rounded-lg p-6 border">
 
-            <h3 className="text-lg font-semibold mb-4">
+            {/* <h3 className="text-lg font-semibold mb-4">
                 Zone Orders & Revenue Trend
-            </h3>
+            </h3> */}
+
+            <h3 className="text-lg font-semibold mb-4">
+ <span className="uppercase"> {data?.[0]?.zone_name || "Zone"}</span> - Orders & Revenue Trend
+</h3>
 
             <ResponsiveContainer width="100%" height={300}>
 
@@ -110,7 +114,7 @@ const ZoneTrendChart = ({ data }: any) => {
                         orientation="right"
                     />
 
-                    <Tooltip
+                    {/* <Tooltip
                         formatter={(value: any, name: any) => [
                             name === "revenue" ? `₹${value}` : value,
                             name === "revenue" ? "Revenue" : "Orders"
@@ -118,7 +122,19 @@ const ZoneTrendChart = ({ data }: any) => {
                         labelFormatter={(label) =>
                             `Date: ${formatDate(label)}`
                         }
-                    />
+                    /> */}
+
+                    <Tooltip
+  formatter={(value: any, name: any, props: any) => {
+    if (props.dataKey === "revenue") {
+      return [`₹${value}`, "Revenue"];
+    }
+    return [value, "Orders"];
+  }}
+  labelFormatter={(label) =>
+    `Date: ${formatDate(label)}`
+  }
+/>
 
                     <Legend />
 
