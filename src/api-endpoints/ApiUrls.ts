@@ -162,6 +162,12 @@ const userAgent = `${baseUrl}/api/user/agent`;
 // manualActivate
 const manualActivate = `${baseUrl}/api/order/public/order`;
 
+// agentPerformance
+const agentPerformance=`${baseUrl}/api/stats/agent-performance`;
+
+// loginLogs
+const loginLogs = `${baseUrl}/api/user/login-logs/user/`;
+
 export default {
   login,
   allUsers,
@@ -233,6 +239,8 @@ export default {
   productMovementDirect,
   userAgent,
   manualActivate,
+  agentPerformance,
+  loginLogs,
 };
 
 
