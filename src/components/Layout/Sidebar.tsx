@@ -119,7 +119,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 
 const Sidebar: React.FC = () => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const menuItems = [
@@ -129,9 +129,18 @@ const Sidebar: React.FC = () => {
       icon: Users,
       children: [
         // { name: 'Services', path: '/servicesRequest' },
-        { name: 'Requests', path: '/requestsLive' },
-        { name: 'Tools Inventory Movement', path: '/toolsInventoryMovementLive' },
-        { name: 'Product Inventory Movement', path: '/productInventoryMovementLive' }
+        {
+          name: 'Requests', path: '/requestsLive'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Tools Inventory Movement', path: '/toolsInventoryMovementLive'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Product Inventory Movement', path: '/productInventoryMovementLive'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        }
       ],
     },
 
@@ -139,9 +148,18 @@ const Sidebar: React.FC = () => {
       name: 'Users & Agents',
       icon: Users,
       children: [
-        { name: 'Customers', path: '/customers' },
-        { name: 'Users', path: '/users' },
-        { name: 'Agents', path: '/agents' },
+        {
+          name: 'Customers', path: '/customers'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Users', path: '/users'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Agents', path: '/agents'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
         // { name: 'Attendance', path: '/attendance' },
       ],
     },
@@ -149,11 +167,26 @@ const Sidebar: React.FC = () => {
       name: 'Product Management',
       icon: Package,
       children: [
-        { name: 'Categories', path: '/categories' },
-        { name: 'Brands', path: '/brands' },
-        { name: 'Attribute', path: '/attribute' },
-        { name: 'Products', path: '/products' },
-        { name: 'Products Inventory', path: '/productsInventory' },
+        {
+          name: 'Categories', path: '/categories'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Brands', path: '/brands'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Attribute', path: '/attribute'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Products', path: '/products'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Products Inventory', path: '/productsInventory'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
         // { name: 'Inventory', path: '/inventory' },
       ],
     },
@@ -162,26 +195,57 @@ const Sidebar: React.FC = () => {
       icon: Users,
       children: [
         // { name: 'Services', path: '/services-Request' },
-        { name: 'Requests', path: '/requests' },
-        { name: 'Tools Inventory Movement', path: '/toolsInventoryMovement' },
-        { name: 'Product Inventory Movement', path: '/productInventoryMovement' }
+        {
+          name: 'Requests', path: '/requests'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Tools Inventory Movement', path: '/toolsInventoryMovement'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Product Inventory Movement', path: '/productInventoryMovement'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        }
       ],
     },
     // { name: 'Requests', icon: Store, path: '/requests' },
     // { name: 'Services Request', icon: Store, path: '/services-Request' },
     // { name: 'Tools Inventory Movement', icon: Store, path: '/toolsInventoryMovement' },
     // { name: 'Product Inventory Movement', icon: Store, path: '/productInventoryMovement' },
-    { name: 'Hubs', icon: Store, path: '/hubs' },
-    { name: 'Tools', icon: Wrench, path: '/tools' },
-    { name: 'Tools Inventory', icon: Store, path: '/toolsInventory' },
-    { name: 'Services', icon: UserCog, path: '/services' },
-    { name: 'Zonal Manager Panel', icon: MapPin, path: '/zones' },
+    {
+      name: 'Hubs', icon: Store, path: '/hubs'
+      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+    },
+    {
+      name: 'Tools', icon: Wrench, path: '/tools'
+      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+    },
+    {
+      name: 'Tools Inventory', icon: Store, path: '/toolsInventory'
+      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+    },
+    {
+      name: 'Services', icon: UserCog, path: '/services'
+      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+    },
+    {
+      name: 'Zonal Manager Panel', icon: MapPin, path: '/zones'
+      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+    },
     // { name: 'Slots', icon: Users, path: '/slots' },
     {
       name: 'Orders Management',
       icon: ShoppingCart,
       children: [
-        { name: 'All Orders', path: '/orders' },
+        {
+          name: 'All Orders', path: '/orders'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Order modify', path: '/OrderModify'
+          , roles: ["SUPER_ADMIN"]
+        },
         // { name: 'Refund Orders', path: '/refunds' },
         // { name: 'Tickets & Escalations', path: '/tickets' },
         // { name: 'Coupons & Promotions', path: '/coupons' },
@@ -190,13 +254,17 @@ const Sidebar: React.FC = () => {
       ],
     },
     // { name: 'Reports', icon: BarChart3, path: '/reports' },
-    { name: 'Settings', icon: Settings, path: '/settings' },
+    {
+      name: 'Settings', icon: Settings, path: '/settings'
+      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+    },
   ];
 
   const toggleMenu = (name: string) => {
     setOpenMenu(openMenu === name ? null : name);
   };
 
+  console.log(user)
   return (
     <div className="bg-gray-900 text-white w-64 h-full flex flex-col">
 
@@ -209,69 +277,89 @@ const Sidebar: React.FC = () => {
       {/* Menu */}
       <nav className="flex-1 overflow-y-auto no-scrollbar px-4 py-4">
         <ul className="space-y-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
+          {/* {menuItems?.filter((menu:any) => menu?.roles?.includes(user?.role)) // 🔥 MAIN LINE
+          ?.map((item) => { */}
+          {menuItems
+            ?.map((item: any) => {
+              if (item.children) {
+                const filteredChildren = item.children.filter((sub: any) =>
+                  sub.roles?.includes(user?.role)
+                );
+                if (filteredChildren.length === 0) return null;
 
-            // 🔹 If submenu exists
-            if (item.children) {
+                return { ...item, children: filteredChildren };
+              }
+
+              if (item.roles && !item.roles.includes(user?.role)) {
+                return null;
+              }
+
+              return item;
+            })
+            ?.filter(Boolean) // remove null
+            ?.map((item) => {
+              const Icon = item.icon;
+
+              // 🔹 If submenu exists
+              if (item.children) {
+                return (
+                  <li key={item.name}>
+                    <button
+                      onClick={() => toggleMenu(item.name)}
+                      className="flex items-center justify-between w-full px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition"
+                    >
+                      <div className="flex items-center">
+                        <Icon className="w-5 h-5 mr-3" />
+                        {item.name}
+                      </div>
+                      {openMenu === item.name ? (
+                        <ChevronDown size={16} />
+                      ) : (
+                        <ChevronRight size={16} />
+                      )}
+                    </button>
+
+                    {openMenu === item.name && (
+                      <ul className="ml-8 mt-1 space-y-1">
+                        {item.children.map((sub: any) => (
+                          <li key={sub.name}>
+                            <NavLink
+                              to={sub.path}
+                              className={({ isActive }) =>
+                                `block px-4 py-2 text-sm rounded-lg transition ${isActive
+                                  ? 'bg-orange-600 text-white'
+                                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                }`
+                              }
+                            >
+                              {sub.name}
+                            </NavLink>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                );
+              }
+
+              // 🔹 Normal Menu
               return (
                 <li key={item.name}>
-                  <button
-                    onClick={() => toggleMenu(item.name)}
-                    className="flex items-center justify-between w-full px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition"
+                  <NavLink
+                    to={item.path}
+                    className={({ isActive }) =>
+                      `flex items-center px-4 py-3 text-sm rounded-lg transition ${isActive
+                        ? 'bg-orange-600 text-white'
+                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                      }`
+                    }
                   >
-                    <div className="flex items-center">
-                      <Icon className="w-5 h-5 mr-3" />
-                      {item.name}
-                    </div>
-                    {openMenu === item.name ? (
-                      <ChevronDown size={16} />
-                    ) : (
-                      <ChevronRight size={16} />
-                    )}
-                  </button>
-
-                  {openMenu === item.name && (
-                    <ul className="ml-8 mt-1 space-y-1">
-                      {item.children.map((sub) => (
-                        <li key={sub.name}>
-                          <NavLink
-                            to={sub.path}
-                            className={({ isActive }) =>
-                              `block px-4 py-2 text-sm rounded-lg transition ${isActive
-                                ? 'bg-orange-600 text-white'
-                                : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                              }`
-                            }
-                          >
-                            {sub.name}
-                          </NavLink>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                    <Icon className="w-5 h-5 mr-3" />
+                    {item.name}
+                  </NavLink>
                 </li>
               );
-            }
-
-            // 🔹 Normal Menu
-            return (
-              <li key={item.name}>
-                <NavLink
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `flex items-center px-4 py-3 text-sm rounded-lg transition ${isActive
-                      ? 'bg-orange-600 text-white'
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                    }`
-                  }
-                >
-                  <Icon className="w-5 h-5 mr-3" />
-                  {item.name}
-                </NavLink>
-              </li>
-            );
-          })}
+            })}
         </ul>
       </nav>
 
