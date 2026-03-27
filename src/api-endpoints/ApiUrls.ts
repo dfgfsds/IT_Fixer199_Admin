@@ -168,6 +168,9 @@ const agentPerformance=`${baseUrl}/api/stats/agent-performance`;
 // loginLogs
 const loginLogs = `${baseUrl}/api/user/login-logs/user/`;
 
+// activeLogs
+const activeLogs =`${baseUrl}/api/user/active-logs/user/`;
+
 export default {
   login,
   allUsers,
@@ -241,6 +244,7 @@ export default {
   manualActivate,
   agentPerformance,
   loginLogs,
+  activeLogs,
 };
 
 

@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowLeftIcon, Bike, Calendar, CheckCircle, CreditCard, Mail
 import Pagination from '../Pagination';
 import { extractErrorMessage } from '../../utils/extractErrorMessage ';
 import toast from 'react-hot-toast';
+import AgentLoginLogs from './AgentLoginLogs';
 import AgentActiveLogs from './AgentActiveLogs';
 
 
@@ -574,6 +575,16 @@ const Agents360: React.FC = () => {
                     </button>
 
                     <button
+                        onClick={() => setActiveTab('loginLog')}
+                        className={`px-6 py-3 text-sm font-medium ${activeTab === 'loginLog'
+                            ? 'border-b-2 border-orange-600 text-orange-600'
+                            : 'text-gray-600'
+                            }`}
+                    >
+                        Agent Login Log
+                    </button>
+
+                    <button
                         onClick={() => setActiveTab('activeLog')}
                         className={`px-6 py-3 text-sm font-medium ${activeTab === 'activeLog'
                             ? 'border-b-2 border-orange-600 text-orange-600'
@@ -1087,6 +1098,11 @@ const Agents360: React.FC = () => {
                                 />
                             )}
                         </div>
+                    )}
+
+                    {/* AGENT ACTIVE LOGS */}
+                    {activeTab === "loginLog" && (
+                        <AgentLoginLogs userId={agent?.user_details?.id} />
                     )}
 
                     {/* AGENT ACTIVE LOGS */}
