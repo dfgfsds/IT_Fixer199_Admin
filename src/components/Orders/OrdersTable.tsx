@@ -11,6 +11,7 @@ import SlotChangeModal from "./SlotChangeModal";
 import HubServiceModal from "./HubServiceModal";
 import OrderModificationModal from "./OrderModificationModal";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import ManualActivateModal from "./ManualActivateModal";
 
 interface OrdersTableProps {
   orders: Order[];
@@ -36,6 +37,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
   const [slotChangeOrder, setSlotChangeOrder] = useState<any>(null);
   const [hubServiceOrder, setHubServiceOrder] = useState<any>(null);
   const [modificationOrder, setModificationOrder] = useState<any>(null);
+  const [manualActivateOrder, setManualActivateOrder] = useState<any>(null);
 
   const openSlotChange = (order: any) => {
     setSlotChangeOrder(order);
@@ -228,48 +230,6 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                       {order?.slot_time || "-"}
                     </div>
                   </td>
-
-                  {/* STATUS */}
-                  {/* <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded 
-              ${statusColors[order?.order_status]}`}
-                    >
-                      {order?.order_status}
-                    </span>
-                    <div className="flex flex-wrap gap-2 mt-2">
-
-                      {order?.order_status === "CANCELLED" && order?.payment_status === "SUCCESS" && (
-                        <button
-                          onClick={() => handleRefund(order)}
-                          className="text-xs px-2 py-1 rounded-md bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition"
-                        >
-                          Refund
-                        </button>
-                      )}
-
-                      {order?.order_status !== "CANCELLED" && order?.order_status !== "COMPLETED" && (
-                        <button
-                          onClick={() => setCancelOrder(order)}
-                          className="text-xs px-2 py-1 rounded-md bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition"
-                        >
-                          Cancel
-                        </button>
-                      )}
-
-                      {canChangeSlot(order?.order_status) && (
-                        <button
-                          onClick={() => openSlotChange(order)}
-                          className="text-xs px-2 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition"
-                        >
-                          Change Slot
-                        </button>
-                      )}
-
-                    </div>
-
-                  </td> */}
-
                   <td className="px-6 py-4">
                     <span
                       className={`px-3 py-1 text-xs font-semibold rounded-full
@@ -383,7 +343,18 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                               Order Modification
                             </button>
                           )}
-
+                          {order?.is_active === false && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setManualActivateOrder(order); // ✅ correct
+                                setOpenDropdown(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                            >
+                              Manual Order Activation
+                            </button>
+                          )}
                           {canUnassignAgent(order) && (
                             <button
                               onClick={(e) => {
@@ -491,6 +462,16 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
         />
       )}
 
+      {manualActivateOrder && (
+        <ManualActivateModal
+          order={manualActivateOrder}
+          onClose={() => setManualActivateOrder(null)}
+          onSuccess={() => {
+            setManualActivateOrder(null);
+            fetchOrders();
+          }}
+        />
+      )}
 
       {unassignOrder && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">

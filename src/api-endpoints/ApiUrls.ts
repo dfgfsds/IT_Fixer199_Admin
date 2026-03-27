@@ -127,37 +127,40 @@ const orderCancel = `${baseUrl}/api/order/orders`;
 const requestSlotChange = `${baseUrl}/api/request/slot-change`;
 
 // dashboardStatus
-const dashboardStatus =`${baseUrl}/api/stats/dashboard`;
+const dashboardStatus = `${baseUrl}/api/stats/dashboard`;
 
 // stats/order-trend
-const statsOrderTrend=`${baseUrl}/api/stats/order-trend`;
+const statsOrderTrend = `${baseUrl}/api/stats/order-trend`;
 
 // stats/revenue-trend
-const statsRevenueTrend=`${baseUrl}/api/stats/revenue-trend`;
+const statsRevenueTrend = `${baseUrl}/api/stats/revenue-trend`;
 
 // stats/sales-distribution-percentage
-const statsSalesDistribution =`${baseUrl}/api/stats/sales-distribution-percentage`;
+const statsSalesDistribution = `${baseUrl}/api/stats/sales-distribution-percentage`;
 
 // stats/zone-wise-trend
 const statsZoneWiseTrend = `${baseUrl}/api/stats/zone-wise-trend`;
 
 // HubServiceRequest
-const HubServiceRequest =`${baseUrl}/api/request/hub-service/`;
+const HubServiceRequest = `${baseUrl}/api/request/hub-service/`;
 
 // orderModification
-const orderModification=`${baseUrl}/api/order/order-item-modification/request/`;
+const orderModification = `${baseUrl}/api/order/order-item-modification/request/`;
 
 // orderItemModifications
-const orderItemModifications=`${baseUrl}/api/order/order-item-modifications/`;
+const orderItemModifications = `${baseUrl}/api/order/order-item-modifications/`;
 
 // toolMovementDirect
-const toolMovementDirect=`${baseUrl}/api/tools/movement/direct/`;
+const toolMovementDirect = `${baseUrl}/api/tools/movement/direct/`;
 
 // productMovementDirect
-const productMovementDirect =`${baseUrl}/api/product-inventory/movements/direct/`;
+const productMovementDirect = `${baseUrl}/api/product-inventory/movements/direct/`;
 
 // UserAgent
-const userAgent=`${baseUrl}/api/user/agent`;
+const userAgent = `${baseUrl}/api/user/agent`;
+
+// manualActivate
+const manualActivate = `${baseUrl}/api/order/public/order`;
 
 export default {
   login,
@@ -229,6 +232,7 @@ export default {
   toolMovementDirect,
   productMovementDirect,
   userAgent,
+  manualActivate,
 };
 
 
