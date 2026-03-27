@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowLeftIcon, Bike, Calendar, CheckCircle, CreditCard, Mail
 import Pagination from '../Pagination';
 import { extractErrorMessage } from '../../utils/extractErrorMessage ';
 import toast from 'react-hot-toast';
+import AgentActiveLogs from './AgentActiveLogs';
 
 
 const Agents360: React.FC = () => {
@@ -23,6 +24,33 @@ const Agents360: React.FC = () => {
     const [pageSize, setPageSize] = useState(10)
     const [totalPages, setTotalPages] = useState(1)
     const [pagination, setPagination] = useState<any>(null)
+
+    const [performance, setPerformance] = useState<any>(null);
+
+    const [dateRange, setDateRange] = useState({
+        start_date: "",
+        end_date: "",
+    });
+
+    // ✅ CORRECT
+    const fetchPerformance = async () => {
+        // if (!dateRange.start_date || !dateRange.end_date) return;
+
+        try {
+            const res = await axiosInstance.get(
+                `${Api.agentPerformance}/${id}?start_date=${dateRange.start_date}&end_date=${dateRange.end_date}`
+            );
+
+            setPerformance(res.data?.data);
+        } catch (err) {
+            console.error("Performance fetch failed", err);
+        }
+    };
+
+    // ✅ useEffect OUTSIDE
+    useEffect(() => {
+        fetchPerformance();
+    }, [dateRange.start_date, dateRange.end_date]);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -545,6 +573,16 @@ const Agents360: React.FC = () => {
                         Agent Tool Stocks
                     </button>
 
+                    <button
+                        onClick={() => setActiveTab('activeLog')}
+                        className={`px-6 py-3 text-sm font-medium ${activeTab === 'activeLog'
+                            ? 'border-b-2 border-orange-600 text-orange-600'
+                            : 'text-gray-600'
+                            }`}
+                    >
+                        Agent Active Log
+                    </button>
+
                 </div>
 
                 <div className="p-6">
@@ -554,7 +592,7 @@ const Agents360: React.FC = () => {
                         <div className="space-y-8">
 
                             {/* ===== BASIC INFORMATION ===== */}
-                            <div className="bg-gray-50 rounded-xl p-6 border">
+                            {/* <div className="bg-gray-50 rounded-xl p-6 border">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-6">
                                     Basic Information
                                 </h3>
@@ -575,8 +613,111 @@ const Agents360: React.FC = () => {
                                     <Info label="End Time" value={agent?.end_time} />
 
                                 </div>
-                            </div>
+                            </div> */}
 
+
+                            <div className="bg-white rounded-2xl border shadow-sm p-6">
+
+                                <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                                    Basic Information
+                                </h3>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                                    {/* 🧩 LEFT SIDE (NOW CARD STYLE) */}
+                                    <div className="lg:col-span-2 bg-white border rounded-2xl p-6 shadow-sm">
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+
+                                            <Info label="Full Name" value={agent?.user_details?.name} />
+                                            <Info label="Email" value={agent?.user_details?.email} />
+                                            <Info label="Mobile Number" value={agent?.user_details?.mobile_number} />
+                                            <Info label="Role" value={agent?.user_details?.role} />
+                                            <Info label="Hub Name" value={agent?.hub_name} />
+                                            <Info label="Agent Type" value={agent?.agent_type} />
+                                            <Info label="Staff" value={agent?.user_details?.is_staff ? "Yes" : "No"} />
+                                            <Info label="Admin Permission Required" value={agent?.is_admin_permission_required ? "Yes" : "No"} />
+                                            <Info label="Joined On" value={new Date(agent?.user_details?.date_joined || "").toLocaleDateString()} />
+                                            <Info label="Cumulative Rating" value={agent?.cumulative_rating} />
+                                            <Info label="Start Time" value={agent?.start_time} />
+                                            <Info label="End Time" value={agent?.end_time} />
+
+                                        </div>
+
+                                    </div>
+
+                                    {/* 🧩 RIGHT SIDE (MATCHED DESIGN) */}
+                                    <div className="bg-white border rounded-2xl p-6 shadow-sm h-fit">
+
+                                        <div className="mb-4">
+                                            <h4 className="text-sm font-semibold text-gray-800">
+                                                Agent Performance
+                                            </h4>
+                                            <p className="text-xs text-gray-400">
+                                                Track performance by date
+                                            </p>
+                                        </div>
+
+                                        {/* DATE */}
+                                        <div className="grid grid-cols-2 gap-3 mb-5">
+                                            <input
+                                                type="date"
+                                                value={dateRange.start_date}
+                                                onChange={(e) =>
+                                                    setDateRange({ ...dateRange, start_date: e.target.value })
+                                                }
+                                                className="border px-3 py-2 rounded-lg text-sm w-full"
+                                            />
+
+                                            <input
+                                                type="date"
+                                                value={dateRange.end_date}
+                                                onChange={(e) =>
+                                                    setDateRange({ ...dateRange, end_date: e.target.value })
+                                                }
+                                                className="border px-3 py-2 rounded-lg text-sm w-full"
+                                            />
+                                        </div>
+
+                                        {performance ? (
+                                            <>
+                                                {/* INFO */}
+                                                <div className="space-y-2 text-sm mb-5">
+                                                    <PerfRow label="Agent Name" value={performance.agent_name} />
+                                                    <PerfRow label="Mobile" value={performance.agent_mobile} />
+                                                    <PerfRow label="Role" value={performance.role} />
+                                                </div>
+
+                                                {/* STATS */}
+                                                <div className="grid grid-cols-2 gap-4">
+
+                                                    <div className="bg-orange-50 border rounded-xl p-4 text-center">
+                                                        <p className="text-xs text-gray-500">Total Orders</p>
+                                                        <p className="text-2xl font-bold text-orange-600">
+                                                            {performance.total_orders}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="bg-green-50 border rounded-xl p-4 text-center">
+                                                        <p className="text-xs text-gray-500">Working Hours</p>
+                                                        <p className="text-2xl font-bold text-green-600">
+                                                            {performance.total_working_hours}
+                                                        </p>
+                                                    </div>
+
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="text-center py-6 text-gray-400 text-sm">
+                                                Select date range
+                                            </div>
+                                        )}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
 
                             {/* ===== ACCOUNT STATUS ===== */}
                             <div className="bg-gray-50 rounded-xl p-6 border">
@@ -948,6 +1089,10 @@ const Agents360: React.FC = () => {
                         </div>
                     )}
 
+                    {/* AGENT ACTIVE LOGS */}
+                    {activeTab === "activeLog" && (
+                        <AgentActiveLogs userId={agent?.user_details?.id} />
+                    )}
                 </div>
             </div >
 
@@ -1305,4 +1450,11 @@ const FormInput = ({
 
     </div>
 
+);
+
+const PerfRow = ({ label, value }: any) => (
+    <div className="flex justify-between text-sm">
+        <span className="text-gray-500">{label}</span>
+        <span className="font-medium text-gray-800">{value}</span>
+    </div>
 );
