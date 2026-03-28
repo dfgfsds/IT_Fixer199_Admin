@@ -39,7 +39,6 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
 
     const fetchHubsByZone = async () => {
         const res = await axiosInstance.get(Api?.allHubs);
-        console.log(res?.data)
         setHubs(res?.data?.hubs || []);
     };
 
@@ -65,15 +64,12 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
 
         try {
             setLoading(true);
-
             let response;
-
             const cleanedUser = removeEmptyFields(newUser);
-
             if (editUser) {
                 // EDIT MODE
                 response = await axiosInstance.put(
-                    `${Api.createUser}/${editUser.id}`, cleanedUser 
+                    `${Api.createUser}/${editUser.id}`, cleanedUser
                     // {
                     //     ...newUser,
                     //     ...(newUser.password ? {} : { password: undefined }),

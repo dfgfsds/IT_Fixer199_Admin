@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import Api from "../../api-endpoints/ApiUrls";
 import { UserPlus, X } from "lucide-react";
+import toast from "react-hot-toast";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 const HubManagersModal = ({ show, onClose, hub }: any) => {
     const [managers, setManagers] = useState<any[]>([]);
@@ -38,24 +40,32 @@ const HubManagersModal = ({ show, onClose, hub }: any) => {
 
     const handleAddManager = async () => {
         if (!selectedManager) return;
+        try {
+            const updatedApi = await axiosInstance.post(Api.hubManagerMapping, {
+                hub: hub.id,
+                manager: selectedManager,
+            });
+            if (updatedApi) {
+                setSelectedManager("");
+                fetchHubManagers();
+            }
 
-        await axiosInstance.post(Api.hubManagerMapping, {
-            hub: hub.id,
-            manager: selectedManager,
-        });
+        } catch (error) {
+            toast.error(extractErrorMessage(error));
+        }
 
-        setSelectedManager("");
-        fetchHubManagers();
     };
 
     const handleRemoveManager = async (mappingId: string) => {
         if (!window.confirm("Remove this manager from hub?")) return;
-
-        await axiosInstance.delete(
-            `${Api.hubManagerMapping}/${mappingId}`
-        );
-
-        fetchHubManagers();
+        try {
+            await axiosInstance.delete(
+                `${Api.hubManagerMapping}/${mappingId}`
+            );
+            fetchHubManagers();
+        } catch (error) {
+            toast.error(extractErrorMessage(error));
+        }
     };
 
     if (!show) return null;

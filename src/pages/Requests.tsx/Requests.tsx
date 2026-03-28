@@ -5,6 +5,8 @@ import axiosInstance from "../../configs/axios-middleware";
 import Api from "../../api-endpoints/ApiUrls";
 import AgentAssign from "../Requests/Requests.tsx/AgentAssign";
 import TrackingModal from "../Requests/Requests.tsx/TrackingModal";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import toast from "react-hot-toast";
 
 interface RequestType {
     id: string;
@@ -57,7 +59,7 @@ const Requests: React.FC = () => {
             const res = await axiosInstance.get(`${Api.Requests}/?${params.toString()}`);
             setRequests(res?.data?.data || res?.data || []);
         } catch (error) {
-            console.error(error);
+            toast.error(extractErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -114,7 +116,7 @@ const Requests: React.FC = () => {
                 }
             }
         } catch (error) {
-            console.error(error);
+            toast.error(extractErrorMessage(error));
         } finally {
             setLoadingId(null);
         }
@@ -138,7 +140,7 @@ const Requests: React.FC = () => {
                 setCurrentRefundId(null);
             }
         } catch (error) {
-            console.error("OTP Verify Error:", error);
+            toast.error(extractErrorMessage(error));
         }
     };
 

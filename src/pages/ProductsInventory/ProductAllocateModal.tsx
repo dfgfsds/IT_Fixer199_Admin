@@ -142,7 +142,7 @@ const ProductAllocateModal: React.FC<Props> = ({
                                 className={`flex-1 py-2 rounded-lg border ${type === "GIVE" ? "bg-green-600 text-white" : ""
                                     }`}
                             >
-                                GIVE
+                                GET
                             </button>
 
                             <button
@@ -150,7 +150,7 @@ const ProductAllocateModal: React.FC<Props> = ({
                                 className={`flex-1 py-2 rounded-lg border ${type === "GET" ? "bg-blue-600 text-white" : ""
                                     }`}
                             >
-                                GET
+                                GIVE
                             </button>
 
                         </div>

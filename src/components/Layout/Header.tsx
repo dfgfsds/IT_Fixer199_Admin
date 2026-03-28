@@ -251,7 +251,7 @@ const Header: React.FC = () => {
                   No notifications
                 </div>
               ) : (
-                notifications?.map((notif) => (
+                notifications?.filter((i: any) => i?.is_read === false)?.map((notif) => (
                   <div
                     key={notif.id}
                     onClick={() => markAsRead(notif.id)}

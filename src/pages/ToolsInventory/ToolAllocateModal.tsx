@@ -36,7 +36,6 @@ const ToolAllocateModal: React.FC<Props> = ({
                 console.error(err);
             }
         };
-
         fetchAgents();
     }, [show]);
 
@@ -46,7 +45,6 @@ const ToolAllocateModal: React.FC<Props> = ({
         setApiErrors('')
         try {
             setLoading(true);
-
             const updatedApi = await axiosInstance.post(`${Api.toolMovementDirect}`, {
                 agent_id: selectedAgent,
                 tools_id: selectedItem?.tool?.id,
@@ -70,16 +68,16 @@ const ToolAllocateModal: React.FC<Props> = ({
     };
 
     const resetState = () => {
-  setSelectedAgent("");
-  setQuantity(1);
-  setType("GIVE");
-  setApiErrors("");
-};
+        setSelectedAgent("");
+        setQuantity(1);
+        setType("GIVE");
+        setApiErrors("");
+    };
 
-const handleClose = () => {
-  resetState();
-  onClose();
-};
+    const handleClose = () => {
+        resetState();
+        onClose();
+    };
 
     if (!show || !selectedItem) return null;
 
@@ -143,7 +141,7 @@ const handleClose = () => {
                                     : "bg-white"
                                     }`}
                             >
-                                GIVE
+                                GET
                             </button>
 
                             <button
@@ -153,7 +151,7 @@ const handleClose = () => {
                                     : "bg-white"
                                     }`}
                             >
-                                GET
+                                GIVE
                             </button>
                         </div>
                     </div>
@@ -181,7 +179,7 @@ const handleClose = () => {
                     <div className="flex justify-end gap-3 pt-4 border-t">
 
                         <button
-                       onClick={handleClose}
+                            onClick={handleClose}
                             className="px-4 py-2 border rounded-lg"
                         >
                             Cancel

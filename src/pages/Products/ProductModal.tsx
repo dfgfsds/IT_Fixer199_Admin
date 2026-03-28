@@ -118,7 +118,6 @@ const ProductModal: React.FC<Props> = ({
 
     const fetchAttributes = async () => {
         const res = await axiosInstance.get(Api?.attributeFields);
-        console.log(res?.data?.data)
         const values = (res?.data?.data || []).flatMap((attr: any) =>
             (attr?.attribute_values || []).map((val: any) => ({
                 value_id: val.value_id,

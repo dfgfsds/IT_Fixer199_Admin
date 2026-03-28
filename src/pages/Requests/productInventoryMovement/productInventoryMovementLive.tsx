@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Search, Loader2, Eye } from "lucide-react";
 import axiosInstance from "../../../configs/axios-middleware";
 import Api from "../../../api-endpoints/ApiUrls";
+import toast from "react-hot-toast";
+import { extractErrorMessage } from "../../../utils/extractErrorMessage ";
 interface MovementType {
     id: string;
     product: any;
@@ -94,9 +96,7 @@ const ProductInventoryMovementLive: React.FC = () => {
     };
 
     useEffect(() => {
-
         connectWebSocket();
-
         return () => {
             socketRef.current?.close();
         };
@@ -104,8 +104,6 @@ const ProductInventoryMovementLive: React.FC = () => {
     }, []);
 
     // ---------------- FILTER LOGIC ----------------
-
-    console.log(movements)
     const filteredData = useMemo(() => {
 
         return movements.filter((item) => {
@@ -142,7 +140,7 @@ const ProductInventoryMovementLive: React.FC = () => {
             connectWebSocket();
 
         } catch (error) {
-            console.error(error);
+           toast.error(extractErrorMessage(error));
         } finally {
             setLoadingId(null);
         }

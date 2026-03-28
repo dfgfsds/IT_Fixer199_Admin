@@ -11,11 +11,13 @@ const OrderModify: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [pagination, setPagination] = useState<PaginationData | null>(null);
     const [loading, setLoading] = useState(true);
-
+    const getToday = () => {
+        return new Date().toISOString().split("T")[0];
+    };
     const [filters, setFilters] = useState({
         status: "",
         search: "",
-        startDate: "",
+        startDate: getToday(),
         endDate: "",
         page: 1,
     });
@@ -37,23 +39,6 @@ const OrderModify: React.FC = () => {
                 order?.id?.toLowerCase().includes(searchValue)
             );
         }
-
-        // // 📂 STATUS
-        // if (filters.status !== '') {
-        //   data = data.filter(
-        //     (order: any) => order.order_status === filters.status
-        //   );
-        // }
-
-        // // 🧑‍🔧 AGENT FILTER ✅ ADD THIS
-        // if (selectedAgent) {
-        //   data = data.filter(
-        //     (order: any) =>
-        //       order?.agent_id === selectedAgent ||
-        //       order?.agent?.id === selectedAgent // fallback
-        //   );
-        // }
-
         setFilteredOrders(data);
 
     }, [filters, orders, selectedAgent]);
@@ -68,7 +53,7 @@ const OrderModify: React.FC = () => {
 
             params.append("page", String(filters.page));
             params.append("limit", "20");
-            params.append("is_active", "true");
+            params.append("is_active", "false");
 
             if (filters.status) params.append("status", filters.status);
             if (filters.search) params.append("search", filters.search);
@@ -145,7 +130,7 @@ const OrderModify: React.FC = () => {
                             setFilters({
                                 status: "",
                                 search: "",
-                                startDate: "",
+                                startDate: getToday(),
                                 endDate: "",
                                 page: 1,
                             });

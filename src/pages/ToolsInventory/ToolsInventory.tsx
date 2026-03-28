@@ -6,6 +6,8 @@ import Api from '../../api-endpoints/ApiUrls';
 import Pagination from "../../components/Pagination";
 import ToolInventoryModal from "./ToolInventoryModal";
 import ToolAllocateModal from "./ToolAllocateModal";
+import toast from "react-hot-toast";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 const ToolsInventory: React.FC = () => {
     const [data, setData] = useState<any[]>([]);
@@ -48,7 +50,7 @@ const ToolsInventory: React.FC = () => {
             setTotalPages(p?.total_pages);
 
         } catch (err) {
-            console.error(err);
+            toast.error(extractErrorMessage(err));
         } finally {
             setLoading(false);
         }
@@ -105,7 +107,7 @@ const ToolsInventory: React.FC = () => {
             setDeleteInventory(null);
 
         } catch (error) {
-            console.error("Delete failed:", error);
+            toast.error(extractErrorMessage(error));
         } finally {
             setDeleteLoading(false);
         }
@@ -113,7 +115,6 @@ const ToolsInventory: React.FC = () => {
 
     const handleStockSubmit = async () => {
         if (!selectedItem || quantity <= 0) return;
-
         try {
             setStockLoading(true);
 
@@ -142,7 +143,7 @@ const ToolsInventory: React.FC = () => {
             setSelectedItem(null);
 
         } catch (err) {
-            console.error(err);
+            toast.error(extractErrorMessage(err));
         } finally {
             setStockLoading(false);
         }
