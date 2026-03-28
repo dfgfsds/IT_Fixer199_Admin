@@ -5,6 +5,8 @@ import axiosInstance from "../../../configs/axios-middleware";
 import Api from '../../../api-endpoints/ApiUrls';
 import AgentAssign from "./AgentAssign";
 import TrackingModal from "./TrackingModal";
+import toast from "react-hot-toast";
+import { extractErrorMessage } from "../../../utils/extractErrorMessage ";
 
 interface RequestType {
     id: string;
@@ -213,7 +215,7 @@ const RequestsLive: React.FC = () => {
 
             }
         } catch (error) {
-            console.error(error);
+            toast.error(extractErrorMessage(error));
         } finally {
             setLoadingId(null);
         }
@@ -245,7 +247,7 @@ const RequestsLive: React.FC = () => {
             }
 
         } catch (error) {
-            console.error("OTP Verify Error:", error);
+            toast.error(extractErrorMessage(error));
         }
     };
 

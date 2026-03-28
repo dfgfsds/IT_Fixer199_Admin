@@ -3,6 +3,7 @@ import axiosInstance from "../../../configs/axios-middleware";
 import Api from "../../../api-endpoints/ApiUrls";
 import { Loader2, MapPin, Clock, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
+import { extractErrorMessage } from "../../../utils/extractErrorMessage ";
 
 interface Props {
     show: boolean;
@@ -50,8 +51,7 @@ const AgentAssign: React.FC<Props> = ({ show, onClose, order, socketRef, refresh
 
             }
         } catch (err) {
-            console.error(err);
-
+            toast.error(extractErrorMessage(err));
         } finally {
             setLoading(false);
         }
@@ -87,8 +87,7 @@ const AgentAssign: React.FC<Props> = ({ show, onClose, order, socketRef, refresh
             }
 
         } catch (err) {
-            console.error(err);
-            toast.error("Failed to assign slot");
+            toast.error(extractErrorMessage(err));
         } finally {
             setLoading(false);
         }
@@ -106,8 +105,7 @@ const AgentAssign: React.FC<Props> = ({ show, onClose, order, socketRef, refresh
 
             onClose();
         } catch (err) {
-            console.error(err);
-            toast.error("Failed to cancel order");
+            toast.error(extractErrorMessage(err));
         } finally {
             setLoading(false);
         }

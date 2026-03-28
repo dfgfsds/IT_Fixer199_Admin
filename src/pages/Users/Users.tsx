@@ -15,6 +15,7 @@ import AddUserModal from "./AddUserModal";
 import axiosInstance from "../../configs/axios-middleware";
 import toast from "react-hot-toast";
 import Pagination from "../../components/Pagination";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 interface UserType {
     id: string;
@@ -114,10 +115,7 @@ const Users: React.FC = () => {
             setDeleteUser(null);
 
         } catch (error: any) {
-            console.error("Failed to delete user:", error);
-            const data = error?.response?.data;
-            let message = "Something went wrong";
-            toast.error(data?.message || message);
+            toast.error(extractErrorMessage(error));
         }
     };
 
@@ -142,14 +140,10 @@ const Users: React.FC = () => {
                     status: dataStatus
                 }
             );
-
             toast.success("User status updated");
-
             fetchUsers(page, pageSize);
-
         } catch (error) {
-            console.error("Status update failed:", error);
-            toast.error("Failed to update status");
+            toast.error(extractErrorMessage(error));
         }
     };
 

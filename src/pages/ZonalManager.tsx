@@ -5,6 +5,8 @@ import Api from '../api-endpoints/ApiUrls';
 import ZoneModal from '../components/Modals/ZoneModal';
 import Pagination from '../components/Pagination';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { extractErrorMessage } from '../utils/extractErrorMessage ';
 
 interface Zone {
   id: string;
@@ -37,56 +39,27 @@ const ZonalManager: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [paginations, setPagination] = useState<any>(null);
   const navigate = useNavigate();
-
-  const filteredZones = zones?.filter((zone) => {
-    const searchText = search?.toLowerCase();
-
-    return (
-      zone?.name?.toLowerCase().includes(searchText) ||
-      zone?.city?.toLowerCase().includes(searchText) ||
-      zone?.state?.toLowerCase().includes(searchText) ||
-      zone?.pincode?.toLowerCase().includes(searchText) ||
-      zone?.manager_name?.toLowerCase().includes(searchText)
-    );
-  });
-
+  const [statusFilter, setStatusFilter] = useState<"" | "ACTIVE" | "INACTIVE">("");
 
   useEffect(() => {
     fetchZones();
-  }, []);
-
-  // const fetchZones = async () => {
-  //   try {
-  //     const response = await axiosInstance.get(Api?.allZone);
-  //     setZones(response?.data?.zones);
-  //   } catch (error) {
-  //     console.error("Failed to fetch zones:", error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
+  }, [search, statusFilter]);
 
   const fetchZones = async (pageNumber = page, size = pageSize) => {
     try {
       setLoading(true);
-
       const response = await axiosInstance.get(
-        `${Api?.allZone}?page=${pageNumber}&size=${size}`
+        `${Api?.allZone}?page=${pageNumber}&size=${size}&search=${search}&status=${statusFilter}`
       );
-
       setZones(response?.data?.zones || []);
-
       const p = response?.data?.pagination;
-
       if (p) {
         setPagination(p);
         setPage(p.page);
         setTotalPages(p.total_pages);
       }
-
     } catch (error) {
-      console.error("Failed to fetch zones:", error);
+      toast.error(extractErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -105,12 +78,11 @@ const ZonalManager: React.FC = () => {
 
   const handleDelete = async () => {
     if (!deleteZoneId) return;
-
     try {
       await axiosInstance.delete(`${Api?.zone}/${deleteZoneId}`);
       fetchZones();
     } catch (error) {
-      console.error("Delete failed:", error);
+      toast.error(extractErrorMessage(error));
     } finally {
       setShowDeleteModal(false);
       setDeleteZoneId(null);
@@ -124,10 +96,6 @@ const ZonalManager: React.FC = () => {
     totalAgents: zones?.reduce((sum, z) => sum + z.total_agents, 0),
     totalRevenue: zones?.reduce((sum, z) => sum + z.monthly_revenue, 0)
   };
-  //   const zoneStats = {
-  //   totalZones: zones.length,
-  //   activeZones: zones.filter(z => z.status === "ACTIVE").length,
-  // };
 
   const handleZoneToggle = async (zone: any) => {
     try {
@@ -139,7 +107,7 @@ const ZonalManager: React.FC = () => {
         fetchZones();
       }
     } catch (err) {
-      console.log(err)
+      toast.error(extractErrorMessage(err));
     }
   }
 
@@ -168,65 +136,42 @@ const ZonalManager: React.FC = () => {
         </button>
       </div>
 
-
-      {/* Stats Cards */}
-      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Zones</p>
-              <p className="text-2xl font-bold text-blue-600">{zoneStats.totalZones}</p>
-            </div>
-            <div className="p-3 rounded-full bg-blue-500">
-              <MapPin className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Active Zones</p>
-              <p className="text-2xl font-bold text-green-600">{zoneStats.activeZones}</p>
-            </div>
-            <div className="p-3 rounded-full bg-green-500">
-              <MapPin className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Agents</p>
-              <p className="text-2xl font-bold text-orange-600">{zoneStats.totalAgents}</p>
-            </div>
-            <div className="p-3 rounded-full bg-orange-500">
-              <Users className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold text-purple-600">₹{zoneStats?.totalRevenue?.toLocaleString()}</p>
-            </div>
-            <div className="p-3 rounded-full bg-purple-500">
-              <DollarSign className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-      </div> */}
-
       {/* Search */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <input
-          type="text"
-          placeholder="Search by zone, city, state, pincode, manager..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full md:w-1/3 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
-        />
+      <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-wrap gap-3 items-center justify-between">
+        {/* LEFT */}
+        <div className="flex flex-wrap gap-3 items-center">
+          {/* SEARCH */}
+          <input
+            type="text"
+            placeholder="Search zone, city..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+          />
+          {/* STATUS FILTER */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="">All Status</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+          </select>
+        </div>
+        {/* RIGHT */}
+        <button
+          onClick={() => {
+            setSearch("");
+            setStatusFilter("");
+            setPage(1);
+          }}
+          className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-100"
+        >
+          Clear
+        </button>
       </div>
+
 
       {/* Zones Grid */}
       {loading ? (
@@ -236,7 +181,7 @@ const ZonalManager: React.FC = () => {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredZones.length === 0 ? (
+            {zones.length === 0 ? (
               <div className="col-span-full flex flex-col items-center justify-center py-20 text-gray-500">
                 <MapPin className="w-10 h-10 mb-4 text-gray-400" />
                 {zones.length === 0 ? (
@@ -317,68 +262,7 @@ const ZonalManager: React.FC = () => {
                           {zone?.total_orders}
                         </span>
                       </div>
-
-                      {/* <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <DollarSign className="w-4 h-4 text-gray-400 mr-2" />
-                          <span className="text-sm text-gray-600">Revenue</span>
-                        </div>
-                        <span className="text-sm font-medium text-gray-900">
-                          ₹{zone?.monthly_revenue?.toLocaleString()}
-                        </span>
-                      </div> */}
-
-                      {/* {zone.pending_tickets > 0 && (
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <AlertCircle className="w-4 h-4 text-red-400 mr-2" />
-                            <span className="text-sm text-red-600">Pending Tickets</span>
-                          </div>
-                          <span className="text-sm font-medium text-red-600">
-                            {zone.pending_tickets}
-                          </span>
-                        </div>
-                      )} */}
-
-                      {/* {zone.manager_name && (
-                        <div className="pt-3 border-t border-gray-200">
-                          <div className="flex items-center">
-                            <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center">
-                              <span className="text-xs font-medium text-gray-600">
-                                {zone.manager_name.charAt(0)}
-                              </span>
-                            </div>
-                            <span className="ml-2 text-sm text-gray-600">
-                              Manager: {zone.manager_name}
-                            </span>
-                          </div>
-                        </div>
-                      )} */}
                     </div>
-
-                    {/* <div className="flex justify-end mt-4 space-x-3">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditZone(zone);
-                          setShowFormModal(true);
-                        }}
-                        className="text-sm px-3 py-1 border rounded-lg hover:bg-gray-50"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteZoneId(zone.id);
-                          setShowDeleteModal(true);
-                        }}
-                        className="text-sm px-3 py-1 text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
-                    </div> */}
 
                     <div className="flex justify-end mt-4 space-x-3">
 
@@ -550,9 +434,6 @@ const ZonalManager: React.FC = () => {
           setEditZone={setEditZone}
         />
       )}
-
-
-
 
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

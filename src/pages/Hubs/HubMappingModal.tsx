@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import Api from "../../api-endpoints/ApiUrls";
 import { Loader, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 interface Props {
     show: boolean;
@@ -21,7 +23,7 @@ const HubMappingModal: React.FC<Props> = ({ show, onClose, hub }) => {
             const response = await axiosInstance.get(`${Api?.allZone}?size=1000`);
             setZones(response?.data?.zones || response?.data || []);
         } catch (error) {
-            console.error("Failed to fetch zones:", error);
+            toast.error(extractErrorMessage(error));
         }
     };
 
@@ -29,7 +31,6 @@ const HubMappingModal: React.FC<Props> = ({ show, onClose, hub }) => {
     const fetchMapping = async () => {
         try {
             const response = await axiosInstance.get(`${Api?.hubMapping}?hub=${hub?.id}`);
-            console.log(response)
             const allMappings = response?.data?.mappings || [];
 
             const filtered = allMappings.filter(
@@ -38,7 +39,7 @@ const HubMappingModal: React.FC<Props> = ({ show, onClose, hub }) => {
 
             setMappings(filtered);
         } catch (error) {
-            console.error("Failed to fetch mapping:", error);
+            toast.error(extractErrorMessage(error));
         }
     };
 
@@ -57,7 +58,7 @@ const HubMappingModal: React.FC<Props> = ({ show, onClose, hub }) => {
             setZoneId("");
             fetchMapping();
         } catch (error) {
-            console.error("Add mapping failed:", error);
+            toast.error(extractErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -75,7 +76,7 @@ const HubMappingModal: React.FC<Props> = ({ show, onClose, hub }) => {
 
             fetchMapping();
         } catch (error) {
-            console.error("Delete mapping failed:", error);
+            toast?.error(extractErrorMessage(error));
         }
     };
 

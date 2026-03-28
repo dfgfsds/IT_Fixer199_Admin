@@ -3,6 +3,8 @@ import axiosInstance from "../../configs/axios-middleware";
 import { Plus, Edit, Trash2, Search } from "lucide-react";
 import BrandModal from "./BrandModal";
 import Api from "../../api-endpoints/ApiUrls";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import toast from "react-hot-toast";
 
 interface Brand {
     id: string;
@@ -42,7 +44,7 @@ const Brands: React.FC = () => {
             setBrands(res?.data?.brands || []);
 
         } catch (err) {
-            console.error("Brand fetch failed:", err);
+            toast.error(extractErrorMessage(err));
         } finally {
             setLoading(false);
         }
@@ -62,7 +64,7 @@ const Brands: React.FC = () => {
             setDeleteBrand(null);
             fetchBrands();
         } catch (err) {
-            console.error("Delete failed:", err);
+            toast.error(extractErrorMessage(err));
         }
     };
 
@@ -91,7 +93,7 @@ const Brands: React.FC = () => {
             fetchBrands();
 
         } catch (err) {
-            console.error("Status update failed:", err);
+            toast.error(extractErrorMessage(err));
         }
     };
 

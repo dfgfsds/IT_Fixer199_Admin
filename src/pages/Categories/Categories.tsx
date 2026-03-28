@@ -3,6 +3,8 @@ import { Plus, Edit, Trash2, Search } from "lucide-react";
 import axiosInstance from "../../configs/axios-middleware";
 import CategoryModal from "./CategoryModal";
 import Api from "../../api-endpoints/ApiUrls";
+import toast from "react-hot-toast";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 interface Category {
     id: string;
@@ -44,7 +46,7 @@ const Categories: React.FC = () => {
             setCategories(res?.data?.data || []);
 
         } catch (err) {
-            console.error("Fetch error:", err);
+            toast.error(extractErrorMessage(err));
         } finally {
             setLoading(false);
         }
@@ -58,7 +60,7 @@ const Categories: React.FC = () => {
             setDeleteId(null);
             fetchCategories();
         } catch (err) {
-            console.error("Delete error:", err);
+            toast.error(extractErrorMessage(err));
         }
     };
 
@@ -87,7 +89,7 @@ const Categories: React.FC = () => {
             fetchCategories();
 
         } catch (err) {
-            console.error("Status update failed:", err);
+            toast.error(extractErrorMessage(err));
         }
     };
 

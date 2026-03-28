@@ -38,15 +38,12 @@ const ToolInventoryModal: React.FC<Props> = ({
         onClose();
     };
 
-
-
     const fetchData = async () => {
         const prod = await axiosInstance.get(`${Api?.tools}?size=1000`);
         const hubRes = await axiosInstance.get(Api?.allHubs);
         setProducts(prod?.data?.data?.tools);
         setHubs(hubRes.data?.hubs || []);
     };
-
 
     useEffect(() => {
         if (!show) return;
@@ -69,7 +66,6 @@ const ToolInventoryModal: React.FC<Props> = ({
 
         } catch (err) {
             setApiErrors(extractErrorMessage(err));
-            console.error(err);
         } finally {
             setLoading(false);
         }

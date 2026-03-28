@@ -4,6 +4,8 @@ import { Plus, Edit, Trash2 } from "lucide-react";
 import ServiceModal from "./ServiceModal";
 import Api from '../../api-endpoints/ApiUrls';
 import Pagination from "../../components/Pagination";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import toast from "react-hot-toast";
 const Services: React.FC = () => {
     const [services, setServices] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -37,7 +39,7 @@ const Services: React.FC = () => {
             const res = await axiosInstance.get(Api?.categories);
             setCategories(res?.data?.data || []);
         } catch (err) {
-            console.error(err);
+            toast.error(extractErrorMessage(err));
         }
     };
 
@@ -62,23 +64,18 @@ const Services: React.FC = () => {
     const fetchZones = async (pageNumber = page, size = pageSize) => {
         try {
             setLoading(true);
-
             const response = await axiosInstance.get(
                 `${Api?.allZone}?size=1000`
             );
-
             setZones(response?.data?.zones || []);
-
             const p = response?.data?.pagination;
-
             if (p) {
                 setPagination(p);
                 setPage(p.page);
                 setTotalPages(p.total_pages);
             }
-
         } catch (error) {
-            console.error("Failed to fetch zones:", error);
+            toast.error(extractErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -112,7 +109,7 @@ const Services: React.FC = () => {
             setTotalPages(p?.total_pages);
 
         } catch (err) {
-            console.error(err);
+            toast.error(extractErrorMessage(err));
         } finally {
             setLoading(false);
         }
@@ -135,35 +132,31 @@ const Services: React.FC = () => {
 
     const handleDelete = async () => {
         if (!deleteId) return;
-
-        await axiosInstance.delete(`${Api?.services}/${deleteId}/`);
-        setDeleteId(null);
-        fetchServices();
+        try {
+            await axiosInstance.delete(`${Api?.services}/${deleteId}/`);
+            setDeleteId(null);
+            fetchServices();
+        } catch (error) {
+            toast.error(extractErrorMessage(error));
+        }
     };
 
     const toggleStatus = async (service: any) => {
         try {
-
             const newStatus =
                 service.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-
             const formData = new FormData();
-
             const serviceObject = {
                 status: newStatus,
             };
-
             formData.append("service", JSON.stringify(serviceObject));
-
             await axiosInstance.put(
                 `${Api?.services}/${service.id}/`,
                 formData
             );
-
             fetchServices();
-
         } catch (error) {
-            console.error("Status update failed:", error);
+            toast.error(extractErrorMessage(error));
         }
     };
 

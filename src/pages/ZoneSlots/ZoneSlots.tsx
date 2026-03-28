@@ -6,6 +6,8 @@ import Pagination from "../../components/Pagination";
 import { useSearchParams } from "react-router-dom";
 import ApiUrls from "../../api-endpoints/ApiUrls";
 import ZoneSlotsModal from "./ZoneSlotsModal";
+import toast from "react-hot-toast";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 
 interface SlotType {
@@ -47,35 +49,24 @@ const ZoneSlots: React.FC = () => {
 
     const fetchSlots = async (pageNumber = page, size = pageSize) => {
         try {
-
             setLoading(true);
-
-            // const response = await axiosInstance.get(
-            //     `${api?.allStols}?page=${pageNumber}&size=${size}&zone_id=${zoneId}`
-            // );
             const params: any = {
                 page: pageNumber,
                 size: size,
                 zone_id: zoneId
             };
-
             if (search) params.search = search;
             if (statusFilter) params.status = statusFilter;
-
             const response = await axiosInstance.get(api?.allStols, { params });
-
             setSlots(response?.data?.slots || []);
-
             const p = response?.data?.pagination;
-
             if (p) {
                 setPagination(p);
                 setPage(p.page);
                 setTotalPages(p.total_pages);
             }
-
         } catch (error) {
-            console.error("Failed to fetch slots:", error);
+            toast.error(extractErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -84,7 +75,6 @@ const ZoneSlots: React.FC = () => {
     const fetchZones = async () => {
         try {
             setLoading(true);
-
             const response = await axiosInstance.get(
                 `${ApiUrls?.zone}/${zoneId}`
             );
@@ -92,15 +82,12 @@ const ZoneSlots: React.FC = () => {
             if (response) {
                 setZones(response?.data?.zone);
             }
-
-
         } catch (error) {
-            console.error("Failed to fetch zones:", error);
+            toast.error(extractErrorMessage(error));
         } finally {
             setLoading(false);
         }
     };
-
 
     const handlePageChange = (newPage: number) => {
         setPage(newPage);
@@ -121,7 +108,7 @@ const ZoneSlots: React.FC = () => {
             await axiosInstance.delete(`${api?.slot}/${deleteSlotId}`);
             fetchSlots();
         } catch (error) {
-            console.error("Delete failed:", error);
+            toast.error(extractErrorMessage(error));
         } finally {
             setShowDeleteModal(false);
             setDeleteSlotId(null);
@@ -137,17 +124,13 @@ const ZoneSlots: React.FC = () => {
 
     const handleSlotToggle = async (slot: any) => {
         try {
-
             const payload = {
                 status: slot.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"
             };
-
             await axiosInstance.put(`${api?.slot}/${slot.id}`, payload);
-
             fetchSlots(page);
-
         } catch (error) {
-            console.error("Status update failed:", error);
+            toast.error(extractErrorMessage(error));
         }
     };
 
@@ -323,7 +306,7 @@ const ZoneSlots: React.FC = () => {
 
                                                 <div className="flex items-center gap-2">
 
-                                                  
+
 
                                                     <button
                                                         onClick={() => handleSlotToggle(slot)}
@@ -341,10 +324,10 @@ const ZoneSlots: React.FC = () => {
                                                                 }`}
                                                         />
                                                     </button>
-  <span
+                                                    <span
                                                         className={`text-xs font-medium ${slot.status === "ACTIVE"
-                                                                ? "text-green-600"
-                                                                : "text-red-600"
+                                                            ? "text-green-600"
+                                                            : "text-red-600"
                                                             }`}
                                                     >
                                                         {slot.status}

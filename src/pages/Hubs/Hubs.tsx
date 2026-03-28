@@ -9,6 +9,8 @@ import HubModal from "./HubModal";
 import HubZoneViewModal from "./HubZoneViewModal";
 import HubManagersModal from "./HubManagersModal";
 import { useAuth } from "../../contexts/AuthContext";
+import toast from "react-hot-toast";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 
 interface HubType {
@@ -45,13 +47,13 @@ const Hubs: React.FC = () => {
             const response = await axiosInstance.get(
                 `${Api?.hubMapping}?hub=${hubId}`
             );
-            const mappings = response?.data?.mappings || [];
-
-            setZonesData(mappings);
-            setShowZoneModal(true);
-
+            if (response) {
+                const mappings = response?.data?.mappings || [];
+                setZonesData(mappings);
+                setShowZoneModal(true);
+            }
         } catch (error) {
-            console.error("Failed to fetch zones:", error);
+            toast.error(extractErrorMessage(error));
         }
     };
 
@@ -65,7 +67,7 @@ const Hubs: React.FC = () => {
             const response = await axiosInstance.get(Api?.allHubs);
             setHubs(response?.data?.hubs);
         } catch (error) {
-            console.error("Failed to fetch hubs:", error);
+            toast.error(extractErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -73,10 +75,14 @@ const Hubs: React.FC = () => {
 
     const handleDelete = async () => {
         if (!deleteHubId) return;
+        try {
+            await axiosInstance.delete(`${Api?.hub}/${deleteHubId}`);
+            setDeleteHubId(null);
+            fetchHubs();
+        } catch (error) {
+            toast.error(extractErrorMessage(error));
+        }
 
-        await axiosInstance.delete(`${Api?.hub}/${deleteHubId}`);
-        setDeleteHubId(null);
-        fetchHubs();
     };
 
     const filteredHubs = hubs?.filter(

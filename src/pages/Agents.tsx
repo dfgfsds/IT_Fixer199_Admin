@@ -8,6 +8,7 @@ import { extractErrorMessage } from '../utils/extractErrorMessage ';
 import AgentTrackingModal from '../components/Modals/AgentTrackingModal';
 import toast from 'react-hot-toast';
 import CreateAgentModal from '../components/Agent/CreateAgentModal';
+import Pagination from '../components/Pagination';
 interface AgentResponse {
   id: string
   user_name: string
@@ -36,8 +37,6 @@ const Agents: React.FC = () => {
   const [selectedManager, setSelectedManager] = useState('');
   const [users, setUsers] = useState<any[]>([]);
   const [apiErrors, setApiErrors] = useState<string>("");
-
-
   const [zoneModal, setZoneModal] = useState(false)
   const [agentZones, setAgentZones] = useState<any>([])
   const [allZones, setAllZones] = useState<any[]>([])
@@ -45,6 +44,13 @@ const Agents: React.FC = () => {
   const [zoneApiErrors, setzoneApiErrors] = useState<string>("");
   const [trackingModal, setTrackingModal] = useState(false);
   const [createModal, setCreateModal] = useState(false);
+
+  const [filteredData, setFilteredData] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [selectedHub, setSelectedHub] = useState("");
+  const [sortOrder, setSortOrder] = useState<"recent" | "oldest">("recent");
+  const [hubs, setHubs] = useState<any[]>([])
 
   const managerList = users
     ?.filter((item: any) => item?.role === "MANAGER")
@@ -55,7 +61,6 @@ const Agents: React.FC = () => {
 
       const response = await axiosInstance.get(`${Api.allUsers}?role=MANAGER&size=10000`,
       );
-      console.log(response)
       setUsers(response.data?.users);
     } catch (error) {
       console.error("Failed to fetch users:", error);
@@ -73,7 +78,6 @@ const Agents: React.FC = () => {
 
   const handleAssignManager = async () => {
     setLoading(true);
-
     try {
       if (selectedManager) {
         const updatedApi = await axiosInstance.put(`${Api?.allocations}${selectedManager}`)
@@ -88,13 +92,11 @@ const Agents: React.FC = () => {
           manager: selectedManager
         })
         if (updatedApi) {
-
           setLoading(false);
           setManagerModal(false);
           fetchAgents();
         }
       }
-
     } catch (error) {
       setLoading(false);
       setApiErrors(extractErrorMessage(error));
@@ -152,14 +154,19 @@ const Agents: React.FC = () => {
 
       fetchAgents();
     } catch (error) {
-      console.error("Delete failed", error);
+      toast.error(extractErrorMessage(error));
     }
   };
 
 
   const handleDeleteZone = async (id: string) => {
-    await axiosInstance.delete(`${Api?.addAgentZone}${selectedAgent.id}/${id}/`)
-    openZoneModal(selectedAgent)
+    try {
+      await axiosInstance.delete(`${Api?.addAgentZone}${selectedAgent.id}/${id}/`)
+      openZoneModal(selectedAgent)
+    } catch (error) {
+      toast.error(extractErrorMessage(error));
+    }
+
   }
 
 
@@ -167,26 +174,39 @@ const Agents: React.FC = () => {
     fetchAgents()
   }, [filters])
 
+  // const fetchAgents = async () => {
+  //   try {
+  //     const params = new URLSearchParams({
+  //       ...(filters.search && { search: filters.search }),
+  //       ...(filters.status !== 'all' && { status: filters.status })
+  //     })
+  //     // const res = await fetch(`/api/agents?${params}`, {
+  //     //   headers: { Authorization: `Bearer ${token}` }
+  //     // })
+  //     const res: any = await axiosInstance.get(Api?.agents);
+  //     if (res) {
+  //       // const data = await res.json()
+  //       setAgents(res?.data?.agents)
+  //     }
+  //   } catch (err) {
+  //     console.log(err)
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
+
   const fetchAgents = async () => {
+    setLoading(true);
+
     try {
-      const params = new URLSearchParams({
-        ...(filters.search && { search: filters.search }),
-        ...(filters.status !== 'all' && { status: filters.status })
-      })
-      // const res = await fetch(`/api/agents?${params}`, {
-      //   headers: { Authorization: `Bearer ${token}` }
-      // })
       const res: any = await axiosInstance.get(Api?.agents);
-      if (res) {
-        // const data = await res.json()
-        setAgents(res?.data?.agents)
-      }
+      setAgents(res?.data?.agents || []);
     } catch (err) {
-      console.log(err)
+      toast.error(extractErrorMessage(err));
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const resetManagerModal = () => {
     setSelectedAgent(null);
@@ -216,21 +236,78 @@ const Agents: React.FC = () => {
   }, [zoneModal]);
 
 
-  const filteredAgents = agents?.filter(agent => {
-    const matchesSearch =
-      agent.user_name
-        ?.toLowerCase()
-        .includes(filters.search.toLowerCase()) ||
-      agent.user_details?.mobile_number
-        ?.toLowerCase()
-        .includes(filters.search.toLowerCase())
+  // const filteredAgents = agents?.filter(agent => {
+  //   const matchesSearch =
+  //     agent.user_name
+  //       ?.toLowerCase()
+  //       .includes(filters.search.toLowerCase()) ||
+  //     agent.user_details?.mobile_number
+  //       ?.toLowerCase()
+  //       .includes(filters.search.toLowerCase())
 
-    const matchesStatus =
-      filters.status === 'all' ||
-      agent.user_details?.status === filters.status
+  //   const matchesStatus =
+  //     filters.status === 'all' ||
+  //     agent.user_details?.status === filters.status
 
-    return matchesSearch && matchesStatus
-  })
+  //   return matchesSearch && matchesStatus
+  // })
+
+  useEffect(() => {
+    let data = [...agents];
+
+    // 🔍 SEARCH
+    if (filters.search) {
+      data = data.filter((agent) =>
+        agent.user_name?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        agent.user_details?.mobile_number?.includes(filters.search)
+      );
+    }
+
+    // 📌 STATUS
+    if (filters.status !== "all") {
+      data = data.filter(
+        (agent) => agent.user_details?.status === filters.status
+      );
+    }
+
+    // 🏢 HUB
+    if (selectedHub) {
+      data = data.filter((agent: any) => agent.hub === selectedHub);
+    }
+
+    // 🔥 SORT (created_at)
+    data.sort((a: any, b: any) => {
+      const d1 = new Date(a.created_at).getTime();
+      const d2 = new Date(b.created_at).getTime();
+
+      return sortOrder === "recent" ? d2 - d1 : d1 - d2;
+    });
+
+    setFilteredData(data);
+    setPage(1);
+  }, [agents, filters, selectedHub, sortOrder]);
+
+  const totalItems = filteredData?.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+
+  const paginatedData = filteredData?.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
+
+  useEffect(() => {
+    fetchHubs();
+  }, []);
+
+  // ✅ FETCH HUBS
+  const fetchHubs = async () => {
+    try {
+      const res = await axiosInstance.get(Api?.allHubs);
+      setHubs(res?.data?.hubs || []);
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   const handleStatusToggle = async (agent: any) => {
     const form = new FormData();
@@ -253,8 +330,7 @@ const Agents: React.FC = () => {
       }
 
     } catch (error) {
-      console.error("Status update failed:", error);
-      toast.error("Failed to update status");
+      toast.error(extractErrorMessage(error));
     }
   };
 
@@ -280,9 +356,9 @@ const Agents: React.FC = () => {
 
       {/* FILTERS */}
       {/* FILTERS */}
-      <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col sm:flex-row gap-4 items-center">
+      {/* <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col sm:flex-row gap-4 items-center">
 
-        {/* SEARCH */}
+      
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -296,9 +372,9 @@ const Agents: React.FC = () => {
           />
         </div>
 
-        {/* STATUS */}
+
         <div className="flex items-center gap-2">
-          {/* <label className="text-sm text-gray-500">Status:</label> */}
+  
 
           <select
             value={filters.status}
@@ -314,7 +390,7 @@ const Agents: React.FC = () => {
           </select>
         </div>
 
-        {/* CLEAR BUTTON */}
+
         <button
           onClick={() =>
             setFilters({
@@ -327,8 +403,93 @@ const Agents: React.FC = () => {
           Clear
         </button>
 
-      </div>
+      </div> */}
+      {/* FILTERS */}
+      <div className="bg-white p-5 rounded-xl border shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
+        {/* LEFT SIDE */}
+        <div className="flex flex-wrap gap-3 items-center w-full">
+
+          {/* SEARCH */}
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search agents..."
+              value={filters.search}
+              onChange={(e) => {
+                setFilters({ ...filters, search: e.target.value });
+                setPage(1);
+              }}
+              className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+            />
+          </div>
+
+          {/* STATUS */}
+          <select
+            value={filters.status}
+            onChange={(e) => {
+              setFilters({ ...filters, status: e.target.value });
+              setPage(1);
+            }}
+            className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="all">All Status</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+            <option value="PENDING">Pending</option>
+          </select>
+
+          {/* HUB */}
+          <select
+            value={selectedHub}
+            onChange={(e) => {
+              setSelectedHub(e.target.value);
+              setPage(1);
+            }}
+            className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm capitalize focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="">All Hubs</option>
+            {hubs?.map((hub: any) => (
+              <option key={hub?.id} value={hub?.id}>
+                {hub?.name}
+              </option>
+            ))}
+          </select>
+
+          {/* SORT */}
+          <select
+            value={sortOrder}
+            onChange={(e) => {
+              setSortOrder(e.target.value as any);
+              setPage(1);
+            }}
+            className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="recent">Newest</option>
+            <option value="oldest">Oldest</option>
+          </select>
+
+        </div>
+
+        {/* RIGHT SIDE */}
+        <div className="flex items-center gap-2 justify-end">
+
+          <button
+            onClick={() => {
+              setFilters({ search: "", status: "all" });
+              setSelectedHub("");
+              setSortOrder("recent");
+              setPage(1);
+            }}
+            className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 transition"
+          >
+            Clear
+          </button>
+
+        </div>
+
+      </div>
 
       {/* Table */}
       {loading ? (
@@ -368,14 +529,14 @@ const Agents: React.FC = () => {
             </thead>
 
             <tbody className="divide-y divide-gray-200">
-              {filteredAgents?.length === 0 ? (
+              {paginatedData?.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-center py-6 text-gray-500">
                     No Agents Found
                   </td>
                 </tr>
               ) : (
-                filteredAgents?.map((agent: any, index: number) => (
+                paginatedData?.map((agent: any, index: number) => (
                   <tr key={agent.id} className="hover:bg-gray-50">
                     {/* Agent */}
                     <td className="px-6 py-4 text-sm text-gray-700">
@@ -428,42 +589,6 @@ const Agents: React.FC = () => {
                     </td> */}
 
                     {user?.role !== 'HUB_MANAGER' && (
-                      // <td className="px-6 py-4">
-                      //   {agent?.manager_details ? (
-                      //     <div className="space-y-1 text-sm">
-
-                      //       <div>
-                      //         <span className="font-medium text-gray-500">Name :</span>{' '}
-                      //         <span className="font-semibold text-gray-900 capitalize">
-                      //           {agent.manager_details?.name || '-'}
-                      //         </span>
-                      //       </div>
-
-                      //       <div>
-                      //         <span className="font-medium text-gray-500">Email :</span>{' '}
-                      //         <span className="text-gray-800 break-all">
-                      //           {agent.manager_details?.email || '-'}
-                      //         </span>
-                      //       </div>
-
-                      //       <div>
-                      //         <span className="font-medium text-gray-500">Mobile :</span>{' '}
-                      //         <span className="text-gray-800">
-                      //           {agent.manager_details?.mobile_number || '-'}
-                      //         </span>
-                      //       </div>
-
-                      //     </div>
-                      //   ) : (
-                      //     <button
-                      //       onClick={() => handleOpenManagerModal(agent)}
-                      //       className="px-3 py-1.5 text-sm bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition font-medium"
-                      //     >
-                      //       + Add Manager
-                      //     </button>
-                      //   )}
-                      // </td>
-
                       <td className="px-6 py-4">
                         {agent?.manager_details ? (
                           <div className="space-y-2 text-sm">
@@ -515,7 +640,12 @@ const Agents: React.FC = () => {
                         ) : (
                           <button
                             onClick={() => handleOpenManagerModal(agent)}
-                            className="px-3 py-1.5 text-sm bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200"
+                            disabled={agent.user_details?.status === "PENDING"}
+                            className={`px-3 py-1.5 text-sm rounded-lg transition
+    ${agent.user_details?.status === "PENDING"
+                                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                : "bg-orange-100 text-orange-600 hover:bg-orange-200"
+                              }`}
                           >
                             + Add Manager
                           </button>
@@ -526,7 +656,12 @@ const Agents: React.FC = () => {
                     <td className="px-6 py-4">
                       <button
                         onClick={() => openZoneModal(agent)}
-                        className="text-blue-600 hover:underline"
+                        disabled={agent.user_details?.status === "PENDING"}
+                        className={`px-3 py-1.5 text-sm rounded-lg transition
+    ${agent.user_details?.status === "PENDING"
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "bg-orange-100 text-orange-600 hover:bg-orange-200"
+                          }`}
                       >
                         View Zones ({agent.zone_details?.length || 0})
                       </button>
@@ -535,33 +670,6 @@ const Agents: React.FC = () => {
 
                     {/* Status */}
                     <td className="px-6 py-4">
-                      {/* <span className={`px-2 py-1 rounded-full text-xs font-medium ${agent.user_details?.status === 'ACTIVE'
-                        ? 'bg-green-100 text-green-700'
-                        : agent.user_details?.status === 'PENDING'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-red-100 text-red-700'
-                        }`}>
-                        {agent.user_details?.status}
-                      </span> */}
-                      {/* <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => handleStatusToggle(agent)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${agent.user_details?.status === "ACTIVE"
-                            ? "bg-green-500"
-                            : "bg-gray-300"
-                            }`}
-                          disabled={agent.user_details?.status === "PENDING"}
-                        >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${agent.user_details?.status === "ACTIVE"
-                              ? "translate-x-6"
-                              : "translate-x-1"
-                              }`}
-                          />
-                        </button>
-                        {agent.user_details?.status === "PENDING" && (<div>Please verify agents</div>)}
-                      </div> */}
-
                       <div className="flex items-center gap-3">
 
                         {/* TOGGLE */}
@@ -642,7 +750,17 @@ const Agents: React.FC = () => {
           </table>
         </div>
       )}
-
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={totalItems}
+        onPageChange={(p: any) => setPage(p)}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1); // 🔥 reset
+        }}
+      />
       {managerModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-4 w-full max-w-md max-h-[90vh] no-scrollbar overflow-y-auto">

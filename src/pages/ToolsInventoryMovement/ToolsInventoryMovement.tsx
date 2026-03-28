@@ -3,6 +3,8 @@ import { Search, Loader2, Eye } from "lucide-react";
 import axiosInstance from "../../configs/axios-middleware";
 import Api from "../../api-endpoints/ApiUrls";
 import Pagination from "../../components/Pagination";
+import toast from "react-hot-toast";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 interface MovementType {
     id: string;
@@ -135,15 +137,10 @@ const ToolsInventoryMovement: React.FC = () => {
             }
 
         } catch (error) {
-
-            console.error(error);
-
+            toast.error(extractErrorMessage(error));
         } finally {
-
             setLoading(false);
-
         }
-
     };
 
     useEffect(() => {
@@ -164,19 +161,15 @@ const ToolsInventoryMovement: React.FC = () => {
 
     const handleAdminApproval = async (id: string, action: "approve" | "reject") => {
         try {
-
             setLoadingId(id);
-
             const updatedApi = await axiosInstance.post(
                 `${Api?.toolsInventoryMovement}/${id}/${action}/`
             );
-
             if (updatedApi) {
                 fetchToolsInventoryMovements();
             }
-
         } catch (error) {
-            console.error(error);
+            toast.error(extractErrorMessage(error));
         } finally {
             setLoadingId(null);
         }

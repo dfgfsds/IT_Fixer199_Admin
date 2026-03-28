@@ -3,6 +3,8 @@ import { Search, Loader2, Eye } from "lucide-react";
 import axiosInstance from "../../configs/axios-middleware";
 import Api from '../../api-endpoints/ApiUrls';
 import Pagination from "../../components/Pagination";
+import toast from "react-hot-toast";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 interface MovementType {
     id: string;
@@ -70,7 +72,7 @@ const ProductInventoryMovement: React.FC = () => {
                 setTotalPages(p.total_pages);
             }
         } catch (error) {
-            console.error(error);
+           toast.error(extractErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -110,19 +112,14 @@ const ProductInventoryMovement: React.FC = () => {
     const [loadingId, setLoadingId] = useState<string | null>(null);
     const handleAdminApproval = async (id: string, action: "approve" | "reject") => {
         try {
-
             setLoadingId(id);
-
             const UpdatedApi = await axiosInstance.post(
                 `${Api?.productInventoryMovement}/${action}/?movement_id=${id}`
             );
-
             if (UpdatedApi) {
-
             }
-
         } catch (error) {
-            console.error(error);
+            toast.error(extractErrorMessage(error));
         } finally {
             setLoadingId(null);
         }
