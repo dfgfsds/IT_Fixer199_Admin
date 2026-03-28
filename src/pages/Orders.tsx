@@ -188,10 +188,10 @@ const Orders: React.FC = () => {
       </div>
 
       {/* FILTER UI */}
-      <div className="bg-white border rounded-2xl p-6 shadow-sm">
+      <div className="bg-white border rounded-2xl p-4 sm:p-6 shadow-sm">
 
         {/* TITLE */}
-        <div className="flex items-center justify-between mb-5 ">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
           <h2 className="text-lg font-semibold text-gray-800">
             Filters
           </h2>
@@ -201,14 +201,14 @@ const Orders: React.FC = () => {
               setFilters({
                 status: "",
                 search: "",
-                startDate:getToday(),
+                startDate: getToday(),
                 endDate: "",
                 page: 1,
               });
               setSelectedAgent("");
               setSortOrder("recent");
             }}
-            className="flex  items-center gap-2 text-sm px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
+            className="flex items-center justify-center gap-2 text-sm px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition w-full sm:w-auto"
           >
             <ListRestart size={16} />
             Reset
@@ -216,7 +216,7 @@ const Orders: React.FC = () => {
         </div>
 
         {/* FILTER GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
 
           {/* SEARCH */}
           <div className="relative">
@@ -277,12 +277,12 @@ const Orders: React.FC = () => {
             </select>
           </div>
 
-          {/* DATE */}
-          <div>
+          {/* DATE RANGE */}
+          <div className="sm:col-span-2 lg:col-span-2">
             <label className="text-xs text-gray-500 mb-1 block">
               Date Range
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="date"
                 value={filters.startDate}
@@ -302,17 +302,23 @@ const Orders: React.FC = () => {
             </div>
           </div>
 
-          <select
-            value={sortOrder}
-            onChange={(e) => {
-              setSortOrder(e.target.value as any);
-              setPage(1);
-            }}
-            className="w-full px-3 py-2 border rounded-lg"
-          >
-            <option value="recent">Newest</option>
-            <option value="oldest">Oldest</option>
-          </select>
+          {/* SORT */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">
+              Sort
+            </label>
+            <select
+              value={sortOrder}
+              onChange={(e) => {
+                setSortOrder(e.target.value as any);
+                setPage(1);
+              }}
+              className="w-full px-3 py-2 border rounded-lg"
+            >
+              <option value="recent">Newest</option>
+              <option value="oldest">Oldest</option>
+            </select>
+          </div>
 
         </div>
       </div>

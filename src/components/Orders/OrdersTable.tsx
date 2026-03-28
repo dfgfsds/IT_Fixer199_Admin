@@ -1,4 +1,4 @@
-import { Copy, Eye, MapPin, MoreVertical, SearchX } from "lucide-react";
+import { Calendar, Clock, Copy, Eye, MapPin, MoreVertical, SearchX } from "lucide-react";
 import { Order } from '../../types';
 import { useEffect, useRef, useState } from "react";
 import OrderViewModal from "./OrderViewModal";
@@ -236,8 +236,14 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                   </td>
 
                   <td className="px-6 py-4">
-                    <div className="text-xs text-gray-500">
-                      {order?.created_at || "-"}
+                    <div className="flex items-center gap-2 text-gray-800 font-medium">
+                      <Calendar size={16} />
+                      <span>{new Date(order?.created_at || "").toLocaleDateString()}</span>
+
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-800 font-medium">
+                      <Clock size={16} />
+                      <span>{new Date(order?.created_at || "").toLocaleTimeString()}</span>
                     </div>
                   </td>
 

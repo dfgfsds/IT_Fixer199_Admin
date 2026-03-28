@@ -5,6 +5,7 @@ import OrdersTable from '../components/Orders/OrdersTable';
 import { Order, PaginationData } from '../types';
 import Api from '../api-endpoints/ApiUrls';
 import axiosInstance from '../configs/axios-middleware';
+import Pagination from '../components/Pagination';
 
 const OrderModify: React.FC = () => {
 
@@ -25,23 +26,59 @@ const OrderModify: React.FC = () => {
     const [agents, setAgents] = useState<any[]>([]);
     const [selectedAgent, setSelectedAgent] = useState("");
     const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+  const [sortOrder, setSortOrder] = useState<"recent" | "oldest">("recent");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-    useEffect(() => {
-        let data = [...orders];
+  useEffect(() => {
+    let data = [...orders];
 
-        // 🔍 SEARCH
-        if (filters?.search.trim() !== '') {
-            const searchValue = filters?.search?.toLowerCase();
+    // 🔍 SEARCH
+    if (filters.search.trim() !== '') {
+      const searchValue = filters.search.toLowerCase();
 
-            data = data?.filter((order: any) =>
-                order?.customer_name?.toLowerCase()?.includes(searchValue) ||
-                order?.customer_number?.includes(searchValue) ||
-                order?.id?.toLowerCase().includes(searchValue)
-            );
-        }
-        setFilteredOrders(data);
+      data = data.filter((order: any) =>
+        order.customer_name?.toLowerCase().includes(searchValue) ||
+        order.customer_number?.includes(searchValue) ||
+        order.id?.toLowerCase().includes(searchValue)
+      );
+    }
 
-    }, [filters, orders, selectedAgent]);
+    // 📅 DATE FILTER
+    if (filters.startDate) {
+      data = data.filter(
+        (o: any) =>
+          new Date(o.created_at) >= new Date(filters.startDate)
+      );
+    }
+
+    if (filters.endDate) {
+      data = data.filter(
+        (o: any) =>
+          new Date(o.created_at) <= new Date(filters.endDate)
+      );
+    }
+
+    // 🔥 SORT
+    data.sort((a: any, b: any) => {
+      const d1 = new Date(a.created_at).getTime();
+      const d2 = new Date(b.created_at).getTime();
+
+      return sortOrder === "recent" ? d2 - d1 : d1 - d2;
+    });
+
+    setFilteredOrders(data);
+    setPage(1);
+
+  }, [orders, filters, sortOrder]);
+
+  const totalItems = filteredOrders.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+
+  const paginatedOrders = filteredOrders.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
 
 
     // ✅ FETCH ORDERS (API FILTER)
@@ -117,10 +154,10 @@ const OrderModify: React.FC = () => {
             </div>
 
             {/* FILTER UI */}
-            <div className="bg-white border rounded-2xl p-6 shadow-sm">
+            <div className="bg-white border rounded-2xl p-4 sm:p-6 shadow-sm">
 
                 {/* TITLE */}
-                <div className="flex items-center justify-between mb-5 ">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
                     <h2 className="text-lg font-semibold text-gray-800">
                         Filters
                     </h2>
@@ -135,8 +172,9 @@ const OrderModify: React.FC = () => {
                                 page: 1,
                             });
                             setSelectedAgent("");
+                            setSortOrder("recent");
                         }}
-                        className="flex  items-center gap-2 text-sm px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
+                        className="flex items-center justify-center gap-2 text-sm px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition w-full sm:w-auto"
                     >
                         <ListRestart size={16} />
                         Reset
@@ -144,7 +182,7 @@ const OrderModify: React.FC = () => {
                 </div>
 
                 {/* FILTER GRID */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
 
                     {/* SEARCH */}
                     <div className="relative">
@@ -205,12 +243,12 @@ const OrderModify: React.FC = () => {
                         </select>
                     </div>
 
-                    {/* DATE */}
-                    <div>
+                    {/* DATE RANGE */}
+                    <div className="sm:col-span-2 lg:col-span-2">
                         <label className="text-xs text-gray-500 mb-1 block">
                             Date Range
                         </label>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                             <input
                                 type="date"
                                 value={filters.startDate}
@@ -230,6 +268,24 @@ const OrderModify: React.FC = () => {
                         </div>
                     </div>
 
+                    {/* SORT */}
+                    <div>
+                        <label className="text-xs text-gray-500 mb-1 block">
+                            Sort
+                        </label>
+                        <select
+                            value={sortOrder}
+                            onChange={(e) => {
+                                setSortOrder(e.target.value as any);
+                                setPage(1);
+                            }}
+                            className="w-full px-3 py-2 border rounded-lg"
+                        >
+                            <option value="recent">Newest</option>
+                            <option value="oldest">Oldest</option>
+                        </select>
+                    </div>
+
                 </div>
             </div>
 
@@ -247,7 +303,17 @@ const OrderModify: React.FC = () => {
                     fetchOrders={fetchOrders}
                 />
             )}
-
+  <Pagination
+        page={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={totalItems}
+        onPageChange={(p) => setPage(p)}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
+      />
         </div>
     );
 };
