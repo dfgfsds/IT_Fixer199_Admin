@@ -5,6 +5,8 @@ import ProductModal from "./ProductModal";
 import PricingModal from "./PricingModal";
 import Api from '../../api-endpoints/ApiUrls';
 import Pagination from "../../components/Pagination";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import toast from "react-hot-toast";
 
 const Products: React.FC = () => {
     const [products, setProducts] = useState<any[]>([]);
@@ -73,11 +75,17 @@ const Products: React.FC = () => {
 
     const confirmDelete = async () => {
         if (!deleteId) return;
+        try {
+            const updatedApi = await axiosInstance.delete(`${Api?.products}/${deleteId}`);
+            if (updatedApi) {
+                setShowDeleteModal(false);
+                setDeleteId(null);
+                fetchProducts();
+            }
+        } catch (error) {
+            toast.error(extractErrorMessage(error));
+        }
 
-        await axiosInstance.delete(`${Api?.products}/${deleteId}`);
-        setShowDeleteModal(false);
-        setDeleteId(null);
-        fetchProducts();
     };
 
     useEffect(() => {
@@ -144,7 +152,7 @@ const Products: React.FC = () => {
             setTotalPages(pagination?.total_pages);
 
         } catch (err) {
-            console.error(err);
+            toast.error(extractErrorMessage(err));
         } finally {
             setLoading(false);
         }
@@ -174,7 +182,7 @@ const Products: React.FC = () => {
             );
 
         } catch (error) {
-            console.error("Status update failed:", error);
+            toast.error(extractErrorMessage(error));
         }
     };
 

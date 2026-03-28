@@ -3,6 +3,8 @@ import axiosInstance from "../../configs/axios-middleware";
 import { Plus, Edit, Trash2, Search } from "lucide-react";
 import AttributeModal from "./AttributeModal";
 import Api from "../../api-endpoints/ApiUrls";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import toast from "react-hot-toast";
 
 interface AttributeType {
   attribute_id: string;
@@ -28,7 +30,7 @@ const Attribute: React.FC = () => {
       const res = await axiosInstance.get(Api?.attributeFields);
       setAttributes(res?.data?.data || []);
     } catch (error) {
-      console.error("Fetch failed:", error);
+  toast.error(extractErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -42,7 +44,7 @@ const Attribute: React.FC = () => {
       setDeleteItem(null);
       fetchAttributes();
     } catch (error) {
-      console.error("Delete failed:", error);
+     toast.error(extractErrorMessage(error));
     }
   };
 

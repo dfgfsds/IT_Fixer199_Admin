@@ -98,7 +98,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
 
   const canUnassignAgent = (order: any) => {
     const blockedStatuses = ["COMPLETED", "CANCELLED", "REFUNDED", "SERVICE_IN_PROGRESS"];
-    return !!order?.assigned_agent_id && !blockedStatuses.includes(order?.order_status);
+    return !!order?.assigned_agent_id && !blockedStatuses.includes(order?.order_status) && order?.is_active !== false;
   };
 
   const handleUnassignAgent = async (order: any) => {
@@ -171,6 +171,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
               <th className="px-6 py-3">Customer</th>
               <th className="px-6 py-3">Zone</th>
               <th className="px-6 py-3">Slot</th>
+              <th className="px-6 py-3">created_at</th>
               <th className="px-6 py-3">Status</th>
               <th className="px-6 py-3">Amount</th>
               <th className="px-6 py-3 text-right">Actions</th>
@@ -233,6 +234,14 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                       {order?.slot_time || "-"}
                     </div>
                   </td>
+
+                  <td className="px-6 py-4">
+                    <div className="text-xs text-gray-500">
+                      {order?.created_at || "-"}
+                    </div>
+                  </td>
+
+
                   <td className="px-6 py-4">
                     <span
                       className={`px-3 py-1 text-xs font-semibold rounded-full
@@ -285,7 +294,9 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                         <div className="absolute right-0 top-8 bg-white border rounded-lg shadow-lg w-40 z-10">
 
                           {order?.order_status !== "CANCELLED" &&
-                            order?.order_status !== "COMPLETED" && (
+                            order?.order_status !== "COMPLETED" &&
+                            order?.is_active !== false &&
+                            (
                               <button
                                 // onClick={() => setCancelOrder(order)}
                                 onClick={(e) => {
@@ -299,22 +310,25 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                               </button>
                             )}
 
-                          {canChangeSlot(order?.order_status) && (
-                            <button
-                              // onClick={() => openSlotChange(order)}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openSlotChange(order);
-                                setOpenDropdown(null);
-                              }}
-                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                            >
-                              Change Slot
-                            </button>
-                          )}
+                          {canChangeSlot(order?.order_status) &&
+                            order?.is_active !== false &&
+                            (
+                              <button
+                                // onClick={() => openSlotChange(order)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openSlotChange(order);
+                                  setOpenDropdown(null);
+                                }}
+                                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                              >
+                                Change Slot
+                              </button>
+                            )}
 
                           {order?.order_status === "CANCELLED" &&
-                            order?.payment_status === "SUCCESS" && (
+                            order?.payment_status === "SUCCESS" &&
+                            order?.is_active !== false && (
                               <button
                                 onClick={() => handleRefund(order)}
                                 className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
@@ -322,7 +336,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                                 Refund
                               </button>
                             )}
-                          {order?.order_status === "IN_PROGRESS" && (
+                          {order?.order_status === "IN_PROGRESS" && order?.is_active !== false && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -334,7 +348,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                               Hub Service
                             </button>
                           )}
-                          {order?.order_status === "IN_PROGRESS" && (
+                          {order?.order_status === "IN_PROGRESS" && order?.is_active !== false && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -371,16 +385,15 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                             </button>
                           )}
 
-                          {order?.order_status !== "CANCELLED" && order?.order_status !== "COMPLETED" && order?.order_status !== "REFUNDED" && order?.order_status !== "IN_PROGRESS" && (
+                          {order?.order_status !== "CANCELLED" && order?.order_status !== "COMPLETED" && order?.order_status !== "REFUNDED" && order?.order_status !== "IN_PROGRESS" && !order?.assigned_agent_id && order?.is_active !== false && (
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setManualActivateOrder(order); // ✅ correct
-                                setOpenDropdown(null);
+                              onClick={() => {
+                                setSelectedRequest(order);
+                                setAssignModalOpen(true);
                               }}
                               className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                             >
-                              Manual Order Activation
+                              Agent Assign
                             </button>
                           )}
                         </div>

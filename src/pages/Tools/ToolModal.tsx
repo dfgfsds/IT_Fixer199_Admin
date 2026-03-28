@@ -47,7 +47,6 @@ const ToolModal: React.FC<Props> = ({
 
     const fetchCategories = async () => {
         const res = await axiosInstance.get(Api?.categories);
-        console.log(res)
         setCategories(res?.data?.data || []);
     };
 

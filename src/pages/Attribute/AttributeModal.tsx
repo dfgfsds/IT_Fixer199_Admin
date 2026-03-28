@@ -318,9 +318,7 @@ const AttributeModal: React.FC<Props> = ({
       onClose();
 
     } catch (error) {
-
       setApiErrors(extractErrorMessage(error));
-
     } finally {
 
       setLoading(false);

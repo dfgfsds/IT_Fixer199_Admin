@@ -3,6 +3,7 @@ import axiosInstance from "../../../configs/axios-middleware";
 import Api from "../../../api-endpoints/ApiUrls";
 import { Loader2, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { extractErrorMessage } from "../../../utils/extractErrorMessage ";
 
 const TRACKING_STATUS = [
   "PENDING",
@@ -44,7 +45,7 @@ const TrackingModal = ({ show, onClose, requestId }: any) => {
       setTracking(res?.data?.data || []);
 
     } catch (err) {
-      toast.error("Failed to fetch tracking history");
+      toast.error(extractErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -82,7 +83,7 @@ const TrackingModal = ({ show, onClose, requestId }: any) => {
       setNote("");
 
     } catch (err) {
-      toast.error("Failed to update tracking");
+      toast.error(extractErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -112,7 +113,7 @@ const TrackingModal = ({ show, onClose, requestId }: any) => {
       fetchTracking();
 
     } catch (err) {
-      toast.error("Invalid OTP");
+      toast.error(extractErrorMessage(err));
     } finally {
       setLoading(false);
     }

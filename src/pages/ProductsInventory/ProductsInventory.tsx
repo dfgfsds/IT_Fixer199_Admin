@@ -5,6 +5,8 @@ import InventoryModal from "./InventoryModal";
 import Api from '../../api-endpoints/ApiUrls';
 import Pagination from "../../components/Pagination";
 import ProductAllocateModal from "./ProductAllocateModal";
+import toast from "react-hot-toast";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 const ProductsInventory: React.FC = () => {
     const [data, setData] = useState<any[]>([]);
@@ -29,6 +31,7 @@ const ProductsInventory: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [pagination, setPagination] = useState<any>(null);
     const [productModal, setProductModal] = useState(false);
+    const [apiErrors, setApiErrors] = useState<string>("");
 
     const fetchInventory = async (pageNumber = page, size = pageSize) => {
         try {
@@ -46,7 +49,7 @@ const ProductsInventory: React.FC = () => {
             setTotalPages(p?.total_pages);
 
         } catch (err) {
-            console.error(err);
+            toast.error(extractErrorMessage(err));
         } finally {
             setLoading(false);
         }
@@ -103,7 +106,7 @@ const ProductsInventory: React.FC = () => {
             setDeleteInventory(null);
 
         } catch (error) {
-            console.error("Delete failed:", error);
+            toast.error(extractErrorMessage(error));
         } finally {
             setDeleteLoading(false);
         }
@@ -111,7 +114,7 @@ const ProductsInventory: React.FC = () => {
 
     const handleStockSubmit = async () => {
         if (!selectedItem || quantity <= 0) return;
-
+        setApiErrors("");
         try {
             setStockLoading(true);
 
@@ -133,14 +136,14 @@ const ProductsInventory: React.FC = () => {
                     }
                 );
             }
-
+            setApiErrors("");
             fetchInventory();
             setStockModal(false);
             setQuantity(0);
             setSelectedItem(null);
 
         } catch (err) {
-            console.error(err);
+            setApiErrors(extractErrorMessage(err));
         } finally {
             setStockLoading(false);
         }
@@ -442,6 +445,13 @@ const ProductsInventory: React.FC = () => {
                                     placeholder="Enter quantity"
                                 />
                             </div>
+
+                            {/* Error */}
+                            {apiErrors && (
+                                <p className="text-red-500 mt-2 text-end px-6">
+                                    {apiErrors}
+                                </p>
+                            )}
 
                             {/* BUTTONS */}
                             <div className="flex justify-end gap-4 pt-4">

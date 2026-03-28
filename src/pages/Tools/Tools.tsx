@@ -4,6 +4,8 @@ import { Plus, Edit, Trash2, Search, Loader2 } from "lucide-react";
 import Api from "../../api-endpoints/ApiUrls";
 import ToolModal from "./ToolModal";
 import Pagination from "../../components/Pagination";
+import toast from "react-hot-toast";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 interface ToolType {
     id: string;
@@ -84,23 +86,21 @@ const Tools: React.FC = () => {
 
     const handleDelete = async () => {
         if (!deleteItem) return;
-
         try {
             await axiosInstance.delete(`${Api?.tools}/${deleteItem.id}/`);
             setDeleteItem(null);
             fetchTools();
         } catch (error) {
-            console.error("Delete failed:", error);
+            toast.error(extractErrorMessage(error));
         }
     };
-
 
     const fetchBrands = async () => {
         try {
             const res = await axiosInstance.get(Api?.allBrands);
             setBrands(res?.data?.brands || []);
         } catch (err) {
-            console.error("Brand fetch failed:", err);
+            toast.error(extractErrorMessage(err));
         } finally {
             setLoading(false);
         }
@@ -111,7 +111,7 @@ const Tools: React.FC = () => {
             const res = await axiosInstance.get(Api?.categories);
             setCategories(res?.data?.data || []);
         } catch (err) {
-            console.error("Fetch error:", err);
+            toast.error(extractErrorMessage(err));
         } finally {
             setLoading(false);
         }
@@ -119,17 +119,13 @@ const Tools: React.FC = () => {
 
     const toggleStatus = async (tool: any) => {
         try {
-
             const newStatus = tool.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-
             await axiosInstance.put(`${Api.tools}/${tool.id}/`, {
                 status: newStatus
             });
-
             fetchTools();
-
         } catch (error) {
-            console.error("Status update failed", error);
+            toast.error(extractErrorMessage(error));
         }
     };
 

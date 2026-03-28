@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Search, Loader2, Eye } from "lucide-react";
 import axiosInstance from "../../../configs/axios-middleware";
 import Api from "../../../api-endpoints/ApiUrls";
+import toast from "react-hot-toast";
+import { extractErrorMessage } from "../../../utils/extractErrorMessage ";
 
 interface MovementType {
     id: string;
@@ -26,78 +28,10 @@ const ToolsInventoryMovementLive: React.FC = () => {
     const [showModal, setShowModal] = useState(false);
     const [selectedItem, setSelectedItem] = useState<any>(null);
 
-    console.log(selectedItem)
     const handleView = (item: any) => {
         setSelectedItem(item);
         setShowModal(true);
     };
-
-    // const wsRef = useRef<WebSocket | null>(null);
-
-    // const connectWebSocket = () => {
-
-    //     const token = localStorage.getItem("token");
-
-    //     const ws = new WebSocket(
-    //         `wss://api.itfixer199.com/ws/tool-movements/?token=${token}&size=1000`
-    //     );
-
-    //     socketRef.current = ws;
-
-    //     ws.onopen = () => {
-    //         console.log("Tool Movement WS Connected");
-    //     };
-
-    //     ws.onmessage = (event) => {
-
-    //         const message = JSON.parse(event?.data);
-    //         console.log("WS DATA:", message);
-
-    //         // 🔵 Initial data
-    //         if (message.type === "initial_data" && message?.movements) {
-    //             setMovements(message?.movements);
-    //             setLoading(false);
-    //         }
-
-    //         // 🟢 Update single movement
-    //         if (message?.type === "update" && message?.movement) {
-    //             const updatedItem = message?.movement;
-    //             setMovements((prev) => {
-    //                 const index = prev?.findIndex(
-    //                     (item: any) => item?.tools_id === updatedItem?.tools_id
-    //                 );
-    //                 if (index !== -1) {
-    //                     const updated = [...prev];
-    //                     updated[index] = updatedItem;
-    //                     return updated;
-    //                 }
-    //                 return [updatedItem, ...prev];
-    //             });
-    //         }
-
-    //         // 🟣 Update multiple movements (THIS WAS MISSING)
-    //         // if (message?.type === "update" && message?.movements) {
-    //         //     setMovements(message?.movements);
-    //         // }
-
-    //     };
-
-    //     ws.onclose = () => {
-    //         console.log("Tool Movement WS Closed");
-    //     };
-    // };
-
-
-    // useEffect(() => {
-
-    //     connectWebSocket();
-
-    //     return () => {
-    //         socketRef.current?.close();
-    //     };
-
-    // }, []);
-
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -115,7 +49,7 @@ const ToolsInventoryMovementLive: React.FC = () => {
 
             ws.onmessage = (event) => {
                 const message = JSON.parse(event.data);
-                console.log("WS DATA:", message);
+                // console.log("WS DATA:", message);
 
                 // 🔵 Initial load
                 if (message.type === "initial_data" && message.movements) {
@@ -168,9 +102,8 @@ const ToolsInventoryMovementLive: React.FC = () => {
                 `${Api?.toolsInventoryMovement}/${id}/${action}/`
             );
             socketRef.current?.close();
-            // connectWebSocket();
         } catch (error) {
-            console.error(error);
+            toast.error(extractErrorMessage(error));
         } finally {
             setLoadingId(null);
         }
