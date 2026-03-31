@@ -419,22 +419,24 @@ import Api from "../../api-endpoints/ApiUrls";
 const OrderDetailsTabsModal = ({ order, onClose }: any) => {
   const [activeTab, setActiveTab] = useState("details");
 
+  const [payments, setPayments] = useState<any[]>([]);
   const [refunds, setRefunds] = useState<any[]>([]);
   const [modifications, setModifications] = useState<any[]>([]);
 
-  // 🔥 Fetch Refunds
-  const fetchRefunds = async () => {
+
+  const fetchPaymentsAndRefunds = async () => {
     try {
       const res = await axiosInstance.get(
         `${Api?.orderCancel}/${order?.id}/payments-refunds/`
       );
+      setPayments(res.data?.order_payments?.payments || []);
       setRefunds(res.data?.order_payments?.refunds || []);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // 🔥 Fetch Modifications
+
   const fetchModifications = async () => {
     try {
       const res = await axiosInstance.get(
@@ -448,7 +450,7 @@ const OrderDetailsTabsModal = ({ order, onClose }: any) => {
 
   useEffect(() => {
     if (order?.id) {
-      fetchRefunds();
+      fetchPaymentsAndRefunds();
       fetchModifications();
     }
   }, [order]);
@@ -468,10 +470,11 @@ const OrderDetailsTabsModal = ({ order, onClose }: any) => {
           <button onClick={onClose} className="text-xl">×</button>
         </div>
 
-        {/* 🔥 TABS */}
+
         <div className="flex border-b px-4">
           {[
             { key: "details", label: "Order Details" },
+            { key: "payments", label: "Payments", count: payments.length },
             { key: "refunds", label: "Refunds", count: refunds.length },
             { key: "modifications", label: "Modifications", count: modifications.length },
           ].map((tab) => (
@@ -479,8 +482,8 @@ const OrderDetailsTabsModal = ({ order, onClose }: any) => {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 ${activeTab === tab.key
-                  ? "border-orange-600 text-orange-600"
-                  : "border-transparent text-gray-500"
+                ? "border-orange-600 text-orange-600"
+                : "border-transparent text-gray-500"
                 }`}
             >
               {tab.label}
@@ -549,18 +552,67 @@ const OrderDetailsTabsModal = ({ order, onClose }: any) => {
                         </div>
                       </div>
 
-                      {/* {item?.item_details?.full_details?.media_files?.length > 0 && (
-                  <div className="mt-5">
-                    <img
-                      src={
-                        item?.item_details?.full_details?.media_files[0]
-                          ?.image_url
-                      }
-                      alt="service"
-                      className="w-40 h-28 object-cover rounded-lg border shadow-sm"
-                    />
-                  </div>
-                )} */}
+                      {item?.item_details?.full_details?.media_files?.length > 0 && (
+                        <div className="mt-5">
+                          <p className="text-gray-400 text-xs uppercase tracking-wide mb-2">
+                            Media Files
+                          </p>
+                          <div className="flex flex-wrap gap-3">
+                            {item?.item_details?.full_details?.media_files?.map(
+                              (file: any, idx: number) => {
+                                const url = file?.image_url || file?.file_url || file?.url || "";
+                                const isVideo =
+                                  file?.file_type === "video" ||
+                                  url?.match(/\.(mp4|webm|ogg|mov)$/i);
+
+                                const handleDownload = async () => {
+                                  try {
+                                    const response = await fetch(url);
+                                    const blob = await response.blob();
+                                    const link = document.createElement("a");
+                                    link.href = URL.createObjectURL(blob);
+                                    link.download = `media_${idx + 1}${isVideo ? ".mp4" : ".jpg"}`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    URL.revokeObjectURL(link.href);
+                                  } catch {
+                                    window.open(url, "_blank");
+                                  }
+                                };
+
+                                return (
+                                  <div key={idx} className="relative group">
+                                    {isVideo ? (
+                                      <video
+                                        src={url}
+                                        controls
+                                        className="w-48 h-32 object-cover rounded-lg border shadow-sm bg-black"
+                                      />
+                                    ) : (
+                                      <img
+                                        src={url}
+                                        alt={`media-${idx}`}
+                                        className="w-40 h-28 object-cover rounded-lg border shadow-sm cursor-pointer hover:opacity-90 transition"
+                                        onClick={() => window.open(url, "_blank")}
+                                      />
+                                    )}
+                                    <button
+                                      onClick={handleDownload}
+                                      title="Download"
+                                      className="absolute bottom-2 right-2 bg-white/90 hover:bg-white text-gray-700 rounded-full p-1.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                );
+                              }
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </section>
@@ -617,21 +669,85 @@ const OrderDetailsTabsModal = ({ order, onClose }: any) => {
             </>
           )}
 
+          {/* 🧩 PAYMENTS */}
+          {activeTab === "payments" && (
+            payments.length === 0 ? (
+              <Empty text="No payments found" />
+            ) : (
+              <>
+                {/* Summary Card */}
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-green-600 font-medium uppercase tracking-wide">Total Paid</p>
+                    <p className="text-2xl font-bold text-green-700">
+                      ₹{payments.reduce((sum: number, p: any) => sum + (parseFloat(p.amount) || 0), 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="text-xs text-green-600 bg-green-100 px-3 py-1 rounded-full font-medium">
+                    {payments.length} Payment{payments.length > 1 ? "s" : ""}
+                  </div>
+                </div>
+
+                {payments.map((p: any) => (
+                  <div key={p.id} className="border rounded-xl p-5 mb-3 shadow-sm bg-white hover:shadow-md transition">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        TXN: {p.transaction_id || "N/A"}
+                      </span>
+                      <StatusBadge status={p.payment_status} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <Info label="Payment Method" value={p.payment_method || "-"} />
+                      <Info label="Amount" value={`₹${p.amount}`} />
+                      <Info label="Date" value={p.created_at ? new Date(p.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "-"} />
+                      <Info label="Time" value={p.created_at ? new Date(p.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }) : "-"} />
+                    </div>
+                  </div>
+                ))}
+              </>
+            )
+          )}
+
           {/* 🧩 REFUNDS */}
           {activeTab === "refunds" && (
             refunds.length === 0 ? (
-              <Empty text="No refunds" />
+              <Empty text="No refunds issued" />
             ) : (
-              refunds.map((r) => (
-                <Card key={r.id}>
-                  <Grid>
-                    <Info label="Amount" value={`₹${r.refund_amount}`} />
-                    <Info label="Status" value={r.refund_status} />
-                    <Info label="Reason" value={r.reason || "-"} />
-                    <Info label="Date" value={r.created_at} />
-                  </Grid>
-                </Card>
-              ))
+              <>
+                {/* Summary Card */}
+                <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-xl p-4 mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-red-600 font-medium uppercase tracking-wide">Total Refunded</p>
+                    <p className="text-2xl font-bold text-red-700">
+                      ₹{refunds.reduce((sum: number, r: any) => sum + (parseFloat(r.refund_amount) || 0), 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="text-xs text-red-600 bg-red-100 px-3 py-1 rounded-full font-medium">
+                    {refunds.length} Refund{refunds.length > 1 ? "s" : ""}
+                  </div>
+                </div>
+
+                {refunds.map((r: any) => (
+                  <div key={r.id} className="border rounded-xl p-5 mb-3 shadow-sm bg-white hover:shadow-md transition">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-lg font-bold text-red-600">₹{r.refund_amount}</span>
+                      <StatusBadge status={r.refund_status} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <Info label="Reason" value={r.reason || "-"} />
+                      <Info label="Date" value={r.created_at ? new Date(r.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "-"} />
+                      {r.refund_method && <Info label="Refund Method" value={r.refund_method} />}
+                      {r.transaction_id && <Info label="Transaction ID" value={r.transaction_id} />}
+                      {r.admin_notes && (
+                        <div className="col-span-2">
+                          <p className="text-xs text-gray-400">Admin Notes</p>
+                          <p className="font-medium text-gray-700">{r.admin_notes}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
             )
           )}
 
@@ -717,5 +833,24 @@ const Info = ({ label, value }: any) => (
 const Empty = ({ text }: any) => (
   <div className="text-center py-10 text-gray-400 text-sm">{text}</div>
 );
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const s = (status || "").toLowerCase();
+  const colors = s.includes("success") || s.includes("paid") || s.includes("approved") || s.includes("processed") || s.includes("completed")
+    ? "bg-green-100 text-green-700"
+    : s.includes("pending") || s.includes("initiated")
+      ? "bg-yellow-100 text-yellow-700"
+      : s.includes("fail") || s.includes("rejected") || s.includes("cancelled")
+        ? "bg-red-100 text-red-700"
+        : s.includes("progress") || s.includes("processing")
+          ? "bg-blue-100 text-blue-700"
+          : "bg-gray-100 text-gray-700";
+
+  return (
+    <span className={`text-xs px-3 py-1 rounded-full font-semibold capitalize ${colors}`}>
+      {status || "Unknown"}
+    </span>
+  );
+};
 
 export default OrderDetailsTabsModal;
