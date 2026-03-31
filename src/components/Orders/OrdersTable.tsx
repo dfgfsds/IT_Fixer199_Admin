@@ -395,7 +395,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                           )}
 
                           {order?.order_platform === "SHOP" &&
-                            !["CONFIRMED", "CANCELLED"].includes(order?.order_status) && (
+                            !["COMPLETED", "CANCELLED"].includes(order?.order_status) && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();

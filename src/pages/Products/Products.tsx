@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
-import { Plus, Edit, CheckCircle, XCircle, DollarSign, Trash2 } from "lucide-react";
+import { Plus, Edit, CheckCircle, XCircle, Eye, MoreVertical } from "lucide-react";
 import ProductModal from "./ProductModal";
 import PricingModal from "./PricingModal";
+import ProductViewModal from "./ProductViewModal";
 import Api from '../../api-endpoints/ApiUrls';
 import Pagination from "../../components/Pagination";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
@@ -15,11 +16,37 @@ const Products: React.FC = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editProduct, setEditProduct] = useState<any>(null);
 
+    const [showViewModal, setShowViewModal] = useState(false);
+    const [viewProduct, setViewProduct] = useState<any>(null);
+
     const [showPricing, setShowPricing] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<string | null>(null);
+
+    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Node;
+
+            const isInsideAnyDropdown = Object.values(dropdownRefs.current).some(
+                (ref) => ref && ref.contains(target)
+            );
+
+            if (!isInsideAnyDropdown) {
+                setOpenDropdown(null);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
 
     const [search, setSearch] = useState("");
@@ -431,39 +458,72 @@ const Products: React.FC = () => {
                                                 </td>
 
                                                 <td className="px-6 py-4 text-right">
-                                                    <div className="flex items-center justify-end space-x-2">
+                                                    <div
+                                                        ref={(el) => (dropdownRefs.current[product.id] = el)}
+                                                        className="flex items-center justify-end space-x-3 relative"
+                                                    >
 
-                                                        {/* Pricing Button */}
+                                                        {/* View Button */}
                                                         <button
                                                             onClick={() => {
-                                                                setSelectedProduct(product);
-                                                                setShowPricing(true);
+                                                                setViewProduct(product);
+                                                                setShowViewModal(true);
                                                             }}
-                                                            className="inline-flex items-center px-3 py-1.5 bg-green-50 text-green-700 text-xs font-medium rounded-lg hover:bg-green-100"
+                                                            className="text-gray-600 hover:text-black transition-colors"
+                                                            title="View"
                                                         >
-                                                            <DollarSign className="w-3 h-3 mr-1" />
-                                                            Pricing
+                                                            <Eye className="w-4 h-4" />
                                                         </button>
 
+                                                        {/* Edit Button */}
                                                         <button
                                                             onClick={() => {
                                                                 setEditProduct(product);
                                                                 setShowCreateModal(true);
                                                             }}
-                                                            className="inline-flex items-center px-3 py-1.5 bg-orange-50 text-orange-700 text-xs font-medium rounded-lg hover:bg-orange-100"
+                                                            className="text-orange-600 hover:text-orange-700 transition"
+                                                            title="Edit"
                                                         >
-                                                            <Edit className="w-3 h-3 mr-1" />
-                                                            Edit
+                                                            <Edit className="w-4 h-4" />
                                                         </button>
 
+                                                        {/* More Dropdown trigger */}
                                                         <button
-                                                            onClick={() => openDeleteModal(product.id)}
-                                                            className="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setOpenDropdown(openDropdown === product.id ? null : product.id);
+                                                            }}
+                                                            className="text-gray-500 hover:text-black transition-colors"
                                                         >
-                                                            <Trash2 className="w-3 h-3 mr-1" />
-                                                            Delete
+                                                            <MoreVertical className="w-4 h-4" />
                                                         </button>
 
+                                                        {/* Dropdown Menu */}
+                                                        {openDropdown === product.id && (
+                                                            <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg w-40 z-20 overflow-hidden text-left">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setSelectedProduct(product);
+                                                                        setShowPricing(true);
+                                                                        setOpenDropdown(null);
+                                                                    }}
+                                                                    className="block w-full text-left px-4 py-2.5 text-sm hover:bg-gray-100 text-gray-700 transition"
+                                                                >
+                                                                    Pricing Details
+                                                                </button>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        openDeleteModal(product.id);
+                                                                        setOpenDropdown(null);
+                                                                    }}
+                                                                    className="block w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 text-red-600 transition border-t"
+                                                                >
+                                                                    Delete Product
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </td>
 
@@ -499,6 +559,16 @@ const Products: React.FC = () => {
                 onClose={() => setShowPricing(false)}
                 product={selectedProduct}
             // onSuccess={fetchProducts}
+            />
+
+            {/* Product View Modal */}
+            <ProductViewModal
+                show={showViewModal}
+                onClose={() => {
+                    setShowViewModal(false);
+                    setViewProduct(null);
+                }}
+                product={viewProduct}
             />
 
             {showDeleteModal && (

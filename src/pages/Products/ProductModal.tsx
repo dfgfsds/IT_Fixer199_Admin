@@ -120,6 +120,8 @@ const ProductModal: React.FC<Props> = ({
         const res = await axiosInstance.get(Api?.attributeFields);
         const values = (res?.data?.data || []).flatMap((attr: any) =>
             (attr?.attribute_values || []).map((val: any) => ({
+                attribute_id: attr.attribute_id,
+                attribute_name: attr.attribute_name,
                 value_id: val.value_id,
                 value: val.value,
             }))
@@ -147,22 +149,35 @@ const ProductModal: React.FC<Props> = ({
 
     const attributeOptions = attributesList?.map((attr) => ({
         value: attr?.value_id,
-        label: `${attr?.value}`,
+        label: `${attr.attribute_name}: ${attr.value}`,
         full: attr,
     }));
 
 
     const handleAttributeChange = (selected: any) => {
-        setForm({
-            ...form,
-            attributes: selected
-                ? selected?.map((s: any) => ({
-                    id: s?.full?.value_id,
-                    attribute_name: s?.full?.name,
-                    value: s?.full?.value,
-                }))
-                : [],
-        });
+        if (!selected) {
+            setForm({ ...form, attributes: [] });
+            return;
+        }
+
+        // Logic: Keep only the latest selection for each unique attribute group
+        const result: any[] = [];
+        const seenAttributes = new Set();
+
+        // Iterate backwards to pick the most recent choice for an attribute
+        for (let i = selected.length - 1; i >= 0; i--) {
+            const item = selected[i].full;
+            if (!seenAttributes.has(item.attribute_id)) {
+                result.unshift({
+                    id: item.value_id,
+                    attribute_name: item.attribute_name,
+                    value: item.value,
+                });
+                seenAttributes.add(item.attribute_id);
+            }
+        }
+
+        setForm({ ...form, attributes: result });
     };
 
     const selectedAttributeOptions = attributeOptions?.filter((option) =>
@@ -212,7 +227,11 @@ const ProductModal: React.FC<Props> = ({
             status: editProduct.status || "ACTIVE",
             category_ids:
                 editProduct.categories?.map((c: any) => c.id) || [],
-            // attributes: editProduct?.attributes?.map((a: any) => {id:a?.value_id}),
+            attributes: editProduct?.attributes_details?.map((a: any) => ({
+                id: a.value_id,
+                attribute_name: a.attribute_name,
+                value: a.value
+            })) || [],
             pricing: editProduct.product_pricing?.map((p: any) => ({
                 type: p.type,
                 price: p.price
@@ -518,7 +537,7 @@ const ProductModal: React.FC<Props> = ({
                             className="w-full border rounded-lg px-3 py-2"
                         >
                             <option value="PRODUCT">PRODUCT</option>
-                            <option value="VARIANT">VARIANT</option>
+                            {/* <option value="VARIANT">VARIANT</option> */}
                         </select>
                     </div>
 
