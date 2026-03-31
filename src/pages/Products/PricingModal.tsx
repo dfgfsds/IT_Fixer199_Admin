@@ -368,7 +368,8 @@
 
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
-import { Loader, Plus, Trash2 } from "lucide-react";
+import { Loader, Plus, Trash2, X } from "lucide-react";
+import Select from "react-select";
 import Api from '../../api-endpoints/ApiUrls';
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
@@ -389,12 +390,12 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
         {
             id: '',
             pricing_type: "",
-            hub: "",
+            hubs: [], // ✅ CHANGED TO ARRAY
             start_time: "",
             end_time: "",
             max_quantity: 1,
             price: "",
-            is_default: true, // ✅ ONLY ONE DEFAULT
+            is_default: true,
         },
     ]);
 
@@ -411,7 +412,7 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
 
                     return {
                         pricing_type: item?.pricing_type || "",
-                        hub: item?.hub || "",
+                        hubs: item?.hub ? [item.hub] : [],
                         start_time: item?.start_time
                             ? item.start_time.slice(0, 5)
                             : "",
@@ -432,7 +433,7 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
             setPricingList([
                 {
                     pricing_type: "",
-                    hub: "",
+                    hubs: [],
                     start_time: "",
                     end_time: "",
                     max_quantity: 1,
@@ -453,7 +454,7 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
             setPricingList([
                 {
                     pricing_type: "",
-                    hub: "",
+                    hubs: [],
                     start_time: "",
                     end_time: "",
                     max_quantity: 1,
@@ -494,12 +495,12 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
             ...pricingList,
             {
                 pricing_type: "",
-                hub: "",
+                hubs: [],
                 start_time: "",
                 end_time: "",
                 max_quantity: 1,
                 price: "",
-                is_default: false, // ✅ NOT DEFAULT
+                is_default: false,
             },
         ]);
     };
@@ -526,15 +527,35 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
             return;
         }
 
-        const payload = pricingList.map((item) => ({
-            pricing_type: item?.pricing_type,
-            hub: item?.hub,
-            start_time: item?.start_time,
-            end_time: item?.end_time,
-            max_quantity: item?.max_quantity,
-            price: item?.price,
-            ...(item?.id ? { id: item.id } : {}),
-        }));
+        const payload: any[] = [];
+
+        pricingList.forEach((item) => {
+            // If it's default or no hubs are selected, we treat it as one entry
+            if (item.is_default || !item.hubs || item.hubs.length === 0) {
+                payload.push({
+                    pricing_type: item?.pricing_type,
+                    hub: item?.is_default ? "" : null,
+                    start_time: item?.start_time || null,
+                    end_time: item?.end_time || null,
+                    max_quantity: item?.max_quantity,
+                    price: item?.price,
+                    ...(item?.id ? { id: item.id } : {}),
+                });
+            } else {
+                // If multiple hubs selected, create one record per hub
+                item.hubs.forEach((hubId: string) => {
+                    payload.push({
+                        pricing_type: item?.pricing_type,
+                        hub: hubId,
+                        start_time: item?.start_time || null,
+                        end_time: item?.end_time || null,
+                        max_quantity: item?.max_quantity,
+                        price: item?.price,
+                        // id: is tricky here if we split; typically new records are created
+                    });
+                });
+            }
+        });
 
         const pricingPayload = {
             product: product.id,
@@ -557,9 +578,18 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
 
-                <h2 className="text-xl font-semibold mb-6">
-                    Add Pricing - {product.name}
-                </h2>
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold">
+                        Add Pricing - {product.name}
+                    </h2>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                        <X size={24} />
+                    </button>
+                </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
 
@@ -582,9 +612,8 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
                                 </button>
                             )}
 
-                            {/* Pricing Type */}
                             <div>
-                                <label className="text-sm font-medium mb-1">
+                                <label className="text-sm font-medium text-gray-800 mb-1 block">
                                     Product Type *
                                 </label>
                                 <select
@@ -592,7 +621,7 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
                                     onChange={(e) =>
                                         handleChange(index, "pricing_type", e.target.value)
                                     }
-                                    className="w-full border rounded-lg px-3 py-2"
+                                    className="w-full border rounded-lg px-3 py-2 text-sm"
                                     required
                                 >
                                     <option value="">Select Pricing type</option>
@@ -604,27 +633,23 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
                                 </select>
                             </div>
 
-                            {/* Hub */}
+                            {/* Hub Multi Select */}
                             {!item.is_default && (
                                 <div>
-                                    <label className="text-sm font-medium mb-1">
-                                        Hub *
+                                    <label className="text-sm font-medium text-gray-800 mb-1 block">
+                                        Hubs *
                                     </label>
-                                    <select
-                                        value={item.hub}
-                                        onChange={(e) =>
-                                            handleChange(index, "hub", e.target.value)
-                                        }
-                                        className="w-full border rounded-lg px-3 py-2"
-                                        required
-                                    >
-                                        <option value="">Select Hub</option>
-                                        {hubs.map((hub) => (
-                                            <option key={hub.id} value={hub.id}>
-                                                {hub.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <Select
+                                        isMulti
+                                        options={hubs.map(hub => ({ value: hub.id, label: hub.name }))}
+                                        value={hubs.filter(h => item.hubs?.includes(h.id)).map(h => ({ value: h.id, label: h.name }))}
+                                        onChange={(selected) => {
+                                            const ids = selected ? selected.map((s: any) => s.value) : [];
+                                            handleChange(index, "hubs", ids);
+                                        }}
+                                        className="text-sm"
+                                        placeholder="Select Hubs"
+                                    />
                                 </div>
                             )}
 
@@ -675,15 +700,16 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
                                 )}
 
                                 <div>
-                                    <label className="text-sm">Price *</label>
+                                    <label className="text-sm font-medium text-gray-800 mb-1 block">Price *</label>
                                     <input
                                         type="number"
                                         value={item.price}
                                         onChange={(e) =>
                                             handleChange(index, "price", e.target.value)
                                         }
-                                        className="border rounded-lg px-3 py-2 w-full"
+                                        className="border rounded-lg px-3 py-2 w-full text-sm"
                                         required
+                                        placeholder="0.00"
                                     />
                                 </div>
 

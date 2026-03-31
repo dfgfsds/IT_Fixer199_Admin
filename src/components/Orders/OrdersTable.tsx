@@ -13,6 +13,7 @@ import OrderModificationModal from "./OrderModificationModal";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 import ManualActivateModal from "./ManualActivateModal";
 import AgentAssign from "../../pages/Requests/Requests.tsx/AgentAssign";
+import ShopStatusUpdateModal from "./ShopStatusUpdateModal";
 
 interface OrdersTableProps {
   orders: Order[];
@@ -39,6 +40,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
   const [hubServiceOrder, setHubServiceOrder] = useState<any>(null);
   const [modificationOrder, setModificationOrder] = useState<any>(null);
   const [manualActivateOrder, setManualActivateOrder] = useState<any>(null);
+  const [shopUpdateOrder, setShopUpdateOrder] = useState<any>(null);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
 
@@ -301,6 +303,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
 
                           {order?.order_status !== "CANCELLED" &&
                             order?.order_status !== "COMPLETED" &&
+                            order?.order_platform !== "SHOP" &&
                             order?.is_active !== false &&
                             (
                               <button
@@ -390,6 +393,20 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                               Unassign Agent
                             </button>
                           )}
+
+                          {order?.order_platform === "SHOP" &&
+                            !["CONFIRMED", "CANCELLED"].includes(order?.order_status) && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShopUpdateOrder(order);
+                                  setOpenDropdown(null);
+                                }}
+                                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-blue-600 font-medium"
+                              >
+                                Update Status
+                              </button>
+                            )}
 
                           {order?.order_status !== "CANCELLED" && order?.order_status !== "COMPLETED" && order?.order_status !== "REFUNDED" && order?.order_status !== "IN_PROGRESS" && !order?.assigned_agent_id && order?.is_active !== false && (
                             <button
@@ -584,8 +601,18 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
 
         </div>
       )}
-    </div>
 
+      {shopUpdateOrder && (
+        <ShopStatusUpdateModal
+          order={shopUpdateOrder}
+          onClose={() => setShopUpdateOrder(null)}
+          onSuccess={() => {
+            setShopUpdateOrder(null);
+            fetchOrders();
+          }}
+        />
+      )}
+    </div>
   );
 };
 
