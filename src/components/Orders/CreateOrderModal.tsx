@@ -11,6 +11,17 @@ interface CreateOrderModalProps {
     onSuccess: () => void;
 }
 
+interface OrderItem {
+    type: string;
+    category_id: string;
+    product_id: string;
+    service_id: string;
+    quantity: number;
+    amount: any;
+    issue_description_text: string;
+    attributes: Record<string, string>;
+}
+
 const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [hubs, setHubs] = useState<any[]>([]);
@@ -44,7 +55,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                 service_id: "",
                 quantity: 1,
                 amount: 0,
-            }
+                issue_description_text: "",
+                attributes: {} as Record<string, string>
+            } as OrderItem
         ]
     });
 
@@ -95,7 +108,16 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
     const handleAddItem = () => {
         setForm({
             ...form,
-            items: [...form.items, { type: "", category_id: "", product_id: "", service_id: "", quantity: 1, amount: 0 }]
+            items: [...form.items, {
+                type: "",
+                category_id: "",
+                product_id: "",
+                service_id: "",
+                quantity: 1,
+                amount: 0,
+                issue_description_text: "",
+                attributes: {} as Record<string, string>
+            } as OrderItem]
         });
     };
 
@@ -110,7 +132,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         setLoadingRows(prev => ({ ...prev, [index]: true }));
         try {
             const url = type === "PRODUCT" ? Api.products : Api.services;
-            const res = await axiosInstance.get(`${url}?category_id=${categoryId}&include_categories=true`);
+            const res = await axiosInstance.get(`${url}?category_id=${categoryId}&include_categories=true&include_attribute=true`);
             const data = res.data?.products || res.data?.services || res.data?.data || [];
 
             setRowItems(prev => ({
@@ -128,11 +150,12 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         const newItems = [...form.items];
         newItems[index] = { ...newItems[index], [field]: value };
 
-        // Cascade Resets
         if (field === "type") {
             newItems[index].category_id = "";
             newItems[index].product_id = "";
             newItems[index].service_id = "";
+            newItems[index].issue_description_text = "";
+            newItems[index].attributes = {};
             setRowItems(prev => {
                 const updated = { ...prev };
                 delete updated[index];
@@ -141,9 +164,21 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         } else if (field === "category_id") {
             newItems[index].product_id = "";
             newItems[index].service_id = "";
+            newItems[index].attributes = {};
             fetchItemsByCategory(index, newItems[index].type, value);
+        } else if (field === "product_id" || field === "service_id") {
+            newItems[index].attributes = {};
         }
 
+        setForm({ ...form, items: newItems });
+    };
+
+    const handleAttributeChange = (index: number, attrName: string, value: string) => {
+        const newItems = [...form.items];
+        newItems[index].attributes = {
+            ...newItems[index].attributes,
+            [attrName]: value
+        };
         setForm({ ...form, items: newItems });
     };
 
@@ -182,6 +217,8 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                     const baseItem: any = {
                         type: item.type,
                         quantity: Number(item.quantity),
+                        issue_description_text: item.issue_description_text,
+                        attributes: item.attributes
                     };
 
                     if (item.type === "PRODUCT") {
@@ -274,7 +311,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 setScenario(caseId);
                                 if (!caseId) return;
 
-                                // Base updates (Business Logic Only)
                                 let updates: any = {};
                                 switch (caseId) {
                                     case "1": updates = { payment_method: "CASH", no_razorpay: true, no_assignment: true, is_paid: false, order_platform: "WHATSAPP" }; break;
@@ -302,7 +338,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                         </select>
                     </div>
 
-                    {/* Section 1: Customer Details */}
+                    {/* Customer Details */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="md:col-span-2">
                             <h3 className="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -360,7 +396,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                         </div>
                     </div>
 
-                    {/* Section 2: Logistics */}
+                    {/* Logistics */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
                         <div className="md:col-span-2">
                             <h3 className="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -429,7 +465,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                         </div>
                     </div>
 
-                    {/* Section 3: Items */}
+                    {/* Items */}
                     <div className="pt-4 border-t">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-md font-semibold text-gray-800 flex items-center gap-2">
@@ -549,12 +585,64 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                             </button>
                                         )}
                                     </div>
+
+                                    {/* Attributes */}
+                                    {(() => {
+                                        const selectedId = item.type === "PRODUCT" ? item.product_id : item.service_id;
+                                        const selectedItem = (rowItems[index] || []).find((i: any) => i.id === selectedId);
+                                        const attrList = selectedItem?.attributes || [];
+
+                                        if (attrList.length === 0) return null;
+
+                                        const grouped: { [key: string]: any[] } = {};
+                                        attrList.forEach((a: any) => {
+                                            const name = a.attribute_name || a.name || "Option";
+                                            if (!grouped[name]) grouped[name] = [];
+                                            grouped[name].push(a);
+                                        });
+
+                                        return (
+                                            <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
+                                                {Object.keys(grouped).map(attrName => (
+                                                    <div key={attrName}>
+                                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">{attrName}</label>
+                                                        <select
+                                                            value={item.attributes[attrName] || ""}
+                                                            onChange={(e) => handleAttributeChange(index, attrName, e.target.value)}
+                                                            className="w-full px-3 py-1.5 border rounded-lg bg-white text-sm focus:ring-1 focus:ring-orange-500 outline-none"
+                                                        >
+                                                            <option value="">Select {attrName}</option>
+                                                            {grouped[attrName].map((opt: any) => (
+                                                                <option key={opt.id} value={opt.value}>
+                                                                    {opt.value}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* Description Field */}
+                                    <div className="md:col-span-12 mt-2">
+                                        <label className="text-sm font-semibold text-gray-700 mb-1 block capitalize">Description</label>
+                                        <input
+                                            type="text"
+                                            value={item.issue_description_text}
+                                            disabled={!item.type}
+                                            style={{ cursor: !item.type ? "not-allowed" : "text" }}
+                                            onChange={(e) => handleItemChange(index, "issue_description_text", e.target.value)}
+                                            className="w-full px-4 py-2 border rounded-lg bg-white text-sm focus:ring-2 focus:ring-orange-500 transition-all outline-none"
+                                            placeholder="Enter issue details"
+                                        />
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {/* Section 4: Payment */}
+                    {/* Payment */}
                     <div className="pt-4 border-t space-y-6">
                         <h3 className="text-md font-semibold text-gray-800 flex items-center gap-2">
                             <span className="w-1.5 h-6 bg-purple-500 rounded-full"></span>
@@ -652,7 +740,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                     <button
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="px-8 py-2.5 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 shadow-lg shadow-orange-200 transition active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                        className="px-8 py-2.5 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition active:scale-95 disabled:opacity-50 flex items-center gap-2"
                     >
                         {loading ? (
                             <>
