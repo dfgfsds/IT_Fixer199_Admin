@@ -173,11 +173,11 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         setForm({ ...form, items: newItems });
     };
 
-    const handleAttributeChange = (index: number, attrName: string, value: string) => {
+    const handleAttributeChange = (index: number, attrId: string, valueId: string) => {
         const newItems = [...form.items];
         newItems[index].attributes = {
             ...newItems[index].attributes,
-            [attrName]: value
+            [attrId]: valueId
         };
         setForm({ ...form, items: newItems });
     };
@@ -214,11 +214,17 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                 longitude: form.longitude ? Number(form.longitude) : null,
                 items: form.items?.map((item: any) => {
                     const priceVal = Number(item.amount);
+
+                    // Filter out empty attributes
+                    const cleanAttributes = Object.fromEntries(
+                        Object.entries(item.attributes || {}).filter(([_, v]) => v !== "" && v !== null)
+                    );
+
                     const baseItem: any = {
                         type: item.type,
                         quantity: Number(item.quantity),
                         issue_description_text: item.issue_description_text,
-                        attributes: item.attributes
+                        attributes: cleanAttributes
                     };
 
                     if (item.type === "PRODUCT") {
@@ -594,26 +600,29 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
 
                                         if (attrList.length === 0) return null;
 
-                                        const grouped: { [key: string]: any[] } = {};
+                                        const grouped: { [key: string]: { id: string, name: string, options: any[] } } = {};
                                         attrList.forEach((a: any) => {
                                             const name = a.attribute_name || a.name || "Option";
-                                            if (!grouped[name]) grouped[name] = [];
-                                            grouped[name].push(a);
+                                            const id = a.attribute_id;
+                                            if (!grouped[name]) {
+                                                grouped[name] = { id, name, options: [] };
+                                            }
+                                            grouped[name].options.push(a);
                                         });
 
                                         return (
                                             <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
-                                                {Object.keys(grouped).map(attrName => (
-                                                    <div key={attrName}>
-                                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">{attrName}</label>
+                                                {Object.values(grouped).map(group => (
+                                                    <div key={group.name}>
+                                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">{group.name}</label>
                                                         <select
-                                                            value={item.attributes[attrName] || ""}
-                                                            onChange={(e) => handleAttributeChange(index, attrName, e.target.value)}
+                                                            value={item.attributes[group.id] || ""}
+                                                            onChange={(e) => handleAttributeChange(index, group.id, e.target.value)}
                                                             className="w-full px-3 py-1.5 border rounded-lg bg-white text-sm focus:ring-1 focus:ring-orange-500 outline-none"
                                                         >
-                                                            <option value="">Select {attrName}</option>
-                                                            {grouped[attrName].map((opt: any) => (
-                                                                <option key={opt.id} value={opt.value}>
+                                                            <option value="">Select {group.name}</option>
+                                                            {group.options.map((opt: any) => (
+                                                                <option key={opt.id || opt.value_id} value={opt.id || opt.value_id}>
                                                                     {opt.value}
                                                                 </option>
                                                             ))}
