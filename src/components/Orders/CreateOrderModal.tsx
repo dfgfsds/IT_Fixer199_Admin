@@ -1,0 +1,673 @@
+import React, { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
+import axiosInstance from "../../configs/axios-middleware";
+import Api from "../../api-endpoints/ApiUrls";
+import toast from "react-hot-toast";
+import { X, Plus, Trash2 } from "lucide-react";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+
+interface CreateOrderModalProps {
+    onClose: () => void;
+    onSuccess: () => void;
+}
+
+const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess }) => {
+    const [loading, setLoading] = useState(false);
+    const [hubs, setHubs] = useState<any[]>([]);
+    const [zones, setZones] = useState<any[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
+    const [razorPayKey, setRazorPayKey] = useState<string>("");
+    const [scenario, setScenario] = useState("");
+    const [rowItems, setRowItems] = useState<{ [key: number]: any[] }>({});
+    const [loadingRows, setLoadingRows] = useState<{ [key: number]: boolean }>({});
+
+    const [form, setForm] = useState({
+        customer_name: "",
+        customer_number: "",
+        address: "",
+        latitude: "" as any,
+        longitude: "" as any,
+        user_id: null,
+        hub_id: "",
+        zone_id: "",
+        payment_method: "CASH",
+        transaction_id: "",
+        is_paid: false,
+        no_razorpay: true,
+        no_assignment: true,
+        order_platform: "WHATSAPP",
+        items: [
+            {
+                type: "",
+                category_id: "",
+                product_id: "",
+                service_id: "",
+                quantity: 1,
+                amount: 0,
+            }
+        ]
+    });
+
+    useEffect(() => {
+        fetchInitialData();
+        // Prevent background scrolling
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, []);
+
+    const fetchInitialData = async () => {
+        try {
+            const [hubsRes, settingsRes, categoriesRes] = await Promise.all([
+                axiosInstance.get(Api.allHubs),
+                axiosInstance.get(Api.appSettings),
+                axiosInstance.get(Api.categories)
+            ]);
+
+            setHubs(hubsRes.data?.hubs || hubsRes.data?.data || hubsRes.data || []);
+            setRazorPayKey(settingsRes.data?.pg_api_key || settingsRes.data?.data?.pg_api_key || "");
+            setCategories(categoriesRes.data?.data || []);
+
+        } catch (error) {
+            console.error("Failed to fetch initial data:", error);
+        }
+    };
+
+    const fetchZones = async (hubId: string) => {
+        try {
+            const res = await axiosInstance.get(`${Api.hubMapping}?hub=${hubId}`);
+            setZones(res.data?.mappings || []);
+        } catch (error) {
+            console.error("Failed to fetch zones:", error);
+        }
+    };
+
+    const handleHubChange = (hubId: string) => {
+        setForm({ ...form, hub_id: hubId, zone_id: "" });
+        if (hubId) {
+            fetchZones(hubId);
+        } else {
+            setZones([]);
+        }
+    };
+
+    const handleAddItem = () => {
+        setForm({
+            ...form,
+            items: [...form.items, { type: "", category_id: "", product_id: "", service_id: "", quantity: 1, amount: 0 }]
+        });
+    };
+
+    const handleRemoveItem = (index: number) => {
+        if (form.items.length === 1) return;
+        const newItems = form.items.filter((_, i) => i !== index);
+        setForm({ ...form, items: newItems });
+    };
+
+    const fetchItemsByCategory = async (index: number, type: string, categoryId: string) => {
+        if (!categoryId || !type) return;
+        setLoadingRows(prev => ({ ...prev, [index]: true }));
+        try {
+            const url = type === "PRODUCT" ? Api.products : Api.services;
+            const res = await axiosInstance.get(`${url}?category_id=${categoryId}&include_categories=true`);
+            const data = res.data?.products || res.data?.services || res.data?.data || [];
+
+            setRowItems(prev => ({
+                ...prev,
+                [index]: Array.isArray(data) ? data : (data.data || [])
+            }));
+        } catch (error) {
+            console.error("Failed to fetch items by category:", error);
+        } finally {
+            setLoadingRows(prev => ({ ...prev, [index]: false }));
+        }
+    };
+
+    const handleItemChange = (index: number, field: string, value: any) => {
+        const newItems = [...form.items];
+        newItems[index] = { ...newItems[index], [field]: value };
+
+        // Cascade Resets
+        if (field === "type") {
+            newItems[index].category_id = "";
+            newItems[index].product_id = "";
+            newItems[index].service_id = "";
+            setRowItems(prev => {
+                const updated = { ...prev };
+                delete updated[index];
+                return updated;
+            });
+        } else if (field === "category_id") {
+            newItems[index].product_id = "";
+            newItems[index].service_id = "";
+            fetchItemsByCategory(index, newItems[index].type, value);
+        }
+
+        setForm({ ...form, items: newItems });
+    };
+
+    const handleSubmit = async () => {
+        if (!scenario) {
+            toast.error("Please select a business scenario preset first");
+            return;
+        }
+
+        if (!form.customer_name || !form.customer_number || !form.address || !form.hub_id || !form.zone_id) {
+            toast.error("Please fill all required fields");
+            return;
+        }
+
+        const phoneRegex = /^\d{10}$/;
+        if (!phoneRegex.test(form.customer_number)) {
+            toast.error("Please enter a valid 10-digit mobile number");
+            return;
+        }
+
+        if (form.items.length === 0) {
+            toast.error("Add at least one item");
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const payload = {
+                ...form,
+                user_id: null,
+                latitude: form.latitude ? Number(form.latitude) : null,
+                longitude: form.longitude ? Number(form.longitude) : null,
+                items: form.items?.map((item: any) => {
+                    const priceVal = Number(item.amount);
+                    const baseItem: any = {
+                        type: item.type,
+                        quantity: Number(item.quantity),
+                    };
+
+                    if (item.type === "PRODUCT") {
+                        baseItem.product_id = item.product_id;
+                        baseItem.amount = priceVal;
+                    } else {
+                        baseItem.service_id = item.service_id;
+                        baseItem.price = priceVal;
+                    }
+                    return baseItem;
+                })
+            };
+
+            const response = await axiosInstance.post(Api.manualActivate, payload);
+
+            if (response.data) {
+                const createData = response.data.order_creation || response.data.data;
+                const rzpOrderId = createData?.razorpay_order_id;
+                const rzpAmount = createData?.amount;
+
+                if (rzpOrderId && (window as any).Razorpay) {
+                    const options = {
+                        key: razorPayKey,
+                        amount: rzpAmount,
+                        currency: "INR",
+                        name: "IT Fixer",
+                        description: `Order Payment for ${form.customer_name}`,
+                        order_id: rzpOrderId,
+                        handler: function (response: any) {
+                            toast.success("Payment Successful!");
+                            onSuccess();
+                            onClose();
+                        },
+                        prefill: {
+                            name: form.customer_name,
+                            contact: form.customer_number
+                        },
+                        theme: {
+                            color: "#EA580C"
+                        }
+                    };
+                    const rzp = new (window as any).Razorpay(options);
+                    rzp.open();
+                } else {
+                    toast.success("Order Created Successfully!");
+                    onSuccess();
+                    onClose();
+                }
+            }
+        } catch (error) {
+            console.error("Order creation error:", error);
+            toast.error(extractErrorMessage(error));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return ReactDOM.createPortal(
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9000] p-4">
+            <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                {/* Header */}
+                <div className="p-6 border-b flex items-center justify-between bg-gray-50">
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-900">Create New Order</h2>
+                        <p className="text-sm text-gray-500 text-nowrap">Fill in the details to generate a direct order</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Form Body */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-thin scrollbar-thumb-gray-300">
+
+                    {/* Preset Scenario Selector */}
+                    <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center text-white">
+                                <Plus size={24} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-900 leading-tight">Order Scenario Preset</h3>
+                            </div>
+                        </div>
+                        <select
+                            value={scenario}
+                            className="bg-white border-2 border-orange-200 rounded-lg px-4 py-2 outline-none focus:border-orange-500 font-medium text-gray-700"
+                            onChange={(e) => {
+                                const caseId = e.target.value;
+                                setScenario(caseId);
+                                if (!caseId) return;
+
+                                // Base updates (Business Logic Only)
+                                let updates: any = {};
+                                switch (caseId) {
+                                    case "1": updates = { payment_method: "CASH", no_razorpay: true, no_assignment: true, is_paid: false, order_platform: "WHATSAPP" }; break;
+                                    case "2": updates = { payment_method: "RAZORPAY", no_razorpay: false, no_assignment: true, is_paid: false, order_platform: "OWN_PLATFORM" }; break;
+                                    case "3": updates = { payment_method: "UPI", no_razorpay: true, no_assignment: true, is_paid: true, order_platform: "SHOP" }; break;
+                                    case "4": updates = { payment_method: "RAZORPAY", no_razorpay: false, no_assignment: false, is_paid: false, order_platform: "OWN_PLATFORM" }; break;
+                                    case "5": updates = { payment_method: "CASH", no_razorpay: true, no_assignment: false, is_paid: false, order_platform: "WHATSAPP" }; break;
+                                    case "6": updates = { payment_method: "UPI", no_razorpay: true, no_assignment: false, is_paid: true, order_platform: "SHOP" }; break;
+                                }
+
+                                setForm(prev => ({
+                                    ...prev,
+                                    ...updates
+                                }));
+                                toast.success(`Case ${caseId} logic applied`);
+                            }}
+                        >
+                            <option value="">Choose Scenario</option>
+                            <option value="1">Case 1: Pending Payment, No Razorpay, No Agent</option>
+                            <option value="2">Case 2: Pending Payment, Razorpay, No Agent</option>
+                            <option value="3">Case 3: Success Payment, No Agent</option>
+                            <option value="4">Case 4: Pending Payment, Razorpay, With Agent Assignment</option>
+                            <option value="5">Case 5: Pending Payment, No Razorpay, With Agent Assignment</option>
+                            <option value="6">Case 6: Success Payment, With Agent Assignment</option>
+                        </select>
+                    </div>
+
+                    {/* Section 1: Customer Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="md:col-span-2">
+                            <h3 className="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                <span className="w-1.5 h-6 bg-orange-500 rounded-full"></span>
+                                Customer Information
+                            </h3>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-gray-700">Customer Name *</label>
+                            <input
+                                type="text"
+                                value={form.customer_name}
+                                onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                placeholder="Enter customer name"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-gray-700">Mobile Number *</label>
+                            <input
+                                type="tel"
+                                maxLength={10}
+                                value={form.customer_number}
+                                onChange={(e) => setForm({ ...form, customer_number: e.target.value.replace(/\D/g, '') })}
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                placeholder="Enter 10-digit mobile number"
+                            />
+                        </div>
+                        <div className="md:col-span-2 space-y-1">
+                            <label className="text-sm font-medium text-gray-700">Full Address *</label>
+                            <textarea
+                                value={form.address}
+                                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition min-h-[80px]"
+                                placeholder="Enter mapping address"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-gray-700">Latitude</label>
+                            <input
+                                type="number"
+                                value={form.latitude}
+                                onChange={(e) => setForm({ ...form, latitude: e.target.value })}
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-gray-700">Longitude</label>
+                            <input
+                                type="number"
+                                value={form.longitude}
+                                onChange={(e) => setForm({ ...form, longitude: e.target.value })}
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Section 2: Logistics */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+                        <div className="md:col-span-2">
+                            <h3 className="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
+                                Assignment & Logistics
+                            </h3>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-gray-700">Select Hub *</label>
+                            <select
+                                value={form.hub_id}
+                                onChange={(e) => handleHubChange(e.target.value)}
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
+                            >
+                                <option value="">Select Hub</option>
+                                {hubs.map((h: any) => (
+                                    <option key={h.id} value={h.id}>{h.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-gray-700">Select Zone *</label>
+                            <select
+                                value={form.zone_id}
+                                onChange={(e) => setForm({ ...form, zone_id: e.target.value })}
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                disabled={!form.hub_id}
+                            >
+                                <option value="">Select Zone</option>
+                                {zones.map((z: any) => (
+                                    <option key={z.zone} value={z.zone}>{z.zone_name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-gray-700">Platform</label>
+                            <select
+                                value={form.order_platform}
+                                onChange={(e) => setForm({ ...form, order_platform: e.target.value })}
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
+                            >
+                                <option value="WHATSAPP">WhatsApp</option>
+                                <option value="OWN_PLATFORM">Own Platform</option>
+                                <option value="SHOP">Shop</option>
+                                <option value="CALL">Call</option>
+                            </select>
+                        </div>
+                        <div className="flex items-center gap-6 pt-6">
+                            <label
+                                onClick={(e) => { if (scenario) e.preventDefault(); }}
+                                className="flex items-center gap-2 group transition-all"
+                                style={{
+                                    cursor: scenario ? "not-allowed" : "pointer",
+                                    opacity: scenario ? 0.9 : 1
+                                }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={!form.no_assignment}
+                                    style={{ pointerEvents: scenario ? "none" : "auto" }}
+                                    onChange={(e) => setForm({ ...form, no_assignment: !e.target.checked })}
+                                    className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                                />
+                                <span className="text-sm text-gray-700 group-hover:text-gray-900 transition font-medium">Auto Assign Agent</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Section 3: Items */}
+                    <div className="pt-4 border-t">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-md font-semibold text-gray-800 flex items-center gap-2">
+                                <span className="w-1.5 h-6 bg-green-500 rounded-full"></span>
+                                Order Items
+                            </h3>
+                            <button
+                                onClick={handleAddItem}
+                                className="flex items-center gap-1 text-sm font-medium text-orange-600 hover:text-orange-700 transition"
+                            >
+                                <Plus size={16} /> Add Item
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            {form.items.map((item, index) => (
+                                <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 border rounded-xl bg-gray-50 relative group">
+                                    {/* Type Selector */}
+                                    <div className="md:col-span-2">
+                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Type</label>
+                                        <select
+                                            value={item.type}
+                                            onChange={(e) => handleItemChange(index, "type", e.target.value)}
+                                            className="w-full px-3 py-1.5 border rounded-lg bg-white text-sm"
+                                        >
+                                            <option value="">Choose Type</option>
+                                            <option value="PRODUCT">Product</option>
+                                            <option value="SERVICE">Service</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Category Selector */}
+                                    <div className="md:col-span-3">
+                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Category</label>
+                                        <select
+                                            value={item.category_id}
+                                            disabled={!item.type}
+                                            style={{ cursor: !item.type ? "not-allowed" : "pointer" }}
+                                            onChange={(e) => handleItemChange(index, "category_id", e.target.value)}
+                                            className="w-full px-3 py-1.5 border rounded-lg bg-white text-sm"
+                                        >
+                                            {!item.type ? (
+                                                <option value="">Select Type First</option>
+                                            ) : (
+                                                <>
+                                                    <option value="">Choose Category</option>
+                                                    {categories
+                                                        .filter((cat: any) => cat.type === item.type && cat.status === "ACTIVE")
+                                                        .map((cat: any) => (
+                                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                        ))
+                                                    }
+                                                </>
+                                            )}
+                                        </select>
+                                    </div>
+
+                                    {/* Item Selector */}
+                                    <div className="md:col-span-3">
+                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
+                                            {item.type === "PRODUCT" ? "Select Product" : "Select Service"}
+                                        </label>
+                                        <select
+                                            value={item.type === "PRODUCT" ? item.product_id : item.service_id}
+                                            disabled={!item.category_id || loadingRows[index]}
+                                            style={{ cursor: (!item.category_id || loadingRows[index]) ? "not-allowed" : "pointer" }}
+                                            onChange={(e) => handleItemChange(index, item.type === "PRODUCT" ? "product_id" : "service_id", e.target.value)}
+                                            className="w-full px-3 py-1.5 border rounded-lg bg-white text-sm"
+                                        >
+                                            {loadingRows[index] ? (
+                                                <option>Loading Items...</option>
+                                            ) : !item.category_id ? (
+                                                <option value="">Select Category First</option>
+                                            ) : (
+                                                <>
+                                                    <option value="">Choose item</option>
+                                                    {(rowItems[index] || []).map((p: any) => (
+                                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                                    ))}
+                                                </>
+                                            )}
+                                        </select>
+                                    </div>
+
+                                    {/* Qty & Amount */}
+                                    <div className="md:col-span-2">
+                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Qty</label>
+                                        <input
+                                            type="number"
+                                            value={item.quantity}
+                                            disabled={!item.type}
+                                            style={{ cursor: !item.type ? "not-allowed" : "text" }}
+                                            onChange={(e) => handleItemChange(index, "quantity", e.target.value)}
+                                            className="w-full px-3 py-1.5 border rounded-lg bg-white text-sm"
+                                            min="1"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2 relative group">
+                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Amount</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={item.amount}
+                                            disabled={!item.type}
+                                            style={{ cursor: !item.type ? "not-allowed" : "text" }}
+                                            onChange={(e) => handleItemChange(index, "amount", e.target.value)}
+                                            className="w-full px-3 py-1.5 border rounded-lg bg-white text-sm"
+                                            placeholder="0.00"
+                                        />
+                                        {/* Remove Item Button */}
+                                        {form.items.length > 1 && (
+                                            <button
+                                                onClick={() => handleRemoveItem(index)}
+                                                className="absolute -right-2 top-0 text-red-400 hover:text-red-600 bg-white rounded-full p-0.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Section 4: Payment */}
+                    <div className="pt-4 border-t space-y-6">
+                        <h3 className="text-md font-semibold text-gray-800 flex items-center gap-2">
+                            <span className="w-1.5 h-6 bg-purple-500 rounded-full"></span>
+                            Payment Information
+                        </h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-gray-700">Payment Method</label>
+                                <select
+                                    value={!form.no_razorpay ? "RAZORPAY" : form.payment_method}
+                                    style={{
+                                        pointerEvents: !form.no_razorpay ? "none" : "auto",
+                                        opacity: !form.no_razorpay ? 0.9 : 1,
+                                        cursor: !form.no_razorpay ? "not-allowed" : "pointer"
+                                    }}
+                                    onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500 transition bg-white font-medium shadow-sm"
+                                >
+                                    {form.no_razorpay ? (
+                                        <>
+                                            <option value="CASH">Cash</option>
+                                            <option value="UPI">UPI</option>
+                                            <option value="WALLET">Wallet</option>
+                                        </>
+                                    ) : (
+                                        <option value="RAZORPAY">Razorpay</option>
+                                    )}
+                                </select>
+                            </div>
+
+                            <div className="flex items-center gap-10 pt-6 md:col-span-2">
+                                <label
+                                    onClick={(e) => { if (scenario) e.preventDefault(); }}
+                                    className="flex items-center gap-2 group transition-all"
+                                    style={{
+                                        cursor: scenario ? "not-allowed" : "pointer",
+                                        opacity: scenario ? 0.9 : 1
+                                    }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={form.is_paid}
+                                        style={{ pointerEvents: scenario ? "none" : "auto" }}
+                                        onChange={(e) => setForm({ ...form, is_paid: e.target.checked })}
+                                        className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                                    />
+                                    <span className="text-sm text-gray-700 group-hover:text-gray-900 transition font-medium">Payment Received</span>
+                                </label>
+
+                                <label
+                                    onClick={(e) => { if (scenario) e.preventDefault(); }}
+                                    className="flex items-center gap-2 group transition-all"
+                                    style={{
+                                        cursor: scenario ? "not-allowed" : "pointer",
+                                        opacity: scenario ? 0.9 : 1
+                                    }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={!form.no_razorpay}
+                                        style={{ pointerEvents: scenario ? "none" : "auto" }}
+                                        onChange={(e) => setForm({ ...form, no_razorpay: !e.target.checked })}
+                                        className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                                    />
+                                    <span className="text-sm text-gray-700 group-hover:text-gray-900 transition font-medium">Enable Razorpay</span>
+                                </label>
+                            </div>
+
+                            {form.is_paid && (
+                                <div className="md:col-span-2 space-y-1">
+                                    <label className="text-sm font-medium text-gray-700">Transaction ID</label>
+                                    <input
+                                        type="text"
+                                        value={form.transaction_id}
+                                        onChange={(e) => setForm({ ...form, transaction_id: e.target.value })}
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                        placeholder="Enter transaction reference number"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="p-6 border-t bg-gray-50 flex items-center justify-end gap-4">
+                    <button
+                        onClick={onClose}
+                        disabled={loading}
+                        className="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-100 transition disabled:opacity-50"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        className="px-8 py-2.5 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 shadow-lg shadow-orange-200 transition active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                    >
+                        {loading ? (
+                            <>
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                Creating...
+                            </>
+                        ) : (
+                            "Create Order Now"
+                        )}
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+};
+
+export default CreateOrderModal;
