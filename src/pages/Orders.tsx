@@ -5,10 +5,12 @@ import { Order, PaginationData } from '../types';
 import Api from '../api-endpoints/ApiUrls';
 import axiosInstance from '../configs/axios-middleware';
 import Pagination from '../components/Pagination';
+import CreateOrderModal from '../components/Orders/CreateOrderModal';
 
 const Orders: React.FC = () => {
 
   const [orders, setOrders] = useState<Order[]>([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [pagination, setPagination] = useState<PaginationData | null>(null);
   const [loading, setLoading] = useState(true);
   const getToday = () => {
@@ -182,9 +184,19 @@ const Orders: React.FC = () => {
     <div className="space-y-6">
 
       {/* HEADER */}
-      <div>
-        <h1 className="text-2xl font-bold">Orders Management</h1>
-        <p className="text-gray-500">Manage and track all service orders</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Orders Management</h1>
+          <p className="text-gray-500">Manage and track all service orders</p>
+        </div>
+
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg shadow-sm transition w-full sm:w-auto"
+        >
+          <span className="text-lg font-bold">+</span>
+          Create Order
+        </button>
       </div>
 
       {/* FILTER UI */}
@@ -348,6 +360,16 @@ const Orders: React.FC = () => {
           setPage(1);
         }}
       />
+
+      {showCreateModal && (
+        <CreateOrderModal
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => {
+            fetchOrders();
+            setShowCreateModal(false);
+          }}
+        />
+      )}
     </div>
   );
 };

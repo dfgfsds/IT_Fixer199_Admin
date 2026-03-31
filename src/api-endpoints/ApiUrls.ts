@@ -160,16 +160,16 @@ const productMovementDirect = `${baseUrl}/api/product-inventory/movements/direct
 const userAgent = `${baseUrl}/api/user/agent`;
 
 // manualActivate
-const manualActivate = `${baseUrl}/api/order/public/order`;
+const manualActivate = `${baseUrl}/api/order/public/order/`;
 
 // agentPerformance
-const agentPerformance=`${baseUrl}/api/stats/agent-performance`;
+const agentPerformance = `${baseUrl}/api/stats/agent-performance`;
 
 // loginLogs
 const loginLogs = `${baseUrl}/api/user/login-logs/user/`;
 
 // activeLogs
-const activeLogs =`${baseUrl}/api/user/active-logs/user/`;
+const activeLogs = `${baseUrl}/api/user/active-logs/user/`;
 
 export default {
   login,

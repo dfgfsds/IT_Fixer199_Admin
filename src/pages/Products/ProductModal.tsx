@@ -3,7 +3,7 @@ import axiosInstance from "../../configs/axios-middleware";
 import Select from 'react-select';
 import Api from '../../api-endpoints/ApiUrls';
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
-import { Loader } from "lucide-react";
+import { Loader, Plus, Trash2, X } from "lucide-react";
 
 interface Props {
     show: boolean;
@@ -46,8 +46,9 @@ const ProductModal: React.FC<Props> = ({
         status: "ACTIVE",
         category_ids: [],
         attributes: [],
-        pricing_type: "",
-        price: ""
+        pricing: [
+            { type: "", price: "" }
+        ]
     });
 
     // ---------------- Fetch Data ----------------
@@ -69,8 +70,7 @@ const ProductModal: React.FC<Props> = ({
         status: "ACTIVE",
         category_ids: [],
         attributes: [],
-        pricing_type: "",
-        price: ""
+        pricing: [{ type: "", price: "" }]
     });
 
     const resetAll = () => {
@@ -213,10 +213,10 @@ const ProductModal: React.FC<Props> = ({
             category_ids:
                 editProduct.categories?.map((c: any) => c.id) || [],
             // attributes: editProduct?.attributes?.map((a: any) => {id:a?.value_id}),
-            attributes: editProduct?.attributes?.map((a: any) => ({
-                id: a?.value_id
-            })) || [],
-            // attributes: editProduct.attributes || [],
+            pricing: editProduct.product_pricing?.map((p: any) => ({
+                type: p.type,
+                price: p.price
+            })) || [{ type: "", price: "" }],
             specification: parsedSpecification,
         });
 
@@ -224,7 +224,7 @@ const ProductModal: React.FC<Props> = ({
             setExistingImages(editProduct.media);
             setPreviewUrls(editProduct.media.map((m: any) => m.url));
         }
-        
+
     }, [editProduct]);
 
 
@@ -280,17 +280,40 @@ const ProductModal: React.FC<Props> = ({
         setForm({ ...form, specification: updatedSpecs });
     };
 
+    // ---------------- Pricing Rows ----------------
+    const handlePricingChange = (index: number, field: string, value: string) => {
+        const updatedPricing = [...form.pricing];
+        updatedPricing[index] = { ...updatedPricing[index], [field]: value };
+        setForm({ ...form, pricing: updatedPricing });
+    };
+
+    const addPricingRow = () => {
+        if (form.pricing.length < priceTypes.length) {
+            setForm({
+                ...form,
+                pricing: [...form.pricing, { type: "", price: "" }]
+            });
+        }
+    };
+
+    const removePricingRow = (index: number) => {
+        const updatedPricing = [...form.pricing];
+        updatedPricing.splice(index, 1);
+        setForm({ ...form, pricing: updatedPricing });
+    };
+
+
     // ---------------- Submit ----------------
     const handleSubmit = async (e: any) => {
         e.preventDefault();
         setLoading(true);
 
-        const pricingPayload = [
-            {
-                type: form.pricing_type,
-                price: form.price
-            }
-        ];
+        const pricingPayload = form.pricing
+            .filter((p: any) => p.type && p.price)
+            .map((p: any) => ({
+                type: p.type,
+                price: p.price
+            }));
 
         try {
             const formData = new FormData();
@@ -300,8 +323,7 @@ const ProductModal: React.FC<Props> = ({
                     key !== "category_ids" &&
                     key !== "attributes" &&
                     key !== "specification" &&
-                    key !== "pricing_type" &&
-                    key !== "price"
+                    key !== "pricing"
                 ) {
                     formData.append(key, form[key]);
                 }
@@ -436,9 +458,18 @@ const ProductModal: React.FC<Props> = ({
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[90vh] no-scrollbar overflow-y-auto">
 
-                <h2 className="text-xl font-semibold mb-6">
-                    {isEdit ? "Edit Product" : "Create Product"}
-                </h2>
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold">
+                        {isEdit ? "Edit Product" : "Create Product"}
+                    </h2>
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                        <X size={24} />
+                    </button>
+                </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
 
@@ -491,6 +522,7 @@ const ProductModal: React.FC<Props> = ({
                         </select>
                     </div>
 
+                    {/*
                     <div>
                         <label className="block text-sm font-medium mb-2">
                             Specification
@@ -538,7 +570,7 @@ const ProductModal: React.FC<Props> = ({
                             + Add Specification
                         </button>
                     </div>
-
+                    */}
 
                     {/* SKU */}
                     <div>
@@ -666,44 +698,73 @@ const ProductModal: React.FC<Props> = ({
 
                     {/* Type */}
                     {!editProduct && (
+                        <div className="space-y-4">
+                            <label className="block text-sm font-medium">Pricing Details</label>
+                            {form.pricing.map((item: any, index: number) => {
+                                // Filtering Logic: Exclude types selected in other rows
+                                const selectedInOtherRows = form.pricing
+                                    .filter((_: any, i: number) => i !== index)
+                                    .map((p: any) => p.type);
 
-                        <>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">
-                                    Pricing Type *
-                                </label>
-                                <select
-                                    value={form.pricing_type}
-                                    onChange={(e) =>
-                                        setForm({ ...form, pricing_type: e.target.value })
-                                    }
-                                    className="w-full border rounded-lg px-3 py-2"
-                                    required
+                                const availableOptions = priceTypes.filter(
+                                    (pt: any) => !selectedInOtherRows.includes(pt.name)
+                                );
+
+                                return (
+                                    <div key={index} className="flex gap-4 items-end bg-gray-50 p-3 rounded-lg border border-gray-100 relative">
+                                        <div className="flex-1">
+                                            <label className="block text-xs text-gray-800 mb-1">Pricing Type *</label>
+                                            <select
+                                                value={item.type}
+                                                onChange={(e) => handlePricingChange(index, "type", e.target.value)}
+                                                className="w-full border rounded-lg px-3 py-2 text-sm"
+                                                required
+                                            >
+                                                <option value="">Select type</option>
+                                                {availableOptions.map((p: any) => (
+                                                    <option key={p?.name} value={p?.name}>
+                                                        {p?.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="flex-1">
+                                            <label className="block text-xs text-gray-800 mb-1">Price *</label>
+                                            <input
+                                                type="number"
+                                                value={item.price}
+                                                onChange={(e) => handlePricingChange(index, "price", e.target.value)}
+                                                className="w-full border rounded-lg px-3 py-2 text-sm"
+                                                required
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+
+                                        {form.pricing.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removePricingRow(index)}
+                                                className="text-red-500 hover:text-red-700 p-2"
+                                                title="Remove Pricing"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
+                                );
+                            })}
+
+                            {form.pricing.length < priceTypes.length && (
+                                <button
+                                    type="button"
+                                    onClick={addPricingRow}
+                                    className="text-orange-600 text-sm font-medium hover:text-orange-700 flex items-center"
                                 >
-                                    <option value="">Select Pricing type</option>
-                                    {priceTypes?.map((p: any) => (
-                                        <option key={p?.name} value={p?.name}>
-                                            {p?.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1">
-                                    Price *
-                                </label>
-                                <input
-                                    type="number"
-                                    value={form.price}
-                                    onChange={(e) =>
-                                        setForm({ ...form, price: e.target.value })
-                                    }
-                                    className="w-full border rounded-lg px-3 py-2"
-                                    required
-                                />
-                            </div>
-                        </>
+                                    <span className="text-lg mr-1">+</span> Add Another Pricing Type
+                                </button>
+                            )}
+                        </div>
                     )}
                     {/* Status */}
                     <div>
