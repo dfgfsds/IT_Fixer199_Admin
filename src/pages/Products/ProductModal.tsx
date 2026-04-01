@@ -40,6 +40,8 @@ const ProductModal: React.FC<Props> = ({
         model: "",
         type: "PRODUCT",
         sku: "",
+        barcode: "",
+        hsn: "",
         specification: [
             { key: "", value: "" }
         ],
@@ -66,6 +68,8 @@ const ProductModal: React.FC<Props> = ({
         model: "",
         type: "PRODUCT",
         sku: "",
+        barcode: "",
+        hsn: "",
         specification: [{ key: "", value: "" }],
         status: "ACTIVE",
         category_ids: [],
@@ -224,10 +228,12 @@ const ProductModal: React.FC<Props> = ({
             model: editProduct.model_name || "",
             type: editProduct.type || "PRODUCT",
             sku: editProduct.sku || "",
+            barcode: editProduct.barcode || "",
+            hsn: editProduct.hsn || "",
             status: editProduct.status || "ACTIVE",
             category_ids:
                 editProduct.categories?.map((c: any) => c.id) || [],
-            attributes: editProduct?.attributes_details?.map((a: any) => ({
+            attributes: (editProduct?.attributes_details || editProduct?.attributes)?.map((a: any) => ({
                 id: a.value_id,
                 attribute_name: a.attribute_name,
                 value: a.value
@@ -321,154 +327,98 @@ const ProductModal: React.FC<Props> = ({
         setForm({ ...form, pricing: updatedPricing });
     };
 
-
     // ---------------- Submit ----------------
     const handleSubmit = async (e: any) => {
         e.preventDefault();
         setLoading(true);
-
-        const pricingPayload = form.pricing
-            .filter((p: any) => p.type && p.price)
-            .map((p: any) => ({
-                type: p.type,
-                price: p.price
-            }));
+        setApiErrors("");
 
         try {
             const formData = new FormData();
 
-            Object.keys(form).forEach((key) => {
-                if (
-                    key !== "category_ids" &&
-                    key !== "attributes" &&
-                    key !== "specification" &&
-                    key !== "pricing"
-                ) {
-                    formData.append(key, form[key]);
-                }
-            });
+            // 1. Basic Fields
+            formData.append("name", form.name);
+            formData.append("description", form.description);
+            formData.append("brand_id", form.brand_id);
+            formData.append("model", form.model);
+            formData.append("type", form.type);
+            formData.append("sku", form.sku);
+            formData.append("barcode", form.barcode);
+            formData.append("hsn", form.hsn);
+            formData.append("status", form.status);
 
+            // 2. Categories (Append each as a stringified dictionary for PUT/POST compatibility)
             form.category_ids.forEach((id: string) => {
-                formData.append("category_ids", id);
+                formData.append("category_ids", JSON.stringify({ category_id: id }));
             });
 
-            // ✅ Attributes
-            const attributesPayload = form?.attributes.map((attr: any) => ({
-                value_id: attr?.id,
+            // 3. Attributes (Append each as a stringified dictionary)
+            const attributesPayload = form.attributes.map((attr: any) => ({
+                value_id: attr.id,
             }));
+            attributesPayload.forEach((attr: any) => {
+                formData.append("attributes", JSON.stringify(attr));
+            });
 
-            formData.append("attributes", JSON.stringify(attributesPayload));
-            // form.attributes.forEach((attr: any) => {
-            //     formData.append("attributes", JSON.stringify(attr?.id));
-            // });
+            // 4. Specification (Append each as a stringified dictionary for parsing consistency)
+            const formattedSpecification = form.specification
+                .filter((item: any) => item.key && item.value)
+                .map((item: any) => ({
+                    [item.key]: item.value,
+                }));
+            formattedSpecification.forEach((spec: any) => {
+                formData.append("specification", JSON.stringify(spec));
+            });
 
-            // Send only new images
-            // newImages.forEach((file) => {
-            //     formData.append("media_files", file);
-            // });
+            // 5. Pricing (Append each as a stringified dictionary - mostly for creation)
+            if (!isEdit) {
+                const pricingPayload = form.pricing
+                    .filter((p: any) => p.type && p.price)
+                    .map((p: any) => ({
+                        type: p.type,
+                        price: p.price
+                    }));
 
+                pricingPayload.forEach((price: any) => {
+                    formData.append("pricing", JSON.stringify(price));
+                });
+            }
+
+            // 6. Media Handling
+            // New Images
             newImages.forEach((file) => {
                 formData.append("media_files[]", file);
             });
 
-            // 🔥 Convert to required format
-            const formattedSpecification = form.specification
-                .filter((item: any) => item.key && item.value) // remove empty rows
-                .map((item: any) => ({
-                    [item.key]: item.value,
-                }));
+            // Delete IDs (Edit mode only)
+            if (isEdit && editProduct.media) {
+                const originalIds = editProduct.media.map((m: any) => m.id) || [];
+                const remainingIds = existingImages.map((m: any) => m.id);
+                const deleteMediaIds = originalIds.filter((id: string) => !remainingIds.includes(id));
 
-            formData.append(
-                "specification",
-                JSON.stringify(formattedSpecification)
-            );
-
-            formData.append("pricing", JSON.stringify(pricingPayload));
-
-            if (isEdit) {
-                // const updateApi = await axiosInstance.put(`${Api?.products}/${editProduct.id}`, formData);
-                // if (updateApi) {
-                //     onSuccess();
-                //     handleClose();
-                //     setLoading(false);
-                // }
-                if (isEdit) {
-                    const formData = new FormData();
-
-                    // 🔹 Basic fields
-                    formData.append("name", form.name);
-                    formData.append("description", form.description);
-                    formData.append("brand_id", form.brand_id);
-                    formData.append("model", form.model);
-                    formData.append("type", form.type);
-                    formData.append("sku", form.sku);
-                    formData.append("status", form.status);
-
-                    // 🔹 CATEGORY FORMAT ✅
-                    const categoryPayload = form.category_ids.map((id: string) => ({
-                        category_id: id
-                    }));
-                    formData.append("category_ids", JSON.stringify(categoryPayload));
-
-                    // 🔹 ATTRIBUTES FORMAT ✅
-                    const attributePayload = form.attributes.map((attr: any) => ({
-                        value_id: attr.id
-                    }));
-                    formData.append("attributes", JSON.stringify(attributePayload));
-
-                    // 🔹 SPECIFICATION (OBJECT format) ✅
-                    const specObject = form.specification
-                        .filter((item: any) => item.key && item.value)
-                        .reduce((acc: any, item: any) => {
-                            acc[item.key] = item.value;
-                            return acc;
-                        }, {});
-                    formData.append("specification", JSON.stringify(specObject));
-
-                    // 🔥 DELETE MEDIA (IMPORTANT)
-                    const originalIds = editProduct.media?.map((m: any) => m.id) || [];
-                    const remainingIds = existingImages.map((m: any) => m.id);
-
-                    const deleteMediaIds = originalIds.filter(
-                        (id: string) => !remainingIds.includes(id)
-                    );
-
-                    deleteMediaIds.forEach((id: string) => {
-                        formData.append("delete_media_ids", id);
-                    });
-
-                    // 🔹 NEW IMAGES
-                    newImages.forEach((file) => {
-                        formData.append("media_files", file);
-                    });
-
-                    const updateApi = await axiosInstance.put(
-                        `${Api?.products}/${editProduct.id}`,
-                        formData
-                    );
-
-                    if (updateApi) {
-                        onSuccess();
-                        handleClose();
-                        setLoading(false);
-                    }
-                }
-            } else {
-                const updateApi = await axiosInstance.post(Api?.products, formData);
-                if (updateApi) {
-                    onSuccess();
-                    handleClose();
-                    setLoading(false);
-                }
+                deleteMediaIds.forEach((id: string) => {
+                    formData.append("delete_media_ids", id);
+                });
             }
 
+            // 7. API Call
+            let response;
+            if (isEdit) {
+                response = await axiosInstance.put(`${Api?.products}/${editProduct.id}`, formData);
+            } else {
+                response = await axiosInstance.post(Api?.products, formData);
+            }
+
+            if (response) {
+                onSuccess();
+                handleClose();
+            }
 
         } catch (error) {
-            setLoading(false);
             setApiErrors(extractErrorMessage(error));
-
+        } finally {
+            setLoading(false);
         }
-
     };
 
     if (!show) return null;
@@ -604,6 +554,40 @@ const ProductModal: React.FC<Props> = ({
                             }
                             className="w-full border rounded-lg px-3 py-2"
                         />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Barcode */}
+                        <div>
+                            <label className="block text-sm font-medium mb-1">
+                                Barcode
+                            </label>
+                            <input
+                                type="text"
+                                value={form.barcode}
+                                onChange={(e) =>
+                                    setForm({ ...form, barcode: e.target.value })
+                                }
+                                className="w-full border rounded-lg px-3 py-2"
+                                placeholder="Enter barcode"
+                            />
+                        </div>
+
+                        {/* HSN */}
+                        <div>
+                            <label className="block text-sm font-medium mb-1">
+                                HSN
+                            </label>
+                            <input
+                                type="text"
+                                value={form.hsn}
+                                onChange={(e) =>
+                                    setForm({ ...form, hsn: e.target.value })
+                                }
+                                className="w-full border rounded-lg px-3 py-2"
+                                placeholder="Enter HSN code"
+                            />
+                        </div>
                     </div>
                     {/* Description */}
                     <div>
