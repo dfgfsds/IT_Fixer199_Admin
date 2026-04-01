@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
-import { Plus, Edit, CheckCircle, XCircle, Eye, MoreVertical } from "lucide-react";
+import { Plus, Edit, CheckCircle, XCircle, Eye, MoreVertical, DollarSign, Trash2 } from "lucide-react";
 import ProductModal from "./ProductModal";
 import PricingModal from "./PricingModal";
 import ProductViewModal from "./ProductViewModal";
@@ -475,16 +475,17 @@ const Products: React.FC = () => {
                                                             <Eye className="w-4 h-4" />
                                                         </button>
 
-                                                        {/* Edit Button */}
+                                                        {/* Pricing Button */}
                                                         <button
-                                                            onClick={() => {
-                                                                setEditProduct(product);
-                                                                setShowCreateModal(true);
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSelectedProduct(product);
+                                                                setShowPricing(true);
                                                             }}
-                                                            className="text-orange-600 hover:text-orange-700 transition"
-                                                            title="Edit"
+                                                            className="text-blue-600 hover:text-blue-700 transition"
+                                                            title="Pricing Details"
                                                         >
-                                                            <Edit className="w-4 h-4" />
+                                                            <DollarSign className="w-4 h-4" />
                                                         </button>
 
                                                         {/* More Dropdown trigger */}
@@ -504,13 +505,14 @@ const Products: React.FC = () => {
                                                                 <button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        setSelectedProduct(product);
-                                                                        setShowPricing(true);
+                                                                        setEditProduct(product);
+                                                                        setShowCreateModal(true);
                                                                         setOpenDropdown(null);
                                                                     }}
-                                                                    className="block w-full text-left px-4 py-2.5 text-sm hover:bg-gray-100 text-gray-700 transition"
+                                                                    className="flex items-center w-full text-left px-4 py-2.5 text-sm hover:bg-gray-100 text-gray-700 transition"
                                                                 >
-                                                                    Pricing Details
+                                                                    <Edit className="w-4 h-4 mr-2" />
+                                                                    Edit Product
                                                                 </button>
                                                                 <button
                                                                     onClick={(e) => {
@@ -518,8 +520,9 @@ const Products: React.FC = () => {
                                                                         openDeleteModal(product.id);
                                                                         setOpenDropdown(null);
                                                                     }}
-                                                                    className="block w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 text-red-600 transition border-t"
+                                                                    className="flex items-center w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 text-red-600 transition border-t"
                                                                 >
+                                                                    <Trash2 className="w-4 h-4 mr-2" />
                                                                     Delete Product
                                                                 </button>
                                                             </div>
