@@ -213,6 +213,12 @@ const Products: React.FC = () => {
         }
     };
 
+
+    const handEditProduct = (product: any) => {
+        setEditProduct(product);
+        setShowCreateModal(true);
+        setOpenDropdown(null);
+    }
     return (
         <div className="space-y-6">
 
@@ -503,12 +509,13 @@ const Products: React.FC = () => {
                                                         {openDropdown === product.id && (
                                                             <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg w-40 z-20 overflow-hidden text-left">
                                                                 <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setEditProduct(product);
-                                                                        setShowCreateModal(true);
-                                                                        setOpenDropdown(null);
-                                                                    }}
+                                                                    // onClick={(e) => {
+                                                                    //     e.stopPropagation();
+                                                                    //     setEditProduct(product);
+                                                                    //     setShowCreateModal(true);
+                                                                    //     setOpenDropdown(null);
+                                                                    // }}
+                                                                    onClick={() => handEditProduct(product)}
                                                                     className="flex items-center w-full text-left px-4 py-2.5 text-sm hover:bg-gray-100 text-gray-700 transition"
                                                                 >
                                                                     <Edit className="w-4 h-4 mr-2" />
@@ -549,12 +556,16 @@ const Products: React.FC = () => {
             )}
 
             {/* Product Modal */}
-            <ProductModal
-                show={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
-                onSuccess={fetchProducts}
-                editProduct={editProduct}
-            />
+            {showCreateModal && (
+                <ProductModal
+                    show={showCreateModal}
+                    onClose={() => setShowCreateModal(false)}
+                    onSuccess={fetchProducts}
+                    editProduct={editProduct}
+                    setEditProduct={setEditProduct}
+                />
+            )}
+
 
             {/* Pricing Modal */}
             <PricingModal
