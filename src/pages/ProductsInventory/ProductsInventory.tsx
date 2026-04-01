@@ -23,7 +23,7 @@ const ProductsInventory: React.FC = () => {
     const [stockModal, setStockModal] = useState(false);
     const [stockType, setStockType] = useState<"add" | "remove" | null>(null);
     const [selectedItem, setSelectedItem] = useState<any>(null);
-    const [quantity, setQuantity] = useState(0);
+    const [quantity, setQuantity] = useState<any>();
     const [stockLoading, setStockLoading] = useState(false);
 
     const [page, setPage] = useState(1);
@@ -33,6 +33,36 @@ const ProductsInventory: React.FC = () => {
     const [productModal, setProductModal] = useState(false);
     const [apiErrors, setApiErrors] = useState<string>("");
 
+    // ADD STATE
+    const [serialNumbers, setSerialNumbers] = useState<string[]>([""]);
+
+    // SYNC SERIALS WITH QUANTITY (🔥 important)
+    useEffect(() => {
+        setSerialNumbers((prev) =>
+            Array.from({ length: quantity || 1 }, (_, i) => prev[i] || "")
+        );
+    }, [quantity]);
+
+    const handleSerialChange = (index: number, value: string) => {
+        setSerialNumbers((prev) => {
+            const updated = [...prev];
+            updated[index] = value;
+            return updated;
+        });
+    };
+
+    const handleAddSerial = () => {
+        setSerialNumbers((prev) => [...prev, ""]);
+        setQuantity((prev: any) => prev + 1);
+    };
+
+    const handleRemoveSerial = (index: number) => {
+        setSerialNumbers((prev) => {
+            const updated = prev.filter((_, i) => i !== index);
+            setQuantity(updated.length || 1);
+            return updated.length ? updated : [""];
+        });
+    };
     const fetchInventory = async (pageNumber = page, size = pageSize) => {
         try {
             setLoading(true);
@@ -115,11 +145,18 @@ const ProductsInventory: React.FC = () => {
     const handleStockSubmit = async () => {
         if (!selectedItem || quantity <= 0) return;
         setApiErrors("");
+        const trimmed = serialNumbers?.map((sn) => sn?.trim());
+
+        if (trimmed.some((sn) => !sn)) {
+            setApiErrors("All serial numbers are required");
+            return;
+        }
+
         try {
             setStockLoading(true);
-
+            let res = ""
             if (stockType === "add") {
-                await axiosInstance.post(`${Api.productInventory}/`, {
+                const res = await axiosInstance.post(`${Api.productInventory}/`, {
                     product_id: selectedItem.product.id,
                     hub_id: selectedItem.hub_id,
                     stock_in_hub: quantity,
@@ -127,7 +164,7 @@ const ProductsInventory: React.FC = () => {
             }
 
             if (stockType === "remove") {
-                await axiosInstance.post(
+                const res = await axiosInstance.post(
                     `${Api.productInventory}/remove/`,
                     {
                         product_id: selectedItem.product.id,
@@ -136,11 +173,14 @@ const ProductsInventory: React.FC = () => {
                     }
                 );
             }
-            setApiErrors("");
-            fetchInventory();
-            setStockModal(false);
-            setQuantity(0);
-            setSelectedItem(null);
+            if (res) {
+                setApiErrors("");
+                fetchInventory();
+                setStockModal(false);
+                setQuantity(0);
+                setSelectedItem(null);
+                setSerialNumbers([""]);
+            }
 
         } catch (err) {
             setApiErrors(extractErrorMessage(err));
@@ -380,89 +420,116 @@ const ProductsInventory: React.FC = () => {
             {stockModal && selectedItem && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
 
-                    <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden">
+                    <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden max-h-screen overflow-y-auto no-scrollbar">
 
                         {/* HEADER */}
                         <div
-                            className={`px-8 py-6 text-white ${stockType === "add"
+                            className={`px-6 py-4 text-white ${stockType === "add"
                                 ? "bg-gradient-to-r from-emerald-600 to-green-500"
                                 : "bg-gradient-to-r from-red-600 to-rose-500"
                                 }`}
                         >
-                            <h2 className="text-xl font-bold">
+                            <h2 className="text-lg font-semibold">
                                 {stockType === "add" ? "Add Stock" : "Remove Stock"}
                             </h2>
-                            <p className="text-sm opacity-90 mt-1">
-                                Update inventory quantity
+                            <p className="text-xs opacity-90">
+                                Enter serial numbers
                             </p>
                         </div>
 
-                        <div className="p-8 space-y-6">
+                        <div className="p-6 space-y-5">
 
-                            {/* PRODUCT INFO CARD */}
-                            <div className="bg-gray-50 border rounded-2xl p-5 space-y-3">
-
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Product</span>
-                                    <span className="font-semibold text-gray-800">
-                                        {selectedItem.product?.name}
-                                    </span>
-                                </div>
-
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Hub</span>
-                                    <span className="font-semibold text-gray-800">
-                                        {selectedItem.hub_name}
-                                    </span>
-                                </div>
-
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Current Stock</span>
-                                    <span
-                                        className={`font-bold ${selectedItem.stock_in_hub > 0
-                                            ? "text-green-600"
-                                            : "text-red-600"
-                                            }`}
-                                    >
+                            {/* INFO */}
+                            <div className="bg-gray-50 border rounded-xl p-4 text-sm space-y-2">
+                                <p><b>Product:</b> {selectedItem.product?.name}</p>
+                                <p><b>Hub:</b> {selectedItem.hub_name}</p>
+                                <p>
+                                    <b>Current:</b>{" "}
+                                    <span className={selectedItem.stock_in_hub > 0 ? "text-green-600" : "text-red-600"}>
                                         {selectedItem.stock_in_hub}
                                     </span>
-                                </div>
-
+                                </p>
                             </div>
 
-                            {/* QUANTITY INPUT */}
+                            {/* QUANTITY */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-600 mb-2">
-                                    Enter Quantity
+                                <label className="text-sm font-medium text-gray-600 mb-1">
+                                    Quantity
                                 </label>
 
                                 <input
                                     type="number"
-                                    min="1"
+                                    min={1}
                                     value={quantity}
                                     onChange={(e) => setQuantity(Number(e.target.value))}
-                                    className="w-full border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none px-4 py-3 rounded-xl text-lg font-semibold"
-                                    placeholder="Enter quantity"
+                                    className="w-full border px-3 py-2 rounded-lg text-sm"
                                 />
                             </div>
 
-                            {/* Error */}
+                            {/* SERIAL HEADER */}
+                            {/* <div className="flex justify-between items-center">
+                                <span className="text-sm font-semibold">Serial Numbers</span>
+
+                                <button
+                                    onClick={handleAddSerial}
+                                    className="text-indigo-600 text-xs flex items-center gap-1"
+                                >
+                                    <Plus size={14} /> Add
+                                </button>
+                            </div> */}
+
+                            {/* SERIAL TABLE */}
+                            <div className="border rounded-lg overflow-hidden">
+                                <div className="grid grid-cols-[40px_1fr_40px] bg-gray-100 text-xs px-2 py-2 font-medium">
+                                    <span>#</span>
+                                    <span>Serial</span>
+                                    <span></span>
+                                </div>
+
+                                <div className="max-h-52 overflow-y-auto">
+                                    {serialNumbers.map((sn, index) => (
+                                        <div
+                                            key={index}
+                                            className="grid grid-cols-[40px_1fr_40px] items-center border-t px-2 py-2"
+                                        >
+                                            <span className="text-xs">{index + 1}</span>
+
+                                            <input
+                                                type="text"
+                                                value={sn}
+                                                onChange={(e) =>
+                                                    handleSerialChange(index, e.target.value)
+                                                }
+                                                className="border px-2 py-1 rounded text-xs"
+                                                placeholder="Enter serial"
+                                            />
+
+                                            {serialNumbers.length > 1 && (
+                                                <button
+                                                    onClick={() => handleRemoveSerial(index)}
+                                                    className="text-red-500"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            {/* ERROR */}
                             {apiErrors && (
-                                <p className="text-red-500 mt-2 text-end px-6">
-                                    {apiErrors}
-                                </p>
+                                <p className="text-red-500 text-xs text-end">{apiErrors}</p>
                             )}
 
-                            {/* BUTTONS */}
-                            <div className="flex justify-end gap-4 pt-4">
-
+                            {/* ACTION */}
+                            <div className="flex justify-end gap-2 pt-3 border-t">
                                 <button
                                     onClick={() => {
                                         setStockModal(false);
                                         setSelectedItem(null);
-                                        setQuantity(0);
+                                        setSerialNumbers([""]);
                                     }}
-                                    className="px-5 py-2 border border-gray-300 rounded-xl text-sm hover:bg-gray-50"
+                                    className="px-3 py-1 border rounded-md text-xs"
                                 >
                                     Cancel
                                 </button>
@@ -470,9 +537,9 @@ const ProductsInventory: React.FC = () => {
                                 <button
                                     onClick={handleStockSubmit}
                                     disabled={stockLoading}
-                                    className={`px-6 py-2 rounded-xl text-sm font-semibold text-white shadow-md transition ${stockType === "add"
-                                        ? "bg-emerald-600 hover:bg-emerald-700"
-                                        : "bg-red-600 hover:bg-red-700"
+                                    className={`px-4 py-1 rounded-md text-xs text-white ${stockType === "add"
+                                        ? "bg-emerald-600"
+                                        : "bg-red-600"
                                         }`}
                                 >
                                     {stockLoading
@@ -481,11 +548,9 @@ const ProductsInventory: React.FC = () => {
                                             ? "Add Stock"
                                             : "Remove Stock"}
                                 </button>
-
                             </div>
 
                         </div>
-
                     </div>
                 </div>
             )}
