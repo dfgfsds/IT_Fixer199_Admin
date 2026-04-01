@@ -635,7 +635,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
 
                                     {/* Description Field */}
                                     <div className="md:col-span-12 mt-2">
-                                        <label className="text-sm font-semibold text-gray-700 mb-1 block capitalize">Description</label>
+                                        <label className="text-sm font-semibold text-gray-700 mb-1 block capitalize">Instruction</label>
                                         <input
                                             type="text"
                                             value={item.issue_description_text}
