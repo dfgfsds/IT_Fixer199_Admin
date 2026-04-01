@@ -9,6 +9,7 @@ interface Props {
     onClose: () => void;
     onSuccess: () => void;
     editService?: any;
+    setEditService: any;
 }
 
 const ServiceModal: React.FC<Props> = ({
@@ -16,6 +17,7 @@ const ServiceModal: React.FC<Props> = ({
     onClose,
     onSuccess,
     editService,
+    setEditService,
 }) => {
     const isEdit = !!editService;
 
@@ -76,7 +78,7 @@ const ServiceModal: React.FC<Props> = ({
         setDeletedCategories([]);
         setDeletedPricingIds([]);
         setDeletedZoneHubIds([]);
-
+setEditService("")
         setApiErrors("");
     };
 
@@ -157,6 +159,7 @@ const ServiceModal: React.FC<Props> = ({
 
         setAttributesList(values);
     };
+
     // ---------------- FETCH MASTER DATA ----------------
     useEffect(() => {
         fetchCategories();
@@ -219,7 +222,7 @@ const ServiceModal: React.FC<Props> = ({
             categories:
                 editService.categories?.map((c: any) => c.category) || [],
 
-            attributes: editService?.attributes_details?.map((a: any) => ({
+            attributes: (editService?.attributes_details || editService?.attributes)?.map((a: any) => ({
                 id: a.value_id,
                 attribute_name: a.attribute_name,
                 value: a.value
@@ -317,9 +320,6 @@ const ServiceModal: React.FC<Props> = ({
         full: attr,
     }));
 
-    const selectedAttributeOptions = attributeOptions?.filter((option) =>
-        form?.attributes?.some((a: any) => a?.value_id === option?.value)
-    );
 
     const handleAttributeChange = (selected: any) => {
         if (!selected) {
@@ -339,9 +339,12 @@ const ServiceModal: React.FC<Props> = ({
                 seenAttributes.add(item.attribute_id);
             }
         }
-
         setForm({ ...form, attributes: result });
     };
+    const selectedAttributeOptions = attributeOptions?.filter((option) =>
+        form?.attributes?.some((a: any) => a?.id === option?.value)
+    );
+
 
 
     // const handleZoneHubChange = async (
