@@ -1,14 +1,6 @@
-// LIVE
-
-// const baseUrl =
-//   import.meta.env.VITE_API_BASE_URL ||
-//   "https://api.itfixer199.com";
-
-// TEST
-
 const baseUrl =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://api-test.itfixer199.com";
+  "https://api.itfixer199.com";
 
 const login = `${baseUrl}/api/login`;
 const allUsers = `${baseUrl}/api/user/all`;
