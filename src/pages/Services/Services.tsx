@@ -90,7 +90,8 @@ const Services: React.FC = () => {
                 include_categories: true,
                 include_media: true,
                 include_pricing: true,
-                include_zones: true
+                include_zones: true,
+                include_attributes: true
             };
 
             if (search) params.search = search;
