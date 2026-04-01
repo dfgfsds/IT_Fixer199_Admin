@@ -117,13 +117,13 @@ const ProductModal: React.FC<Props> = ({
     // };
 
     const fetchAttributes = async () => {
-        const res = await axiosInstance.get(Api?.attributeFields);
-        const values = (res?.data?.data || []).flatMap((attr: any) =>
-            (attr?.attribute_values || []).map((val: any) => ({
-                attribute_id: attr.attribute_id,
-                attribute_name: attr.attribute_name,
-                value_id: val.value_id,
-                value: val.value,
+        const res = await axiosInstance?.get(Api?.attributeFields);
+        const values = (res?.data?.data || [])?.flatMap((attr: any) =>
+            (attr?.attribute_values || [])?.map((val: any) => ({
+                attribute_id: attr?.attribute_id,
+                attribute_name: attr?.attribute_name,
+                value_id: val?.value_id,
+                value: val?.value,
             }))
         );
 
@@ -189,12 +189,9 @@ const ProductModal: React.FC<Props> = ({
     // ---------------- Edit Mode ----------------
     useEffect(() => {
         if (!editProduct) return;
-        console.log(editProduct)
         let parsedSpecification: any[] = [{ key: "", value: "" }];
-
         if (editProduct.specification) {
             let specData = editProduct.specification;
-
             // If string → parse
             if (typeof specData === "string") {
                 try {
@@ -204,7 +201,6 @@ const ProductModal: React.FC<Props> = ({
                     specData = [];
                 }
             }
-
             // If array → convert format
             if (Array.isArray(specData)) {
                 parsedSpecification = specData.map((item: any) => {
@@ -216,7 +212,6 @@ const ProductModal: React.FC<Props> = ({
                 });
             }
         }
-
         setForm({
             name: editProduct.name || "",
             description: editProduct.description || "",
@@ -227,7 +222,7 @@ const ProductModal: React.FC<Props> = ({
             status: editProduct.status || "ACTIVE",
             category_ids:
                 editProduct.categories?.map((c: any) => c.id) || [],
-            attributes: editProduct?.attributes_details?.map((a: any) => ({
+            attributes: editProduct?.attributes?.map((a: any) => ({
                 id: a.value_id,
                 attribute_name: a.attribute_name,
                 value: a.value
