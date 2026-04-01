@@ -33,9 +33,9 @@ const ServiceModal: React.FC<Props> = ({
     const [deletedPricingIds, setDeletedPricingIds] = useState<any[]>([]);
     const [deletedZoneHubIds, setDeletedZoneHubIds] = useState<any[]>([]);
 
-
     const [loading, setLoading] = useState(false);
     const [apiErrors, setApiErrors] = useState<string>("");
+    const [attributesList, setAttributesList] = useState<any[]>([]);
 
     const [form, setForm] = useState<any>({
         name: "",
@@ -45,6 +45,7 @@ const ServiceModal: React.FC<Props> = ({
         eta: 0,
         status: "ACTIVE",
         categories: [],
+        attributes: [],
         pricing_models: [
             { price_type_id: "", price: "" }
         ],
@@ -62,6 +63,7 @@ const ServiceModal: React.FC<Props> = ({
             eta: 0,
             status: "ACTIVE",
             categories: [],
+            attributes: [],
             pricing_models: [{ price_type_id: "", price: "" }],
             zone_hub_mappings: [{ zone_id: "", hub_id: "" }],
         });
@@ -70,7 +72,7 @@ const ServiceModal: React.FC<Props> = ({
         setNewMedia([]);
         setPreviewUrls([]);
         setDeletedMediaIds([]);
-
+        setAttributesList([]);
         setDeletedCategories([]);
         setDeletedPricingIds([]);
         setDeletedZoneHubIds([]);
@@ -83,12 +85,7 @@ const ServiceModal: React.FC<Props> = ({
         onClose();
     };
 
-    // ---------------- FETCH MASTER DATA ----------------
-    useEffect(() => {
-        fetchCategories();
-        fetchPriceTypes();
-        fetchHubsByZone();
-    }, []);
+
 
     const fetchCategories = async () => {
         const res = await axiosInstance.get(Api?.categories);
@@ -124,6 +121,7 @@ const ServiceModal: React.FC<Props> = ({
         value: cat.id,
         label: cat.name,
     }));
+
     const selectedCategoryOptions = categoryOptions.filter((option) =>
         form.categories.includes(option.value)
     );
@@ -146,7 +144,29 @@ const ServiceModal: React.FC<Props> = ({
         });
     };
 
-    console.log(editService)
+    const fetchAttributes = async () => {
+        const res = await axiosInstance.get(Api?.attributeFields);
+        const values = (res?.data?.data || []).flatMap((attr: any) =>
+            (attr?.attribute_values || []).map((val: any) => ({
+                attribute_id: attr.attribute_id,
+                attribute_name: attr.attribute_name,
+                value_id: val.value_id,
+                value: val.value,
+            }))
+        );
+
+        setAttributesList(values);
+    };
+    // ---------------- FETCH MASTER DATA ----------------
+    useEffect(() => {
+        fetchCategories();
+        fetchPriceTypes();
+        fetchHubsByZone();
+    }, []);
+
+    useEffect(() => {
+        fetchAttributes();
+    }, []);
     // ---------------- EDIT MODE ----------------
     useEffect(() => {
         if (!editService) return;
@@ -198,6 +218,12 @@ const ServiceModal: React.FC<Props> = ({
             // ✅ THIS IS THE FIX
             categories:
                 editService.categories?.map((c: any) => c.category) || [],
+
+            attributes: editService?.attributes_details?.map((a: any) => ({
+                id: a.value_id,
+                attribute_name: a.attribute_name,
+                value: a.value
+            })) || [],
 
             pricing_models: formattedPricing,
             // zone_hub_mappings: formattedZoneHub,
@@ -284,6 +310,39 @@ const ServiceModal: React.FC<Props> = ({
         updated.splice(index, 1);
         setForm({ ...form, zone_hub_mappings: updated });
     };
+
+    const attributeOptions = attributesList?.map((attr) => ({
+        value: attr?.value_id,
+        label: `${attr.attribute_name}: ${attr.value}`,
+        full: attr,
+    }));
+
+    const selectedAttributeOptions = attributeOptions?.filter((option) =>
+        form?.attributes?.some((a: any) => a?.value_id === option?.value)
+    );
+
+    const handleAttributeChange = (selected: any) => {
+        if (!selected) {
+            setForm({ ...form, attributes: [] });
+            return;
+        }
+        const result: any[] = [];
+        const seenAttributes = new Set();
+        for (let i = selected.length - 1; i >= 0; i--) {
+            const item = selected[i].full;
+            if (!seenAttributes.has(item.attribute_id)) {
+                result.unshift({
+                    id: item.value_id,
+                    attribute_name: item.attribute_name,
+                    value: item.value,
+                });
+                seenAttributes.add(item.attribute_id);
+            }
+        }
+
+        setForm({ ...form, attributes: result });
+    };
+
 
     // const handleZoneHubChange = async (
     //     index: number,
@@ -374,6 +433,12 @@ const ServiceModal: React.FC<Props> = ({
             form.categories.forEach((id: string) =>
                 formData.append("categories", id)
             );
+
+            const attributesPayload = form?.attributes.map((attr: any) => ({
+                value_id: attr?.id,
+            }));
+
+            formData.append("attributes", JSON.stringify(attributesPayload));
 
             form.pricing_models.forEach((p: any) =>
                 formData.append("pricing_models", JSON.stringify(p))
@@ -566,6 +631,24 @@ const ServiceModal: React.FC<Props> = ({
                                 value={selectedCategoryOptions}
                                 onChange={handleCategoryChange}
                                 isMulti
+                            />
+                        </div>
+
+                        {/* Attributes Multi Select */}
+                        {/* <div>
+                            <label className="block text-sm font-medium mb-1">
+                                Attributes
+                            </label> */}
+                        <div className="bg-white border rounded-xl shadow-sm p-6">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                                Attributes
+                            </h3>
+                            <Select
+                                options={attributeOptions}
+                                value={selectedAttributeOptions}
+                                onChange={handleAttributeChange}
+                                isMulti
+                                placeholder="Select Attributes"
                             />
                         </div>
 
