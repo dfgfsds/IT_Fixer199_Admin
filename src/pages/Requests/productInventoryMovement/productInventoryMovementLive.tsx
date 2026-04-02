@@ -41,8 +41,8 @@ const ProductInventoryMovementLive: React.FC = () => {
         const today = new Date().toISOString().split("T")[0];
 
         const ws = new WebSocket(
-            // `wss://api-test.itfixer199.com/ws/movements/?token=${token}&date=${today}&size=1000`
-            `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
+            `wss://api-test.itfixer199.com/ws/movements/?token=${token}&date=${today}&size=1000`
+            // `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
 
         );
 
