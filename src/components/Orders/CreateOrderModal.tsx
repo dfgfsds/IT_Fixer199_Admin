@@ -85,7 +85,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
     const mapRef = useRef<HTMLDivElement>(null);
     const googleMapRef = useRef<any>(null);
     const markerRef = useRef<any>(null);
-    const autocompleteRef = useRef<any>(null);
 
     const [form, setForm] = useState({
         customer_name: "",
@@ -96,12 +95,14 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         user_id: null,
         hub_id: "",
         zone_id: "",
-        payment_method: "CASH",
+        payment_method: "",
         transaction_id: "",
         is_paid: false,
         no_razorpay: true,
         no_assignment: true,
-        order_platform: "WHATSAPP",
+        order_platform: "",
+        slot_id: "",
+        is_instant_slot: false,
         items: [
             {
                 type: "",
@@ -115,6 +116,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
             } as OrderItem
         ]
     });
+
+    const [locationData, setLocationData] = useState<any>(null);
+    const [fetchingSlots, setFetchingSlots] = useState(false);
 
     useEffect(() => {
         fetchInitialData();
@@ -132,12 +136,12 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         try {
             await loadGoogleMaps();
 
-            // Default center: India
-            const defaultCenter = { lat: 20.5937, lng: 78.9629 };
+            // Default center: Chennai
+            const defaultCenter = { lat: 13.0827, lng: 80.2707 };
 
             const map = new (window as any).google.maps.Map(mapRef.current, {
                 center: defaultCenter,
-                zoom: 5,
+                zoom: 12,
                 mapTypeControl: false,
                 streetViewControl: false,
                 fullscreenControl: false,
@@ -214,7 +218,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         }
     };
 
-    // ── "Locate on Map" button: geocode current address ───────────────────
+    // "Locate on Map" button: geocode current address
     const handleLocateOnMap = async () => {
         if (!mapOpen) {
             setMapOpen(true);
@@ -249,6 +253,37 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
 
         toast.success("Location found! Drag the pin to fine-tune.");
     };
+
+    const fetchZoneAndSlots = async (lat: string, lon: string) => {
+        if (!lat || !lon || !scenario || form.no_assignment) return;
+
+        setFetchingSlots(true);
+        try {
+            const res = await axiosInstance.get(`${Api.zoneByLocation}?lat=${lat}&lng=${lon}`);
+            const data = res.data?.zone_slot;
+            setLocationData(data);
+
+            if (data?.zone?.id) {
+                setForm(prev => ({
+                    ...prev,
+                    slot_id: "",
+                    is_instant_slot: false
+                }));
+            }
+        } catch (error) {
+            console.error("Failed to fetch slots:", error);
+        } finally {
+            setFetchingSlots(false);
+        }
+    };
+
+    useEffect(() => {
+        if (form.latitude && form.longitude && !form.no_assignment) {
+            fetchZoneAndSlots(form.latitude, form.longitude);
+        } else {
+            setLocationData(null);
+        }
+    }, [form.latitude, form.longitude, form.no_assignment, scenario]);
 
     const fetchInitialData = async () => {
         try {
@@ -340,8 +375,19 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
 
     const handleSubmit = async () => {
         if (!scenario) { toast.error("Please select a business scenario preset first"); return; }
-        if (!form.customer_name || !form.customer_number || !form.address || !form.hub_id || !form.zone_id) {
-            toast.error("Please fill all required fields"); return;
+        if (!form.customer_name || !form.customer_number || !form.address || !form.hub_id || !form.zone_id || !form.order_platform) {
+            toast.error("Please fill all required fields (Name, Number, Address, Hub, Zone, and Platform)"); return;
+        }
+        if (form.no_razorpay && !form.payment_method) {
+            toast.error("Please select a payment method"); return;
+        }
+        if (!form.no_assignment && (!form.latitude || !form.longitude)) {
+            toast.error("Coordinates are mandatory for agent assignment. Please pick the location on the map.");
+            return;
+        }
+        if (!form.no_assignment && !form.slot_id && !form.is_instant_slot) {
+            toast.error("Please select an arrival time (Instant or a Slot)");
+            return;
         }
         if (!/^\d{10}$/.test(form.customer_number)) {
             toast.error("Please enter a valid 10-digit mobile number"); return;
@@ -350,11 +396,14 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
 
         try {
             setLoading(true);
+
             const payload = {
                 ...form,
                 user_id: null,
                 latitude: form.latitude ? Number(form.latitude) : null,
                 longitude: form.longitude ? Number(form.longitude) : null,
+                slot_id: form.is_instant_slot ? null : form.slot_id,
+                is_instant_slot: !!form.is_instant_slot,
                 items: form.items?.map((item: any) => {
                     const priceVal = Number(item.amount);
                     const cleanAttributes = Object.fromEntries(
@@ -447,12 +496,12 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 if (!caseId) return;
                                 let updates: any = {};
                                 switch (caseId) {
-                                    case "1": updates = { payment_method: "CASH", no_razorpay: true, no_assignment: true, is_paid: false, order_platform: "WHATSAPP" }; break;
-                                    case "2": updates = { payment_method: "RAZORPAY", no_razorpay: false, no_assignment: true, is_paid: false, order_platform: "OWN_PLATFORM" }; break;
-                                    case "3": updates = { payment_method: "UPI", no_razorpay: true, no_assignment: true, is_paid: true, order_platform: "SHOP" }; break;
-                                    case "4": updates = { payment_method: "RAZORPAY", no_razorpay: false, no_assignment: false, is_paid: false, order_platform: "OWN_PLATFORM" }; break;
-                                    case "5": updates = { payment_method: "CASH", no_razorpay: true, no_assignment: false, is_paid: false, order_platform: "WHATSAPP" }; break;
-                                    case "6": updates = { payment_method: "UPI", no_razorpay: true, no_assignment: false, is_paid: true, order_platform: "SHOP" }; break;
+                                    case "1": updates = { payment_method: "", no_razorpay: true, no_assignment: true, is_paid: false, order_platform: "" }; break;
+                                    case "2": updates = { payment_method: "RAZORPAY", no_razorpay: false, no_assignment: true, is_paid: false, order_platform: "" }; break;
+                                    case "3": updates = { payment_method: "", no_razorpay: true, no_assignment: true, is_paid: true, order_platform: "" }; break;
+                                    case "4": updates = { payment_method: "RAZORPAY", no_razorpay: false, no_assignment: false, is_paid: false, order_platform: "" }; break;
+                                    case "5": updates = { payment_method: "", no_razorpay: true, no_assignment: false, is_paid: false, order_platform: "" }; break;
+                                    case "6": updates = { payment_method: "", no_razorpay: true, no_assignment: false, is_paid: true, order_platform: "" }; break;
                                 }
                                 setForm(prev => ({ ...prev, ...updates }));
                                 toast.success(`Case ${caseId} logic applied`);
@@ -627,6 +676,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 onChange={(e) => setForm({ ...form, order_platform: e.target.value })}
                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
                             >
+                                <option value="">Choose Platform</option>
                                 <option value="WHATSAPP">WhatsApp</option>
                                 <option value="OWN_PLATFORM">Own Platform</option>
                                 <option value="SHOP">Shop</option>
@@ -643,12 +693,88 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                     type="checkbox"
                                     checked={!form.no_assignment}
                                     style={{ pointerEvents: scenario ? "none" : "auto" }}
-                                    onChange={(e) => setForm({ ...form, no_assignment: !e.target.checked })}
+                                    onChange={(e) => {
+                                        const needsAssign = e.target.checked;
+                                        setForm({ ...form, no_assignment: !needsAssign });
+                                        if (!needsAssign) {
+                                            setLocationData(null);
+                                            setForm(prev => ({ ...prev, slot_id: "", is_instant_slot: false }));
+                                        }
+                                    }}
                                     className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                                 />
                                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition font-medium">Auto Assign Agent</span>
                             </label>
                         </div>
+
+                        {/* Availability & Scheduling */}
+                        {!form.no_assignment && (form.latitude && form.longitude) && (
+                            <div className="md:col-span-2 space-y-4 pt-4">
+                                <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                                    <span className="w-1.5 h-4 bg-orange-500 rounded-full"></span>
+                                    Availability & Arrival *
+                                    <Loader2 size={14} className={`text-orange-500 ${fetchingSlots ? 'animate-spin' : 'hidden'}`} />
+                                </h4>
+
+                                {fetchingSlots ? (
+                                    <div className="flex items-center gap-2 text-gray-500 text-sm italic py-2">
+                                        <Loader2 size={14} className="animate-spin" />
+                                        Checking availability…
+                                    </div>
+                                ) : !locationData ? (
+                                    <div className="text-sm text-red-500 bg-red-50 p-3 rounded-lg border border-red-100 italic">
+                                        No service zone or slots found for this location. Try moving the map pin.
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Instant Delivery Option */}
+                                        {locationData.instant_availability?.available && (
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-gray-700">Instant Arrival</label>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setForm({ ...form, is_instant_slot: !form.is_instant_slot, slot_id: "" })}
+                                                    className={`w-full h-[42px] px-4 py-2 border rounded-lg text-sm font-medium transition-all flex items-center gap-3 ${form.is_instant_slot
+                                                        ? 'border-orange-500 ring-1 ring-orange-500/20'
+                                                        : 'border-gray-300 bg-white text-gray-600 hover:border-orange-300'
+                                                        }`}
+                                                >
+                                                    <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${form.is_instant_slot ? 'border-orange-600' : 'border-gray-300'}`}>
+                                                        {form.is_instant_slot && <div className="w-1.5 h-1.5 rounded-full bg-orange-600" />}
+                                                    </div>
+                                                    <span className="truncate">⚡ {locationData.instant_availability.eta_start_time} - {locationData.instant_availability.eta_end_time}</span>
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {/* Scheduled Slot Option */}
+                                        {locationData.slots && locationData.slots.length > 0 && (
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-gray-700">Scheduled visit slot</label>
+                                                <select
+                                                    value={form.slot_id}
+                                                    onChange={(e) => setForm({ ...form, slot_id: e.target.value, is_instant_slot: false })}
+                                                    className={`w-full h-[42px] px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition ${form.slot_id ? 'border-orange-500' : 'border-gray-300'}`}
+                                                >
+                                                    <option value="">Select Scheduled Slot</option>
+                                                    {(locationData.slots || []).map((s: any) => (
+                                                        <option key={s.id} value={s.id}>
+                                                            {s.start_time} - {s.end_time}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
+
+                                        {(!locationData.instant_availability?.available && (!locationData.slots || locationData.slots.length === 0)) && (
+                                            <div className="md:col-span-2 text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-100 italic">
+                                                No arrival slots available right now.
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Items */}
@@ -836,10 +962,11 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                     value={!form.no_razorpay ? "RAZORPAY" : form.payment_method}
                                     style={{ pointerEvents: !form.no_razorpay ? "none" : "auto", opacity: !form.no_razorpay ? 0.9 : 1, cursor: !form.no_razorpay ? "not-allowed" : "pointer" }}
                                     onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
-                                    className="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500 transition bg-white font-medium shadow-sm"
+                                    className="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500 transition bg-white"
                                 >
                                     {form.no_razorpay ? (
                                         <>
+                                            <option value="">Choose Payment Method</option>
                                             <option value="CASH">Cash</option>
                                             <option value="UPI">UPI</option>
                                             <option value="WALLET">Wallet</option>
