@@ -42,7 +42,7 @@ const ProductInventoryMovementLive: React.FC = () => {
 
         const ws = new WebSocket(
             `wss://api-test.itfixer199.com/ws/movements/?token=${token}&date=${today}&size=1000`
-                // `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
+            // `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
 
         );
 
@@ -66,13 +66,13 @@ const ProductInventoryMovementLive: React.FC = () => {
             // 🟢 movement_update (MOST IMPORTANT)
             if (data.type === "movement_update" && data.movements) {
                 setMovements(data.movements);
+                setLoading(false);
             }
 
             // 🟡 fallback single update
             if (data.type === "update" && data.movement) {
 
                 const updated = data.movement;
-
                 setMovements(prev => {
 
                     const index = prev.findIndex(i => i.id === updated.id);
@@ -86,7 +86,7 @@ const ProductInventoryMovementLive: React.FC = () => {
                     return [updated, ...prev];
 
                 });
-
+                setLoading(false);
             }
 
         };
@@ -142,7 +142,7 @@ const ProductInventoryMovementLive: React.FC = () => {
             connectWebSocket();
 
         } catch (error) {
-           toast.error(extractErrorMessage(error));
+            toast.error(extractErrorMessage(error));
         } finally {
             setLoadingId(null);
         }
