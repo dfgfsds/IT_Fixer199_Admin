@@ -22,7 +22,7 @@ interface OrderItem {
     attributes: Record<string, string>;
 }
 
-const MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
+const MAPS_API_KEY = "AIzaSyBtciSghWgfoM4B2-Ews_QjM3azDYz4ZWY";
 
 let mapsLoadPromise: Promise<void> | null = null;
 
