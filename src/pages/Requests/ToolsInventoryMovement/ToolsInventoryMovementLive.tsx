@@ -52,7 +52,7 @@ const ToolsInventoryMovementLive: React.FC = () => {
             ws.onmessage = (event) => {
                 const message = JSON.parse(event.data);
                 // console.log("WS DATA:", message);
-
+                setLoading(false);
                 // 🔵 Initial load
                 if (message.type === "initial_data" && message.movements) {
                     setMovements(message.movements);

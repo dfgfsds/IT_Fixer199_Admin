@@ -56,22 +56,23 @@ const ProductInventoryMovementLive: React.FC = () => {
 
             const data = JSON.parse(event.data);
             console.log("WS DATA:", data);
+                setLoading(false);
 
             // 🔵 Initial load
             if (data.type === "initial_data" && data.movements) {
-                setMovements(data.movements);
                 setLoading(false);
+                setMovements(data.movements);
             }
 
             // 🟢 movement_update (MOST IMPORTANT)
             if (data.type === "movement_update" && data.movements) {
-                setMovements(data.movements);
                 setLoading(false);
+                setMovements(data.movements);
             }
 
             // 🟡 fallback single update
             if (data.type === "update" && data.movement) {
-
+                setLoading(false);
                 const updated = data.movement;
                 setMovements(prev => {
 
@@ -86,7 +87,6 @@ const ProductInventoryMovementLive: React.FC = () => {
                     return [updated, ...prev];
 
                 });
-                setLoading(false);
             }
 
         };
