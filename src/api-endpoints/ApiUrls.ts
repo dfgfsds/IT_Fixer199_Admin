@@ -1,14 +1,14 @@
 // LIVE
 
-// const baseUrl =
-//   import.meta.env.VITE_API_BASE_URL ||
-//   "https://api.itfixer199.com";
+const baseUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://api.itfixer199.com";
 
 // TEST
 
-const baseUrl =
-  import.meta.env.VITE_API_BASE_URL ||
-  "https://api-test.itfixer199.com";
+// const baseUrl =
+//   import.meta.env.VITE_API_BASE_URL ||
+//   "https://api-test.itfixer199.com";
 
 const login = `${baseUrl}/api/login`;
 const allUsers = `${baseUrl}/api/user/all`;
@@ -179,6 +179,9 @@ const loginLogs = `${baseUrl}/api/user/login-logs/user/`;
 // activeLogs
 const activeLogs = `${baseUrl}/api/user/active-logs/user/`;
 
+// productSerialAvailability
+const productSerialAvailability = `${baseUrl}/api/product-serial/availability/`;
+
 export default {
   login,
   allUsers,
@@ -253,6 +256,7 @@ export default {
   agentPerformance,
   loginLogs,
   activeLogs,
+  productSerialAvailability,
 };
 
 

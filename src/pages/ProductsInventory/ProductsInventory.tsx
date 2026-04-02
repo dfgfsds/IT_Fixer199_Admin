@@ -7,6 +7,7 @@ import Pagination from "../../components/Pagination";
 import ProductAllocateModal from "./ProductAllocateModal";
 import toast from "react-hot-toast";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import Select from 'react-select';
 
 const ProductsInventory: React.FC = () => {
     const [data, setData] = useState<any[]>([]);
@@ -32,9 +33,10 @@ const ProductsInventory: React.FC = () => {
     const [pagination, setPagination] = useState<any>(null);
     const [productModal, setProductModal] = useState(false);
     const [apiErrors, setApiErrors] = useState<string>("");
-
+    const [serialNumberData, setSerialNumberData] = useState<any>();
     // ADD STATE
     const [serialNumbers, setSerialNumbers] = useState<string[]>([""]);
+
 
     // SYNC SERIALS WITH QUANTITY (🔥 important)
     useEffect(() => {
@@ -63,6 +65,46 @@ const ProductsInventory: React.FC = () => {
             return updated.length ? updated : [""];
         });
     };
+
+    // SERIAL NUMBER 
+    const fetchSerialNumber = async () => {
+        try {
+            const updatedApi = await axiosInstance.get(`${Api?.productSerialAvailability}?hub_id=${selectedItem?.hub_id}&product_id=${selectedItem?.product?.id}&size=1000`)
+            if (updatedApi) {
+                setSerialNumberData(updatedApi?.data?.availability);
+            }
+        } catch (error) {
+            // toast.error(extractErrorMessage(error));
+        }
+    }
+
+    useEffect(() => {
+        fetchSerialNumber();
+    }, [stockModal, selectedItem?.hub_id, selectedItem?.product?.id])
+
+    // const serialOptions = serialNumberData?.[0]?.available_serial_numbers?.map((item: any) => ({
+    //     value: item,
+    //     label: item,
+    //     isDisabled:
+    //         serialNumbers.includes(item) ||
+    //         (serialNumbers.length >= (quantity || 0) && !serialNumbers.includes(item))
+    // })) || [];
+
+    const serialOptions = useMemo(() => {
+        return serialNumberData?.[0]?.available_serial_numbers?.map((item: any) => ({
+            value: item,
+            label: item,
+            isDisabled:
+                serialNumbers.includes(item) ||
+                (serialNumbers.length >= (quantity || 0) && !serialNumbers.includes(item))
+        })) || [];
+    }, [quantity]);
+
+    console.log(serialOptions)
+    // useEffect(() => {
+    //     setSerialNumbers((prev) => prev?.slice(0, quantity || 1));
+    // }, [quantity]);
+
     const fetchInventory = async (pageNumber = page, size = pageSize) => {
         try {
             setLoading(true);
@@ -491,42 +533,73 @@ const ProductsInventory: React.FC = () => {
                             </div> */}
 
                             {/* SERIAL TABLE */}
-                            <div className="border rounded-lg overflow-hidden">
+                            <div className=" rounded-lg ">
                                 <div className="grid grid-cols-[40px_1fr_40px] bg-gray-100 text-xs px-2 py-2 font-medium">
                                     <span>#</span>
                                     <span>Serial</span>
                                     <span></span>
                                 </div>
+                                {stockType === "add" && (
+                                    <div className="max-h-52 overflow-y-auto">
+                                        {serialNumbers.map((sn, index) => (
+                                            <div
+                                                key={index}
+                                                className="grid grid-cols-[40px_1fr_40px] items-center border-t px-2 py-2"
+                                            >
+                                                <span className="text-xs">{index + 1}</span>
 
-                                <div className="max-h-52 overflow-y-auto">
-                                    {serialNumbers.map((sn, index) => (
-                                        <div
-                                            key={index}
-                                            className="grid grid-cols-[40px_1fr_40px] items-center border-t px-2 py-2"
-                                        >
-                                            <span className="text-xs">{index + 1}</span>
+                                                <input
+                                                    type="text"
+                                                    value={sn}
+                                                    onChange={(e) =>
+                                                        handleSerialChange(index, e.target.value)
+                                                    }
+                                                    className="border px-2 py-1 rounded text-xs"
+                                                    placeholder="Enter serial"
+                                                />
 
-                                            <input
-                                                type="text"
-                                                value={sn}
-                                                onChange={(e) =>
-                                                    handleSerialChange(index, e.target.value)
-                                                }
-                                                className="border px-2 py-1 rounded text-xs"
-                                                placeholder="Enter serial"
-                                            />
+                                                {serialNumbers.length > 1 && (
+                                                    <button
+                                                        onClick={() => handleRemoveSerial(index)}
+                                                        className="text-red-500"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
 
-                                            {serialNumbers.length > 1 && (
-                                                <button
-                                                    onClick={() => handleRemoveSerial(index)}
-                                                    className="text-red-500"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
+                                {stockType !== "add" && (
+                                    <div className="pb-20">
+                                        {/* <label className="block text-sm font-medium mb-1">
+                                        Serial Numbers *
+                                    </label> */}
+
+                                        <Select
+                                            options={serialOptions || []}
+                                            value={serialOptions?.filter((opt: any) =>
+                                                serialNumbers?.includes(opt?.value)
                                             )}
-                                        </div>
-                                    ))}
-                                </div>
+                                            onChange={(selected: any) => {
+                                                let values = selected ? selected.map((s: any) => s.value) : [];
+
+                                                if (values.length > quantity) {
+                                                    values = values.slice(0, quantity);
+                                                }
+
+                                                setSerialNumbers(values);
+                                                // ❌ REMOVE THIS LINE
+                                                // setQuantity(values.length);
+                                            }}
+                                            isMulti
+                                            placeholder="Select Serial Numbers"
+                                            className="text-sm"
+                                        />
+
+                                    </div>
+                                )}
                             </div>
                             {/* ERROR */}
                             {apiErrors && (
@@ -540,6 +613,7 @@ const ProductsInventory: React.FC = () => {
                                         setStockModal(false);
                                         setSelectedItem(null);
                                         setSerialNumbers([""]);
+                                        setQuantity(0)
                                     }}
                                     className="px-3 py-1 border rounded-md text-xs"
                                 >
