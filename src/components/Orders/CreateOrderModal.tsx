@@ -22,7 +22,7 @@ interface OrderItem {
     attributes: Record<string, string>;
 }
 
-const MAPS_API_KEY = "AIzaSyBtciSghWgfoM4B2-Ews_QjM3azDYz4ZWY";
+const MAPS_API_KEY = "AIzaSyAflftNedMvJ812sMI1l0h7kqj1-HBYDE8";
 
 let mapsLoadPromise: Promise<void> | null = null;
 
