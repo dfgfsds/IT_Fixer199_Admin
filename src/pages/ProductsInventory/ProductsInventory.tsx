@@ -160,7 +160,17 @@ const ProductsInventory: React.FC = () => {
                     product_id: selectedItem.product.id,
                     hub_id: selectedItem.hub_id,
                     stock_in_hub: quantity,
+                    serial_numbers: trimmed
                 });
+                if (res) {
+                    setApiErrors("");
+                    fetchInventory();
+                    setStockModal(false);
+                    setQuantity(0);
+                    setSelectedItem(null);
+                    setSerialNumbers([""]);
+                }
+
             }
 
             if (stockType === "remove") {
@@ -170,16 +180,18 @@ const ProductsInventory: React.FC = () => {
                         product_id: selectedItem.product.id,
                         hub_id: selectedItem.hub_id,
                         quantity: quantity,
+                        serial_numbers: trimmed
                     }
                 );
-            }
-            if (res) {
-                setApiErrors("");
-                fetchInventory();
-                setStockModal(false);
-                setQuantity(0);
-                setSelectedItem(null);
-                setSerialNumbers([""]);
+                if (res) {
+                    setApiErrors("");
+                    fetchInventory();
+                    setStockModal(false);
+                    setQuantity(0);
+                    setSelectedItem(null);
+                    setSerialNumbers([""]);
+                }
+
             }
 
         } catch (err) {
