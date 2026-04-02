@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import Api from '../../api-endpoints/ApiUrls';
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
-import { Loader } from "lucide-react";
+import { Eye, EyeOff, Loader } from "lucide-react";
 import { removeEmptyFields } from "../../utils/removeEmptyFields ";
 
 interface AddUserModalProps {
@@ -21,7 +21,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     const [loading, setLoading] = useState(false);
     const [apiErrors, setApiErrors] = useState<string>("");
     const [hubs, setHubs] = useState<any[]>([]);
-
+    const [showPassword, setShowPassword] = useState(false);
     const [newUser, setNewUser] = useState({
         name: "",
         email: "",
@@ -222,16 +222,27 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Password
                                 </label>
-                                <input
-                                    type="password"
-                                    required
-                                    value={newUser.password}
-                                    onChange={(e) =>
-                                        setNewUser({ ...newUser, password: e.target.value })
-                                    }
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                                    placeholder="Enter password"
-                                />
+                                <div className="relative">
+                                    <input
+                                        // type="password"
+                                        required
+                                        type={showPassword ? "text" : "password"}
+                                        value={newUser.password}
+                                        onChange={(e) =>
+                                            setNewUser({ ...newUser, password: e.target.value })
+                                        }
+                                        // className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                                        placeholder="Enter password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>

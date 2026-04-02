@@ -252,7 +252,7 @@ const ToolModal: React.FC<Props> = ({
 
                     <div>
                         <label className="block text-sm font-medium mb-1">
-                            categorie *
+                            Categories *
                         </label>
                         <select
                             value={form.category_id}
@@ -261,7 +261,7 @@ const ToolModal: React.FC<Props> = ({
                             }
                             className="w-full border rounded-lg px-3 py-2"
                         >
-                            <option value="">Select Categorie</option>
+                            <option value="">Select Categories</option>
 
                             {filteredCategories.length > 0 ? (
                                 filteredCategories?.map((c) => (
