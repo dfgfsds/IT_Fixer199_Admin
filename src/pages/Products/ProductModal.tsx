@@ -41,6 +41,8 @@ const ProductModal: React.FC<Props> = ({
         model: "",
         type: "PRODUCT",
         sku: "",
+        barcode: "",
+        hsn: "",
         specification: [
             { key: "", value: "" }
         ],
@@ -60,6 +62,8 @@ const ProductModal: React.FC<Props> = ({
         model: "",
         type: "PRODUCT",
         sku: "",
+        barcode: "",
+        hsn: "",
         specification: [{ key: "", value: "" }],
         status: "ACTIVE",
         category_ids: [],
@@ -222,6 +226,8 @@ const ProductModal: React.FC<Props> = ({
             model: editProduct.model_name || "",
             type: editProduct.type || "PRODUCT",
             sku: editProduct.sku || "",
+            barcode: editProduct.barcode || "",
+            hsn: editProduct.hsn || "",
             status: editProduct.status || "ACTIVE",
             category_ids:
                 editProduct.categories?.map((c: any) => c.id) || [],
@@ -403,6 +409,8 @@ const ProductModal: React.FC<Props> = ({
                     formData.append("model", form.model);
                     formData.append("type", form.type);
                     formData.append("sku", form.sku);
+                    formData.append("barcode", form.barcode);
+                    formData.append("hsn", form.hsn);
                     formData.append("status", form.status);
 
                     // 🔹 CATEGORY FORMAT ✅
@@ -606,6 +614,41 @@ const ProductModal: React.FC<Props> = ({
                             className="w-full border rounded-lg px-3 py-2"
                         />
                     </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Barcode */}
+                        <div>
+                            <label className="block text-sm font-medium mb-1">
+                                Barcode
+                            </label>
+                            <input
+                                type="text"
+                                value={form.barcode}
+                                onChange={(e) =>
+                                    setForm({ ...form, barcode: e.target.value })
+                                }
+                                className="w-full border rounded-lg px-3 py-2"
+                                placeholder="Enter barcode"
+                            />
+                        </div>
+
+                        {/* HSN */}
+                        <div>
+                            <label className="block text-sm font-medium mb-1">
+                                HSN
+                            </label>
+                            <input
+                                type="text"
+                                value={form.hsn}
+                                onChange={(e) =>
+                                    setForm({ ...form, hsn: e.target.value })
+                                }
+                                className="w-full border rounded-lg px-3 py-2"
+                                placeholder="Enter HSN code"
+                            />
+                        </div>
+                    </div>
+
                     {/* Description */}
                     <div>
                         <label className="block text-sm font-medium mb-1">
