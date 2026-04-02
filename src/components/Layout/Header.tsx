@@ -51,7 +51,9 @@ const Header: React.FC = () => {
       setLoadingNotif(true);
 
       const res = await fetch(
-        "https://api.itfixer199.com/api/notifications/",
+        "https://api-test.itfixer199.com/api/notifications/",
+        // "https://api.itfixer199.com/api/notifications/",
+
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -122,7 +124,10 @@ const Header: React.FC = () => {
         console.log("🔥 FCM TOKEN:", token);
 
         if (token) {
-          await fetch("https://api.itfixer199.com/api/notifications/register-fcm/", {
+          await fetch(
+            "https://api-test.itfixer199.com/api/notifications/register-fcm/"
+            //  "https://api.itfixer199.com/api/notifications/register-fcm/"
+            , {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

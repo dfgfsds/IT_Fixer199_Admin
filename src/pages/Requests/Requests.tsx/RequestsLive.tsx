@@ -58,7 +58,8 @@ const RequestsLive: React.FC = () => {
 
         const connect = () => {
             const ws = new WebSocket(
-                `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
+                `wss://api-test.itfixer199.com/ws/requests/?token=${token}&size=1000`
+                    // `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
             );
 
             socketRef.current = ws;
