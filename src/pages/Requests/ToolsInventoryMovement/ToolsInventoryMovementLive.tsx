@@ -82,6 +82,7 @@ const ToolsInventoryMovementLive: React.FC = () => {
 
                         return [updatedItem, ...prev];
                     });
+                    setLoading(false);
                 }
             };
 
