@@ -711,7 +711,7 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
                                         className="border rounded-lg px-3 py-2 w-full text-sm"
                                         required
                                         placeholder="0.00"
-                                        disabled={item.is_default}
+                                        // disabled={item.is_default}
                                     />
                                 </div>
 

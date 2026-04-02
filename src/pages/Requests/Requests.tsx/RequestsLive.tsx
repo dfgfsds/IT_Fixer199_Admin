@@ -59,7 +59,7 @@ const RequestsLive: React.FC = () => {
         const connect = () => {
             const ws = new WebSocket(
                 // `wss://api-test.itfixer199.com/ws/requests/?token=${token}&size=1000`
-                    `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
+                `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
             );
 
             socketRef.current = ws;
@@ -180,7 +180,6 @@ const RequestsLive: React.FC = () => {
     ) => {
         try {
             setLoadingId(req.id);
-
             const isApproved = approvalStatus === "APPROVED";
             if (req.request_type === "REFUND") {
 
@@ -225,7 +224,6 @@ const RequestsLive: React.FC = () => {
     const handleVerifyOtp = async () => {
         try {
             if (!currentRefundId) return;
-
             const updatedApi = await axiosInstance.post(
                 `${Api?.approvalOtpVerify}/${currentRefundId}/`,
                 {
@@ -246,7 +244,6 @@ const RequestsLive: React.FC = () => {
                 setOtp("");
                 setCurrentRefundId(null);
             }
-
         } catch (error) {
             toast.error(extractErrorMessage(error));
         }
@@ -308,7 +305,6 @@ const RequestsLive: React.FC = () => {
                                 <th className="px-4 py-3 text-left">Approval</th>
                                 <th className="px-4 py-3 text-left">Created</th>
                                 <th className="px-6 py-3 text-right">Action</th>
-
                             </tr>
                         </thead>
                         <tbody>
@@ -317,7 +313,6 @@ const RequestsLive: React.FC = () => {
                                     <td className="px-4 py-3">
                                         {index + 1}
                                     </td>
-
                                     <td className="px-4 py-3 capitalize">
                                         <div className="flex flex-col">
                                             <span className="font-medium text-gray-900">
@@ -328,14 +323,12 @@ const RequestsLive: React.FC = () => {
                                             </span>
                                         </div>
                                     </td>
-
                                     <td className="px-4 py-3">
                                         {req?.request_type}
                                     </td>
                                     <td className="px-4 py-3 ">
                                         {req?.requested_by_role}
                                     </td>
-
                                     <td className="px-4 py-3">
                                         <span
                                             className={`px-2 py-1 text-xs rounded-full font-semibold ${STATUS_STYLE[req.status] ||
@@ -345,7 +338,6 @@ const RequestsLive: React.FC = () => {
                                             {req?.status.replaceAll("_", " ")}
                                         </span>
                                     </td>
-
                                     <td className="px-6 py-4">
                                         {req.approval_status === "APPROVED" ? (
                                             <>
@@ -396,11 +388,9 @@ const RequestsLive: React.FC = () => {
                                             </div>
                                         )}
                                     </td>
-
                                     <td className="px-4 py-3">
                                         {req?.created_at ? new Date(req.created_at).toLocaleString() : "-"}
                                     </td>
-
                                     <td className="px-6 py-4 text-right">
                                         <button
                                             onClick={() => {
@@ -412,7 +402,6 @@ const RequestsLive: React.FC = () => {
                                             <Eye size={18} />
                                         </button>
                                     </td>
-
                                 </tr>
                             ))}
                         </tbody>
