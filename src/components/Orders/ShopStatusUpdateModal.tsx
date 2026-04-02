@@ -16,6 +16,7 @@ const ShopStatusUpdateModal: React.FC<ShopStatusUpdateModalProps> = ({
   onSuccess,
 }) => {
   const [status, setStatus] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState(order?.payment_status || "");
   const [otp, setOtp] = useState("");
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -26,17 +27,24 @@ const ShopStatusUpdateModal: React.FC<ShopStatusUpdateModalProps> = ({
       return;
     }
 
+    if (order?.payment_status !== "SUCCESS" && !paymentStatus) {
+      toast.error("Please select a payment status");
+      return;
+    }
+
     try {
       setLoading(true);
+      const payload: any = {
+        order_status: status,
+      };
+
+      if (order?.payment_status !== "SUCCESS") {
+        payload.payment_status = paymentStatus;
+      }
+
       const response = await axiosInstance.post(
         `${Api?.manualActivate}${order?.id}/manual-update/`,
-        {
-          order_status: status,
-          payment_status: status === "COMPLETED" ? "SUCCESS" : order?.payment_status || "PENDING",
-          assign_agent: false,
-          agent_id: order?.assigned_agent_id || null,
-          order_platform: "SHOP",
-        }
+        payload
       );
 
       const updateData = response.data?.["Order updated successfully"] || response.data?.data;
@@ -99,7 +107,7 @@ const ShopStatusUpdateModal: React.FC<ShopStatusUpdateModalProps> = ({
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Select New Status</label>
               <select
-                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all mb-4"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 disabled={loading}
@@ -108,6 +116,22 @@ const ShopStatusUpdateModal: React.FC<ShopStatusUpdateModalProps> = ({
                 <option value="COMPLETED">COMPLETED</option>
                 <option value="CANCELLED">CANCELLED</option>
               </select>
+
+              {order?.payment_status !== "SUCCESS" && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Update Payment Status</label>
+                  <select
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    value={paymentStatus}
+                    onChange={(e) => setPaymentStatus(e.target.value)}
+                    disabled={loading}
+                  >
+                    <option value="">Choose Payment Status</option>
+                    <option value="SUCCESS">SUCCESS</option>
+                    <option value="FAILED">FAILED</option>
+                  </select>
+                </div>
+              )}
             </div>
           ) : (
             <div>

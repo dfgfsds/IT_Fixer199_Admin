@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
 import axiosInstance from "../../configs/axios-middleware";
 import Api from "../../api-endpoints/ApiUrls";
 import toast from "react-hot-toast";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, MapPin, Loader2, Map } from "lucide-react";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 interface CreateOrderModalProps {
@@ -22,6 +22,53 @@ interface OrderItem {
     attributes: Record<string, string>;
 }
 
+const MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
+
+let mapsLoadPromise: Promise<void> | null = null;
+
+const loadGoogleMaps = (): Promise<void> => {
+    if (mapsLoadPromise) return mapsLoadPromise;
+    mapsLoadPromise = new Promise((resolve, reject) => {
+        if ((window as any).google?.maps) { resolve(); return; }
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        script.onload = () => resolve();
+        script.onerror = () => { mapsLoadPromise = null; reject(new Error("Google Maps failed to load")); };
+        document.head.appendChild(script);
+    });
+    return mapsLoadPromise;
+};
+
+
+const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
+    return new Promise((resolve) => {
+        const geocoder = new (window as any).google.maps.Geocoder();
+        geocoder.geocode({ address }, (results: any, status: any) => {
+            if (status === "OK" && results[0]) {
+                const loc = results[0].geometry.location;
+                resolve({ lat: loc.lat(), lng: loc.lng() });
+            } else {
+                resolve(null);
+            }
+        });
+    });
+};
+
+const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
+    return new Promise((resolve) => {
+        const geocoder = new (window as any).google.maps.Geocoder();
+        geocoder.geocode({ location: { lat, lng } }, (results: any, status: any) => {
+            if (status === "OK" && results[0]) {
+                resolve(results[0].formatted_address);
+            } else {
+                resolve(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+            }
+        });
+    });
+};
+
 const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [hubs, setHubs] = useState<any[]>([]);
@@ -31,6 +78,14 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
     const [scenario, setScenario] = useState("");
     const [rowItems, setRowItems] = useState<{ [key: number]: any[] }>({});
     const [loadingRows, setLoadingRows] = useState<{ [key: number]: boolean }>({});
+
+    // Map state
+    const [mapOpen, setMapOpen] = useState(false);
+    const [mapLoading, setMapLoading] = useState(false);
+    const mapRef = useRef<HTMLDivElement>(null);
+    const googleMapRef = useRef<any>(null);
+    const markerRef = useRef<any>(null);
+    const autocompleteRef = useRef<any>(null);
 
     const [form, setForm] = useState({
         customer_name: "",
@@ -63,12 +118,137 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
 
     useEffect(() => {
         fetchInitialData();
-        // Prevent background scrolling
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.body.style.overflow = 'auto';
-        };
+        document.body.style.overflow = "hidden";
+        return () => { document.body.style.overflow = "auto"; };
     }, []);
+
+    useEffect(() => {
+        if (!mapOpen) return;
+        initMap();
+    }, [mapOpen]);
+
+    const initMap = async () => {
+        setMapLoading(true);
+        try {
+            await loadGoogleMaps();
+
+            // Default center: India
+            const defaultCenter = { lat: 20.5937, lng: 78.9629 };
+
+            const map = new (window as any).google.maps.Map(mapRef.current, {
+                center: defaultCenter,
+                zoom: 5,
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false,
+                styles: [
+                    { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }
+                ]
+            });
+
+            const marker = new (window as any).google.maps.Marker({
+                map,
+                draggable: true,
+                animation: (window as any).google.maps.Animation.DROP,
+                icon: {
+                    url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                }
+            });
+
+            // Marker drag end → reverse geocode
+            marker.addListener("dragend", async () => {
+                const pos = marker.getPosition();
+                const lat = pos.lat();
+                const lng = pos.lng();
+                const addr = await reverseGeocode(lat, lng);
+                setForm(prev => ({
+                    ...prev,
+                    latitude: lat.toFixed(7),
+                    longitude: lng.toFixed(7),
+                    address: addr
+                }));
+            });
+
+            // Map click → move marker + reverse geocode
+            map.addListener("click", async (e: any) => {
+                const lat = e.latLng.lat();
+                const lng = e.latLng.lng();
+                marker.setPosition(e.latLng);
+                marker.setAnimation((window as any).google.maps.Animation.DROP);
+                const addr = await reverseGeocode(lat, lng);
+                setForm(prev => ({
+                    ...prev,
+                    latitude: lat.toFixed(7),
+                    longitude: lng.toFixed(7),
+                    address: addr
+                }));
+            });
+
+            googleMapRef.current = map;
+            markerRef.current = marker;
+
+            // If address already typed → geocode it immediately
+            if (form.address.trim()) {
+                const coords = await geocodeAddress(form.address);
+                if (coords) {
+                    map.setCenter(coords);
+                    map.setZoom(16);
+                    marker.setPosition(coords);
+                    setForm(prev => ({
+                        ...prev,
+                        latitude: coords.lat.toFixed(7),
+                        longitude: coords.lng.toFixed(7)
+                    }));
+                }
+            } else if (form.latitude && form.longitude) {
+                const pos = { lat: Number(form.latitude), lng: Number(form.longitude) };
+                map.setCenter(pos);
+                map.setZoom(16);
+                marker.setPosition(pos);
+            }
+        } catch (err) {
+            console.error("Map init error:", err);
+            toast.error("Failed to load Google Maps. Check your API key.");
+        } finally {
+            setMapLoading(false);
+        }
+    };
+
+    // ── "Locate on Map" button: geocode current address ───────────────────
+    const handleLocateOnMap = async () => {
+        if (!mapOpen) {
+            setMapOpen(true);
+            return;
+        }
+        // Map already open — just geocode the current address
+        if (!form.address.trim()) {
+            toast.error("Please enter an address first");
+            return;
+        }
+        if (!googleMapRef.current || !markerRef.current) return;
+
+        setMapLoading(true);
+        const coords = await geocodeAddress(form.address);
+        setMapLoading(false);
+
+        if (!coords) {
+            toast.error("Could not find that address. Try being more specific.");
+            return;
+        }
+
+        googleMapRef.current.setCenter(coords);
+        googleMapRef.current.setZoom(17);
+        markerRef.current.setPosition(coords);
+        markerRef.current.setAnimation((window as any).google.maps.Animation.DROP);
+
+        setForm(prev => ({
+            ...prev,
+            latitude: coords.lat.toFixed(7),
+            longitude: coords.lng.toFixed(7)
+        }));
+
+        toast.success("Location found! Drag the pin to fine-tune.");
+    };
 
     const fetchInitialData = async () => {
         try {
@@ -77,11 +257,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                 axiosInstance.get(Api.appSettings),
                 axiosInstance.get(Api.categories)
             ]);
-
             setHubs(hubsRes.data?.hubs || hubsRes.data?.data || hubsRes.data || []);
             setRazorPayKey(settingsRes.data?.pg_api_key || settingsRes.data?.data?.pg_api_key || "");
             setCategories(categoriesRes.data?.data || []);
-
         } catch (error) {
             console.error("Failed to fetch initial data:", error);
         }
@@ -98,24 +276,16 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
 
     const handleHubChange = (hubId: string) => {
         setForm({ ...form, hub_id: hubId, zone_id: "" });
-        if (hubId) {
-            fetchZones(hubId);
-        } else {
-            setZones([]);
-        }
+        if (hubId) fetchZones(hubId);
+        else setZones([]);
     };
 
     const handleAddItem = () => {
         setForm({
             ...form,
             items: [...form.items, {
-                type: "",
-                category_id: "",
-                product_id: "",
-                service_id: "",
-                quantity: 1,
-                amount: 0,
-                issue_description_text: "",
+                type: "", category_id: "", product_id: "", service_id: "",
+                quantity: 1, amount: 0, issue_description_text: "",
                 attributes: {} as Record<string, string>
             } as OrderItem]
         });
@@ -123,8 +293,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
 
     const handleRemoveItem = (index: number) => {
         if (form.items.length === 1) return;
-        const newItems = form.items.filter((_, i) => i !== index);
-        setForm({ ...form, items: newItems });
+        setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
     };
 
     const fetchItemsByCategory = async (index: number, type: string, categoryId: string) => {
@@ -134,13 +303,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
             const url = type === "PRODUCT" ? Api.products : Api.services;
             const res = await axiosInstance.get(`${url}?category_id=${categoryId}&include_categories=true&include_attribute=true`);
             const data = res.data?.products || res.data?.services || res.data?.data || [];
-
-            setRowItems(prev => ({
-                ...prev,
-                [index]: Array.isArray(data) ? data : (data.data || [])
-            }));
+            setRowItems(prev => ({ ...prev, [index]: Array.isArray(data) ? data : (data.data || []) }));
         } catch (error) {
-            console.error("Failed to fetch items by category:", error);
+            console.error("Failed to fetch items:", error);
         } finally {
             setLoadingRows(prev => ({ ...prev, [index]: false }));
         }
@@ -149,18 +314,13 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
     const handleItemChange = (index: number, field: string, value: any) => {
         const newItems = [...form.items];
         newItems[index] = { ...newItems[index], [field]: value };
-
         if (field === "type") {
             newItems[index].category_id = "";
             newItems[index].product_id = "";
             newItems[index].service_id = "";
             newItems[index].issue_description_text = "";
             newItems[index].attributes = {};
-            setRowItems(prev => {
-                const updated = { ...prev };
-                delete updated[index];
-                return updated;
-            });
+            setRowItems(prev => { const u = { ...prev }; delete u[index]; return u; });
         } else if (field === "category_id") {
             newItems[index].product_id = "";
             newItems[index].service_id = "";
@@ -169,44 +329,27 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         } else if (field === "product_id" || field === "service_id") {
             newItems[index].attributes = {};
         }
-
         setForm({ ...form, items: newItems });
     };
 
     const handleAttributeChange = (index: number, attrId: string, valueId: string) => {
         const newItems = [...form.items];
-        newItems[index].attributes = {
-            ...newItems[index].attributes,
-            [attrId]: valueId
-        };
+        newItems[index].attributes = { ...newItems[index].attributes, [attrId]: valueId };
         setForm({ ...form, items: newItems });
     };
 
     const handleSubmit = async () => {
-        if (!scenario) {
-            toast.error("Please select a business scenario preset first");
-            return;
-        }
-
+        if (!scenario) { toast.error("Please select a business scenario preset first"); return; }
         if (!form.customer_name || !form.customer_number || !form.address || !form.hub_id || !form.zone_id) {
-            toast.error("Please fill all required fields");
-            return;
+            toast.error("Please fill all required fields"); return;
         }
-
-        const phoneRegex = /^\d{10}$/;
-        if (!phoneRegex.test(form.customer_number)) {
-            toast.error("Please enter a valid 10-digit mobile number");
-            return;
+        if (!/^\d{10}$/.test(form.customer_number)) {
+            toast.error("Please enter a valid 10-digit mobile number"); return;
         }
-
-        if (form.items.length === 0) {
-            toast.error("Add at least one item");
-            return;
-        }
+        if (form.items.length === 0) { toast.error("Add at least one item"); return; }
 
         try {
             setLoading(true);
-
             const payload = {
                 ...form,
                 user_id: null,
@@ -214,19 +357,15 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                 longitude: form.longitude ? Number(form.longitude) : null,
                 items: form.items?.map((item: any) => {
                     const priceVal = Number(item.amount);
-
-                    // Filter out empty attributes
                     const cleanAttributes = Object.fromEntries(
                         Object.entries(item.attributes || {}).filter(([_, v]) => v !== "" && v !== null)
                     );
-
                     const baseItem: any = {
                         type: item.type,
                         quantity: Number(item.quantity),
                         issue_description_text: item.issue_description_text,
                         attributes: cleanAttributes
                     };
-
                     if (item.type === "PRODUCT") {
                         baseItem.product_id = item.product_id;
                         baseItem.amount = priceVal;
@@ -239,12 +378,10 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
             };
 
             const response = await axiosInstance.post(Api.manualActivate, payload);
-
             if (response.data) {
                 const createData = response.data.order_creation || response.data.data;
                 const rzpOrderId = createData?.razorpay_order_id;
                 const rzpAmount = createData?.amount;
-
                 if (rzpOrderId && (window as any).Razorpay) {
                     const options = {
                         key: razorPayKey,
@@ -253,25 +390,14 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                         name: "IT Fixer",
                         description: `Order Payment for ${form.customer_name}`,
                         order_id: rzpOrderId,
-                        handler: function (response: any) {
-                            toast.success("Payment Successful!");
-                            onSuccess();
-                            onClose();
-                        },
-                        prefill: {
-                            name: form.customer_name,
-                            contact: form.customer_number
-                        },
-                        theme: {
-                            color: "#EA580C"
-                        }
+                        handler: () => { toast.success("Payment Successful!"); onSuccess(); onClose(); },
+                        prefill: { name: form.customer_name, contact: form.customer_number },
+                        theme: { color: "#EA580C" }
                     };
                     const rzp = new (window as any).Razorpay(options);
                     rzp.open();
                 } else {
-                    toast.success("Order Created Successfully!");
-                    onSuccess();
-                    onClose();
+                    toast.success("Order Created Successfully!"); onSuccess(); onClose();
                 }
             }
         } catch (error) {
@@ -284,7 +410,10 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
 
     return ReactDOM.createPortal(
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9000] p-4">
-            <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div
+                className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+            >
                 {/* Header */}
                 <div className="p-6 border-b flex items-center justify-between bg-gray-50">
                     <div>
@@ -316,7 +445,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 const caseId = e.target.value;
                                 setScenario(caseId);
                                 if (!caseId) return;
-
                                 let updates: any = {};
                                 switch (caseId) {
                                     case "1": updates = { payment_method: "CASH", no_razorpay: true, no_assignment: true, is_paid: false, order_platform: "WHATSAPP" }; break;
@@ -326,11 +454,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                     case "5": updates = { payment_method: "CASH", no_razorpay: true, no_assignment: false, is_paid: false, order_platform: "WHATSAPP" }; break;
                                     case "6": updates = { payment_method: "UPI", no_razorpay: true, no_assignment: false, is_paid: true, order_platform: "SHOP" }; break;
                                 }
-
-                                setForm(prev => ({
-                                    ...prev,
-                                    ...updates
-                                }));
+                                setForm(prev => ({ ...prev, ...updates }));
                                 toast.success(`Case ${caseId} logic applied`);
                             }}
                         >
@@ -373,32 +497,91 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 placeholder="Enter 10-digit mobile number"
                             />
                         </div>
-                        <div className="md:col-span-2 space-y-1">
-                            <label className="text-sm font-medium text-gray-700">Full Address *</label>
+
+                        {/* Full Address + Map*/}
+                        <div className="md:col-span-2 space-y-3">
+                            {/* Label row with map button on the right */}
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm font-medium text-gray-700">Full Address *</label>
+                                <button
+                                    type="button"
+                                    onClick={handleLocateOnMap}
+                                    disabled={mapLoading}
+                                    title={mapOpen ? "Search this address on map" : "Open map"}
+                                    className="flex items-center gap-[6px] pl-3 pr-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition active:scale-95 disabled:opacity-60 text-sm font-semibold shadow-sm"
+                                >
+                                    {mapLoading
+                                        ? <Loader2 size={16} className="animate-spin" />
+                                        : <MapPin size={16} />
+                                    }
+                                    {mapOpen ? "Search Address" : "Open Map"}
+                                </button>
+                            </div>
+
+                            {/* Textarea */}
                             <textarea
                                 value={form.address}
                                 onChange={(e) => setForm({ ...form, address: e.target.value })}
                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition min-h-[80px]"
                                 placeholder="Enter mapping address"
                             />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">Latitude</label>
-                            <input
-                                type="number"
-                                value={form.latitude}
-                                onChange={(e) => setForm({ ...form, latitude: e.target.value })}
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">Longitude</label>
-                            <input
-                                type="number"
-                                value={form.longitude}
-                                onChange={(e) => setForm({ ...form, longitude: e.target.value })}
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
-                            />
+
+                            {/* Coordinates */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <label className="text-sm font-medium text-gray-700">Latitude</label>
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={form.latitude}
+                                        className="w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-600 outline-none cursor-default"
+                                        placeholder="Auto-filled from map"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-medium text-gray-700">Longitude</label>
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={form.longitude}
+                                        className="w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-600 outline-none cursor-default"
+                                        placeholder="Auto-filled from map"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Collapsible Map Panel */}
+                            {mapOpen && (
+                                <div className="rounded-xl overflow-hidden border border-orange-200 shadow-md mt-4">
+                                    {/* Map toolbar */}
+                                    <div className="bg-orange-50 px-4 py-2 flex items-center justify-between border-b border-orange-100">
+                                        <div className="flex items-center gap-2 text-sm font-medium text-orange-700">
+                                            <Map size={15} />
+                                            Click anywhere or drag the pin to set exact location
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setMapOpen(false)}
+                                            className="text-gray-400 hover:text-gray-700 transition"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+
+                                    {/* Map container */}
+                                    <div className="relative">
+                                        {mapLoading && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
+                                                <div className="flex flex-col items-center gap-2 text-gray-500">
+                                                    <Loader2 size={28} className="animate-spin text-orange-500" />
+                                                    <span className="text-sm font-medium">Loading map…</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div ref={mapRef} style={{ height: "320px", width: "100%" }} />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -454,10 +637,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                             <label
                                 onClick={(e) => { if (scenario) e.preventDefault(); }}
                                 className="flex items-center gap-2 group transition-all"
-                                style={{
-                                    cursor: scenario ? "not-allowed" : "pointer",
-                                    opacity: scenario ? 0.9 : 1
-                                }}
+                                style={{ cursor: scenario ? "not-allowed" : "pointer", opacity: scenario ? 0.9 : 1 }}
                             >
                                 <input
                                     type="checkbox"
@@ -489,7 +669,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                         <div className="space-y-4">
                             {form.items.map((item, index) => (
                                 <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 border rounded-xl bg-gray-50 relative group">
-                                    {/* Type Selector */}
                                     <div className="md:col-span-2">
                                         <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Type</label>
                                         <select
@@ -503,7 +682,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                         </select>
                                     </div>
 
-                                    {/* Category Selector */}
                                     <div className="md:col-span-3">
                                         <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Category</label>
                                         <select
@@ -529,7 +707,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                         </select>
                                     </div>
 
-                                    {/* Item Selector */}
                                     <div className="md:col-span-3">
                                         <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
                                             {item.type === "PRODUCT" ? "Select Product" : "Select Service"}
@@ -556,7 +733,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                         </select>
                                     </div>
 
-                                    {/* Qty & Amount */}
                                     <div className="md:col-span-2">
                                         <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Qty</label>
                                         <input
@@ -569,6 +745,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                             min="1"
                                         />
                                     </div>
+
                                     <div className="md:col-span-2 relative group">
                                         <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Amount</label>
                                         <input
@@ -581,7 +758,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                             className="w-full px-3 py-1.5 border rounded-lg bg-white text-sm"
                                             placeholder="0.00"
                                         />
-                                        {/* Remove Item Button */}
                                         {form.items.length > 1 && (
                                             <button
                                                 onClick={() => handleRemoveItem(index)}
@@ -597,19 +773,14 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                         const selectedId = item.type === "PRODUCT" ? item.product_id : item.service_id;
                                         const selectedItem = (rowItems[index] || []).find((i: any) => i.id === selectedId);
                                         const attrList = selectedItem?.attributes || [];
-
                                         if (attrList.length === 0) return null;
-
-                                        const grouped: { [key: string]: { id: string, name: string, options: any[] } } = {};
+                                        const grouped: { [key: string]: { id: string; name: string; options: any[] } } = {};
                                         attrList.forEach((a: any) => {
                                             const name = a.attribute_name || a.name || "Option";
                                             const id = a.attribute_id;
-                                            if (!grouped[name]) {
-                                                grouped[name] = { id, name, options: [] };
-                                            }
+                                            if (!grouped[name]) grouped[name] = { id, name, options: [] };
                                             grouped[name].options.push(a);
                                         });
-
                                         return (
                                             <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
                                                 {Object.values(grouped).map(group => (
@@ -633,7 +804,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                         );
                                     })()}
 
-                                    {/* Description Field */}
+                                    {/* Description */}
                                     <div className="md:col-span-12 mt-2">
                                         <label className="text-sm font-semibold text-gray-700 mb-1 block capitalize">Instruction</label>
                                         <input
@@ -663,11 +834,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 <label className="text-sm font-medium text-gray-700">Payment Method</label>
                                 <select
                                     value={!form.no_razorpay ? "RAZORPAY" : form.payment_method}
-                                    style={{
-                                        pointerEvents: !form.no_razorpay ? "none" : "auto",
-                                        opacity: !form.no_razorpay ? 0.9 : 1,
-                                        cursor: !form.no_razorpay ? "not-allowed" : "pointer"
-                                    }}
+                                    style={{ pointerEvents: !form.no_razorpay ? "none" : "auto", opacity: !form.no_razorpay ? 0.9 : 1, cursor: !form.no_razorpay ? "not-allowed" : "pointer" }}
                                     onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
                                     className="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500 transition bg-white font-medium shadow-sm"
                                 >
@@ -687,10 +854,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 <label
                                     onClick={(e) => { if (scenario) e.preventDefault(); }}
                                     className="flex items-center gap-2 group transition-all"
-                                    style={{
-                                        cursor: scenario ? "not-allowed" : "pointer",
-                                        opacity: scenario ? 0.9 : 1
-                                    }}
+                                    style={{ cursor: scenario ? "not-allowed" : "pointer", opacity: scenario ? 0.9 : 1 }}
                                 >
                                     <input
                                         type="checkbox"
@@ -705,10 +869,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 <label
                                     onClick={(e) => { if (scenario) e.preventDefault(); }}
                                     className="flex items-center gap-2 group transition-all"
-                                    style={{
-                                        cursor: scenario ? "not-allowed" : "pointer",
-                                        opacity: scenario ? 0.9 : 1
-                                    }}
+                                    style={{ cursor: scenario ? "not-allowed" : "pointer", opacity: scenario ? 0.9 : 1 }}
                                 >
                                     <input
                                         type="checkbox"
@@ -737,7 +898,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                     </div>
                 </div>
 
-                {/* Footer Actions */}
+                {/* Footer */}
                 <div className="p-6 border-t bg-gray-50 flex items-center justify-end gap-4">
                     <button
                         onClick={onClose}
@@ -756,9 +917,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                 Creating...
                             </>
-                        ) : (
-                            "Create Order Now"
-                        )}
+                        ) : "Create Order Now"}
                     </button>
                 </div>
             </div>
