@@ -201,11 +201,12 @@
 // export default ProductAllocateModal;
 
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import Api from "../../api-endpoints/ApiUrls";
 import { Loader2, Package, Plus, Trash2 } from "lucide-react";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import Select from 'react-select';
 
 interface Props {
     show: boolean;
@@ -226,7 +227,7 @@ const ProductAllocateModal: React.FC<Props> = ({
     const [type, setType] = useState<"GIVE" | "GET">("GIVE");
     const [loading, setLoading] = useState(false);
     const [apiErrors, setApiErrors] = useState("");
-
+    const [serialNumberData, setSerialNumberData] = useState<any>();
     const [serialNumbers, setSerialNumbers] = useState<string[]>([""]);
 
     useEffect(() => {
@@ -259,6 +260,45 @@ const ProductAllocateModal: React.FC<Props> = ({
             return updated;
         });
     };
+
+    // SERIAL NUMBER 
+    const fetchSerialNumber = async () => {
+        try {
+            const updatedApi = await axiosInstance.get(`${Api?.productSerialAvailability}?hub_id=${selectedItem?.hub_id}&product_id=${selectedItem?.product?.id}&size=1000`)
+            if (updatedApi) {
+                setSerialNumberData(updatedApi?.data?.availability);
+            }
+        } catch (error) {
+            // toast.error(extractErrorMessage(error));
+        }
+    }
+
+    useEffect(() => {
+        fetchSerialNumber();
+    }, [selectedItem?.hub_id, selectedItem?.product?.id])
+
+    // const serialOptions = serialNumberData?.[0]?.available_serial_numbers?.map((item: any) => ({
+    //     value: item,
+    //     label: item,
+    //     isDisabled:
+    //         serialNumbers.includes(item) ||
+    //         (serialNumbers.length >= (quantity || 0) && !serialNumbers.includes(item))
+    // })) || [];
+
+    const serialOptions = useMemo(() => {
+        return serialNumberData?.[0]?.available_serial_numbers?.map((item: any) => ({
+            value: item,
+            label: item,
+            isDisabled:
+                serialNumbers.includes(item) ||
+                (serialNumbers.length >= (quantity || 0) && !serialNumbers.includes(item))
+        })) || [];
+    }, [quantity]);
+
+    useEffect(() => {
+        setSerialNumbers((prev) => prev?.slice(0, quantity || 1));
+    }, [quantity]);
+
 
     // ADD SERIAL
     const handleAddSerial = () => {
@@ -351,7 +391,7 @@ const ProductAllocateModal: React.FC<Props> = ({
                             onChange={(e) => setSelectedAgent(e.target.value)}
                             className="border px-2 py-1.5 rounded-md text-xs"
                         >
-                            <option value="">Agent</option>
+                            <option value="">Select Agent</option>
                             {agents
                                 ?.filter((i: any) => i?.hub === selectedItem?.hub_id)
                                 ?.map((a: any) => (
@@ -394,7 +434,7 @@ const ProductAllocateModal: React.FC<Props> = ({
                     </div> */}
 
                     {/* SERIAL TABLE STYLE */}
-                    {serialNumbers?.length ? (
+                    {/* {serialNumbers?.length ? (
                         <>
                             <div className="border rounded-lg overflow-hidden">
                                 <div className="grid grid-cols-[40px_1fr_40px] bg-gray-100 text-xs px-2 py-1 font-medium">
@@ -434,7 +474,35 @@ const ProductAllocateModal: React.FC<Props> = ({
                                 </div>
                             </div>
                         </>
-                    ) : ""}
+                    ) : ""} */}
+
+                    <div className="pb-20">
+                        {/* <label className="block text-sm font-medium mb-1">
+                                        Serial Numbers *
+                                    </label> */}
+
+                        <Select
+                            options={serialOptions || []}
+                            value={serialOptions?.filter((opt: any) =>
+                                serialNumbers?.includes(opt?.value)
+                            )}
+                            onChange={(selected: any) => {
+                                let values = selected ? selected.map((s: any) => s.value) : [];
+
+                                if (values.length > quantity) {
+                                    values = values.slice(0, quantity);
+                                }
+
+                                setSerialNumbers(values);
+                                // ❌ REMOVE THIS LINE
+                                // setQuantity(values.length);
+                            }}
+                            isMulti
+                            placeholder="Select Serial Numbers"
+                            className="text-sm"
+                        />
+
+                    </div>
 
 
                     {/* ERROR */}
