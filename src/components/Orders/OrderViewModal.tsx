@@ -83,7 +83,7 @@ const OrderDetailsTabsModal = ({ order, onClose }: any) => {
         </div>
 
         {/* CONTENT */}
-        <div className="p-6 max-h-[460px] overflow-y-auto space-y-6">
+        <div className="p-6 max-h-[360px] overflow-y-auto space-y-6">
 
           {/* 🧩 ORDER DETAILS */}
           {activeTab === "details" && (
@@ -129,7 +129,7 @@ const OrderDetailsTabsModal = ({ order, onClose }: any) => {
                         <Info label="Unit Price" value={`₹${item?.price}`} />
                         <Info label="Device ID" value={item?.device_id || "-"} />
                         <div className="col-span-2">
-                          <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">
+                          <p className="text-xs text-gray-400 font-bold uppercase tracking-wide mb-1">
                             Issue Description
                           </p>
                           <p className="text-gray-700">
