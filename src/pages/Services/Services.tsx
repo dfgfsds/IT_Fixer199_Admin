@@ -90,7 +90,8 @@ const Services: React.FC = () => {
                 include_categories: true,
                 include_media: true,
                 include_pricing: true,
-                include_zones: true
+                include_zones: true,
+                include_attributes: true
             };
 
             if (search) params.search = search;
@@ -159,6 +160,11 @@ const Services: React.FC = () => {
             toast.error(extractErrorMessage(error));
         }
     };
+
+    const handleEdit = (service: any) => {
+        setEditService(service);
+        setShowModal(true);
+    }
 
     return (
         <div className="space-y-6">
@@ -457,10 +463,11 @@ const Services: React.FC = () => {
                                                     <div className="flex justify-end gap-3">
 
                                                         <button
-                                                            onClick={() => {
-                                                                setEditService(service);
-                                                                setShowModal(true);
-                                                            }}
+                                                            // onClick={() => {
+                                                            //     setEditService(service);
+                                                            //     setShowModal(true);
+                                                            // }}
+                                                            onClick={() => handleEdit(service)}
                                                             className="text-orange-600 hover:text-orange-900"
                                                         >
                                                             <Edit className="w-4 h-4" />
@@ -502,6 +509,7 @@ const Services: React.FC = () => {
                 onClose={() => setShowModal(false)}
                 onSuccess={fetchServices}
                 editService={editService}
+                setEditService={setEditService}
             />
 
             {/* Delete Confirm Modal */}

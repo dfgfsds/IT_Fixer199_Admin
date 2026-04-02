@@ -623,6 +623,7 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
                                     }
                                     className="w-full border rounded-lg px-3 py-2 text-sm"
                                     required
+                                    disabled={item.is_default}
                                 >
                                     <option value="">Select Pricing type</option>
                                     {priceTypes?.map((p) => (
@@ -710,6 +711,7 @@ const PricingModal: React.FC<Props> = ({ show, onClose, product }) => {
                                         className="border rounded-lg px-3 py-2 w-full text-sm"
                                         required
                                         placeholder="0.00"
+                                        disabled={item.is_default}
                                     />
                                 </div>
 
