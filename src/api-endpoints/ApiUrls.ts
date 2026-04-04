@@ -1,14 +1,14 @@
 // LIVE
 
-const baseUrl =
-  import.meta.env.VITE_API_BASE_URL ||
-  "https://api.itfixer199.com";
+// const baseUrl =
+//   import.meta.env.VITE_API_BASE_URL ||
+//   "https://api.itfixer199.com";
 
 // TEST
 
-// const baseUrl =
-//   import.meta.env.VITE_API_BASE_URL ||
-//   "https://api-test.itfixer199.com";
+const baseUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://api-test.itfixer199.com";
 
 const login = `${baseUrl}/api/login`;
 const allUsers = `${baseUrl}/api/user/all`;
@@ -186,10 +186,10 @@ const productSerialAvailability = `${baseUrl}/api/product-serial/availability/`;
 const productSerialAgentPossession = `${baseUrl}/api/product-serial/agent-possession/`;
 
 // OrderModificationManualActivate
-const OrderModify = `${baseUrl}/api/order/orders/`; 
+const OrderModify = `${baseUrl}/api/order/orders/`;
 
 // vendor
-const vendor= `${baseUrl}/api/vendor/`;
+const vendor = `${baseUrl}/api/vendor/`;
 
 export default {
   login,
