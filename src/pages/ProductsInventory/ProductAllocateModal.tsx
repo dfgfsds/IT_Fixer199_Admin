@@ -223,12 +223,12 @@ const ProductAllocateModal: React.FC<Props> = ({
 }) => {
     const [agents, setAgents] = useState<any[]>([]);
     const [selectedAgent, setSelectedAgent] = useState("");
-    const [quantity, setQuantity] = useState(1);
+    const [quantity, setQuantity] = useState<any>();
     const [type, setType] = useState<"GIVE" | "GET">("GIVE");
     const [loading, setLoading] = useState(false);
     const [apiErrors, setApiErrors] = useState("");
     const [serialNumberData, setSerialNumberData] = useState<any>();
-    const [serialNumbers, setSerialNumbers] = useState<string[]>([""]);
+    const [serialNumbers, setSerialNumbers] = useState<string[]>([]);
 
     useEffect(() => {
         if (!show) return;
@@ -246,11 +246,11 @@ const ProductAllocateModal: React.FC<Props> = ({
     }, [show]);
 
     // ✅ FIXED SERIAL SYNC (NO RESET BUG)
-    useEffect(() => {
-        setSerialNumbers((prev) =>
-            Array.from({ length: quantity }, (_, i) => prev[i] || "")
-        );
-    }, [quantity]);
+    // useEffect(() => {
+    //     setSerialNumbers((prev) =>
+    //         Array.from({ length: quantity }, (_, i) => prev[i] || "")
+    //     );
+    // }, [quantity]);
 
     // SERIAL CHANGE
     const handleSerialChange = (index: number, value: string) => {
@@ -263,10 +263,20 @@ const ProductAllocateModal: React.FC<Props> = ({
 
     // SERIAL NUMBER 
     const fetchSerialNumber = async () => {
+        setSerialNumberData("")
         try {
-            const updatedApi = await axiosInstance.get(`${Api?.productSerialAvailability}?hub_id=${selectedItem?.hub_id}&product_id=${selectedItem?.product?.id}&size=1000`)
-            if (updatedApi) {
-                setSerialNumberData(updatedApi?.data?.availability);
+            if (type === "GIVE") {
+                if (selectedAgent) {
+                    const updatedApi = await axiosInstance.get(`${Api?.productSerialAgentPossession}?hub_id=${selectedItem?.hub_id}&product_id=${selectedItem?.product?.id}&size=1000&agent_id=${selectedAgent}`)
+                    if (updatedApi) {
+                        setSerialNumberData(updatedApi?.data?.agent_availability);
+                    }
+                }
+            } else {
+                const updatedApi = await axiosInstance.get(`${Api?.productSerialAvailability}?hub_id=${selectedItem?.hub_id}&product_id=${selectedItem?.product?.id}&size=1000`)
+                if (updatedApi) {
+                    setSerialNumberData(updatedApi?.data?.availability);
+                }
             }
         } catch (error) {
             // toast.error(extractErrorMessage(error));
@@ -275,7 +285,7 @@ const ProductAllocateModal: React.FC<Props> = ({
 
     useEffect(() => {
         fetchSerialNumber();
-    }, [selectedItem?.hub_id, selectedItem?.product?.id])
+    }, [selectedItem?.hub_id, selectedItem?.product?.id, type,selectedAgent])
 
     // const serialOptions = serialNumberData?.[0]?.available_serial_numbers?.map((item: any) => ({
     //     value: item,
@@ -285,25 +295,44 @@ const ProductAllocateModal: React.FC<Props> = ({
     //         (serialNumbers.length >= (quantity || 0) && !serialNumbers.includes(item))
     // })) || [];
 
+    // const serialOptions = useMemo(() => {
+    //     return serialNumberData?.[0]?.available_serial_numbers?.map((item: any) => ({
+    //         value: item,
+    //         label: item,
+    //         isDisabled:
+    //             serialNumbers.includes(item) ||
+    //             (serialNumbers.length >= (quantity || 0) && !serialNumbers.includes(item))
+    //     })) || [];
+    // }, [quantity]);
+
     const serialOptions = useMemo(() => {
-        return serialNumberData?.[0]?.available_serial_numbers?.map((item: any) => ({
-            value: item,
-            label: item,
-            isDisabled:
-                serialNumbers.includes(item) ||
-                (serialNumbers.length >= (quantity || 0) && !serialNumbers.includes(item))
-        })) || [];
-    }, [quantity]);
+        return serialNumberData?.[0]?.available_serial_numbers?.map((item: any) => {
+            const isSelected = serialNumbers.includes(item);
+
+            return {
+                value: item,
+                label: item,
+                isDisabled:
+                    !isSelected && serialNumbers.length >= (quantity || 0)
+            };
+        }) || [];
+    }, [serialNumberData, serialNumbers, quantity]);
+
+    // useEffect(() => {
+    //     if (!quantity) return;
+
+    //     setSerialNumbers((prev) => prev?.slice(0, quantity));
+    // }, [quantity]);
 
     useEffect(() => {
-        setSerialNumbers((prev) => prev?.slice(0, quantity || 1));
-    }, [quantity]);
-
+        setSerialNumbers([]);
+        setQuantity(1);
+    }, [type]);
 
     // ADD SERIAL
     const handleAddSerial = () => {
         setSerialNumbers((prev) => [...prev, ""]);
-        setQuantity((prev) => prev + 1);
+        setQuantity((prev: any) => prev + 1);
     };
 
     // REMOVE SERIAL
