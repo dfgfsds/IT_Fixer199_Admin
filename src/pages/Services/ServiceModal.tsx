@@ -78,7 +78,7 @@ const ServiceModal: React.FC<Props> = ({
         setDeletedCategories([]);
         setDeletedPricingIds([]);
         setDeletedZoneHubIds([]);
-setEditService("")
+        setEditService("")
         setApiErrors("");
     };
 
@@ -167,9 +167,6 @@ setEditService("")
         fetchHubsByZone();
     }, []);
 
-    useEffect(() => {
-        fetchAttributes();
-    }, []);
     // ---------------- EDIT MODE ----------------
     useEffect(() => {
         if (!editService) return;
@@ -222,11 +219,16 @@ setEditService("")
             categories:
                 editService.categories?.map((c: any) => c.category) || [],
 
-            attributes: (editService?.attributes_details || editService?.attributes)?.map((a: any) => ({
-                id: a.value_id,
-                attribute_name: a.attribute_name,
-                value: a.value
-            })) || [],
+            // attributes: (editService?.attributes_details || editService?.attributes)?.map((a: any) => ({
+            //     id: a.value_id,
+            //     attribute_name: a.attribute_name,
+            //     value: a.value
+            // })) || [],
+            // ✅ FIXED HERE
+            attributes:
+                (editService?.attributes_details || editService?.attributes)?.map(
+                    (a: any) => a.value_id
+                ) || [],
 
             pricing_models: formattedPricing,
             // zone_hub_mappings: formattedZoneHub,
@@ -240,7 +242,7 @@ setEditService("")
             setPreviewUrls(urls);
         }
 
-    }, [editService]);
+    }, [editService, editService?.attributes_details, editService?.attributes]);
 
 
 
@@ -320,32 +322,18 @@ setEditService("")
         full: attr,
     }));
 
-
     const handleAttributeChange = (selected: any) => {
-        if (!selected) {
-            setForm({ ...form, attributes: [] });
-            return;
-        }
-        const result: any[] = [];
-        const seenAttributes = new Set();
-        for (let i = selected.length - 1; i >= 0; i--) {
-            const item = selected[i].full;
-            if (!seenAttributes.has(item.attribute_id)) {
-                result.unshift({
-                    id: item.value_id,
-                    attribute_name: item.attribute_name,
-                    value: item.value,
-                });
-                seenAttributes.add(item.attribute_id);
-            }
-        }
-        setForm({ ...form, attributes: result });
+        const values = selected ? selected.map((s: any) => s.value) : [];
+
+        setForm({
+            ...form,
+            attributes: values,
+        });
     };
-    const selectedAttributeOptions = attributeOptions?.filter((option) =>
-        form?.attributes?.some((a: any) => a?.id === option?.value)
+
+    const selectedAttributeOptions = attributeOptions.filter((option) =>
+        form.attributes.includes(option.value)
     );
-
-
 
     // const handleZoneHubChange = async (
     //     index: number,
@@ -437,12 +425,13 @@ setEditService("")
                 formData.append("categories", id)
             );
 
-            const attributesPayload = form?.attributes.map((attr: any) => ({
-                value_id: attr?.id,
+            const attributesPayload = form.attributes.map((id: any) => ({
+                value_id: id,
             }));
 
-            formData.append("attributes", JSON.stringify(attributesPayload));
-
+            attributesPayload.forEach((attr: any) => {
+                formData.append("attributes", JSON.stringify(attr));
+            });
             form.pricing_models.forEach((p: any) =>
                 formData.append("pricing_models", JSON.stringify(p))
             );
@@ -499,6 +488,11 @@ setEditService("")
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchAttributes();
+
+    }, []);
 
     if (!show) return null;
 
@@ -646,6 +640,13 @@ setEditService("")
                             <h3 className="text-lg font-semibold text-gray-800 mb-4">
                                 Attributes
                             </h3>
+                            {/* <Select
+                                options={attributeOptions}
+                                value={selectedAttributeOptions}
+                                onChange={handleAttributeChange}
+                                isMulti
+                                placeholder="Select Attributes"
+                            /> */}
                             <Select
                                 options={attributeOptions}
                                 value={selectedAttributeOptions}

@@ -90,6 +90,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
     const [form, setForm] = useState({
         customer_name: "",
         customer_number: "",
+        customer_email: "",
         address: "",
         latitude: "" as any,
         longitude: "" as any,
@@ -101,7 +102,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         is_paid: false,
         no_razorpay: true,
         no_assignment: true,
-        order_platform: "",
+        order_platform: "SHOP",
         slot_id: "",
         is_instant_slot: false,
         items: [
@@ -221,13 +222,11 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         }
     };
 
-    // "Locate on Map" button: geocode current address
     const handleLocateOnMap = async () => {
         if (!mapOpen) {
             setMapOpen(true);
             return;
         }
-        // Map already open — just geocode the current address
         if (!form.address.trim()) {
             toast.error("Please enter an address first");
             return;
@@ -375,7 +374,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         const newItems = form.items.filter((_, i) => i !== index);
         setForm({ ...form, items: newItems });
 
-        // Helper to shift indices in state maps
         const shiftIndices = (prev: any) => {
             const next: any = {};
             let newIdx = 0;
@@ -429,11 +427,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
             newItems[index].attributes = {};
             newItems[index].serial_numbers = [];
 
-            // Auto-fill amount based on selected item
             const selectedId = value;
             const selectedItem = (rowItems[index] || []).find((i: any) => i.id === selectedId);
             if (selectedItem) {
-                // For products, look in product_pricing array
                 if (newItems[index].type === "PRODUCT") {
                     const priceObj = selectedItem.product_pricing?.[0] || selectedItem.pricing?.[0];
                     if (priceObj && priceObj.price) {
@@ -442,7 +438,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                         newItems[index].amount = selectedItem.price;
                     }
                 }
-                // For services, look for price or pricing_models
                 else {
                     const priceVal = selectedItem.price || selectedItem.pricing_models?.[0]?.price;
                     if (priceVal) {
@@ -567,7 +562,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                         description: `Order Payment for ${form.customer_name}`,
                         order_id: rzpOrderId,
                         handler: () => { toast.success("Payment Successful!"); onSuccess(); onClose(); },
-                        prefill: { name: form.customer_name, contact: form.customer_number },
+                        prefill: { name: form.customer_name, contact: form.customer_number, email: form.customer_email },
                         theme: { color: "#EA580C" }
                     };
                     const rzp = new (window as any).Razorpay(options);
@@ -623,12 +618,12 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 if (!caseId) return;
                                 let updates: any = {};
                                 switch (caseId) {
-                                    case "1": updates = { payment_method: "", no_razorpay: true, no_assignment: true, is_paid: false, order_platform: "" }; break;
-                                    case "2": updates = { payment_method: "RAZORPAY", no_razorpay: false, no_assignment: true, is_paid: false, order_platform: "" }; break;
-                                    case "3": updates = { payment_method: "", no_razorpay: true, no_assignment: true, is_paid: true, order_platform: "" }; break;
-                                    case "4": updates = { payment_method: "RAZORPAY", no_razorpay: false, no_assignment: false, is_paid: false, order_platform: "" }; break;
-                                    case "5": updates = { payment_method: "", no_razorpay: true, no_assignment: false, is_paid: false, order_platform: "" }; break;
-                                    case "6": updates = { payment_method: "", no_razorpay: true, no_assignment: false, is_paid: true, order_platform: "" }; break;
+                                    case "1": updates = { payment_method: "", no_razorpay: true, no_assignment: true, is_paid: false, order_platform: "SHOP" }; break;
+                                    case "2": updates = { payment_method: "RAZORPAY", no_razorpay: false, no_assignment: true, is_paid: false, order_platform: "SHOP" }; break;
+                                    case "3": updates = { payment_method: "", no_razorpay: true, no_assignment: true, is_paid: true, order_platform: "SHOP" }; break;
+                                    case "4": updates = { payment_method: "RAZORPAY", no_razorpay: false, no_assignment: false, is_paid: false, order_platform: "SHOP" }; break;
+                                    case "5": updates = { payment_method: "", no_razorpay: true, no_assignment: false, is_paid: false, order_platform: "SHOP" }; break;
+                                    case "6": updates = { payment_method: "", no_razorpay: true, no_assignment: false, is_paid: true, order_platform: "SHOP" }; break;
                                 }
                                 setForm(prev => ({ ...prev, ...updates }));
                                 toast.success(`Case ${caseId} logic applied`);
@@ -671,6 +666,16 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 onChange={(e) => setForm({ ...form, customer_number: e.target.value.replace(/\D/g, '') })}
                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
                                 placeholder="Enter 10-digit mobile number"
+                            />
+                        </div>
+                        <div className="space-y-1 md:col-span-2">
+                            <label className="text-sm font-medium text-gray-700">Email Address</label>
+                            <input
+                                type="email"
+                                value={form.customer_email}
+                                onChange={(e) => setForm({ ...form, customer_email: e.target.value })}
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                placeholder="Enter customer email address"
                             />
                         </div>
 
@@ -803,10 +808,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 onChange={(e) => setForm({ ...form, order_platform: e.target.value })}
                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
                             >
-                                <option value="">Choose Platform</option>
+                                <option value="SHOP">Shop</option>
                                 <option value="WHATSAPP">WhatsApp</option>
                                 <option value="OWN_PLATFORM">Own Platform</option>
-                                <option value="SHOP">Shop</option>
                                 <option value="CALL">Call</option>
                             </select>
                         </div>
