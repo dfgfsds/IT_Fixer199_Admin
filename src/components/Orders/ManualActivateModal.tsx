@@ -41,7 +41,7 @@ const ManualActivateModal = ({ order, onClose, onSuccess }: any) => {
             setLoading(true);
 
             const updatedApi = await axiosInstance.post(
-                `${Api?.manualActivate}${order?.id}/manual-update/`,
+                `${Api?.OrderModify}${order?.id}/manual-activate/`,
                 {
                     transaction_id: form.transaction_id,
                     payment_method: form.payment_method,

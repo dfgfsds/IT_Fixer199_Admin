@@ -20,9 +20,10 @@ interface OrderItem {
     amount: any;
     issue_description_text: string;
     attributes: Record<string, string>;
+    serial_numbers: string[];
 }
 
-const MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
+const MAPS_API_KEY = "AIzaSyAflftNedMvJ812sMI1l0h7kqj1-HBYDE8";
 
 let mapsLoadPromise: Promise<void> | null = null;
 
@@ -112,13 +113,15 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                 quantity: 1,
                 amount: 0,
                 issue_description_text: "",
-                attributes: {} as Record<string, string>
+                attributes: {} as Record<string, string>,
+                serial_numbers: [] as string[]
             } as OrderItem
         ]
     });
 
     const [locationData, setLocationData] = useState<any>(null);
     const [fetchingSlots, setFetchingSlots] = useState(false);
+    const [availableSerials, setAvailableSerials] = useState<{ [key: number]: string[] }>({});
 
     useEffect(() => {
         fetchInitialData();
@@ -300,6 +303,37 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         }
     };
 
+    const fetchAvailableSerials = async (productId: string, index: number) => {
+        if (!productId) return;
+        try {
+            const params: any = { product_id: productId };
+            if (form.hub_id) params.hub_id = form.hub_id;
+
+            const res = await axiosInstance.get(Api.productSerialAvailability, { params });
+            const availabilityData = res.data?.availability || res.data || [];
+            let serials: string[] = [];
+
+            const dataToLoop = Array.isArray(availabilityData) ? availabilityData : [];
+
+            dataToLoop.forEach((item: any) => {
+                if (item.available_serial_numbers) {
+                    if (typeof item.available_serial_numbers === "string") {
+                        const split = item.available_serial_numbers.split(",").map((s: string) => s.trim()).filter(Boolean);
+                        serials = [...serials, ...split];
+                    } else if (Array.isArray(item.available_serial_numbers)) {
+                        serials = [...serials, ...item.available_serial_numbers];
+                    }
+                } else if (item.serial_numbers && Array.isArray(item.serial_numbers)) {
+                    serials = [...serials, ...item.serial_numbers];
+                }
+            });
+
+            setAvailableSerials(prev => ({ ...prev, [index]: [...new Set(serials)] }));
+        } catch (error) {
+            console.error("Failed to fetch serials", error);
+        }
+    };
+
     const fetchZones = async (hubId: string) => {
         try {
             const res = await axiosInstance.get(`${Api.hubMapping}?hub=${hubId}`);
@@ -311,8 +345,17 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
 
     const handleHubChange = (hubId: string) => {
         setForm({ ...form, hub_id: hubId, zone_id: "" });
-        if (hubId) fetchZones(hubId);
-        else setZones([]);
+        if (hubId) {
+            fetchZones(hubId);
+            // Re-fetch serials for all items if hub changes
+            form.items.forEach((item, idx) => {
+                if (item.type === "PRODUCT" && item.product_id) {
+                    fetchAvailableSerials(item.product_id, idx);
+                }
+            });
+        } else {
+            setZones([]);
+        }
     };
 
     const handleAddItem = () => {
@@ -321,14 +364,33 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
             items: [...form.items, {
                 type: "", category_id: "", product_id: "", service_id: "",
                 quantity: 1, amount: 0, issue_description_text: "",
-                attributes: {} as Record<string, string>
+                attributes: {} as Record<string, string>,
+                serial_numbers: [] as string[]
             } as OrderItem]
         });
     };
 
     const handleRemoveItem = (index: number) => {
         if (form.items.length === 1) return;
-        setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
+        const newItems = form.items.filter((_, i) => i !== index);
+        setForm({ ...form, items: newItems });
+
+        // Helper to shift indices in state maps
+        const shiftIndices = (prev: any) => {
+            const next: any = {};
+            let newIdx = 0;
+            form.items.forEach((_, i) => {
+                if (i !== index) {
+                    if (prev[i] !== undefined) next[newIdx] = prev[i];
+                    newIdx++;
+                }
+            });
+            return next;
+        };
+
+        setRowItems(prev => shiftIndices(prev));
+        setLoadingRows(prev => shiftIndices(prev));
+        setAvailableSerials(prev => shiftIndices(prev));
     };
 
     const fetchItemsByCategory = async (index: number, type: string, categoryId: string) => {
@@ -336,7 +398,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         setLoadingRows(prev => ({ ...prev, [index]: true }));
         try {
             const url = type === "PRODUCT" ? Api.products : Api.services;
-            const res = await axiosInstance.get(`${url}?category_id=${categoryId}&include_categories=true&include_attribute=true`);
+            const res = await axiosInstance.get(`${url}?category_id=${categoryId}&include_categories=true&include_attribute=true&include_pricing=true`);
             const data = res.data?.products || res.data?.services || res.data?.data || [];
             setRowItems(prev => ({ ...prev, [index]: Array.isArray(data) ? data : (data.data || []) }));
         } catch (error) {
@@ -355,15 +417,63 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
             newItems[index].service_id = "";
             newItems[index].issue_description_text = "";
             newItems[index].attributes = {};
+            newItems[index].serial_numbers = [];
             setRowItems(prev => { const u = { ...prev }; delete u[index]; return u; });
         } else if (field === "category_id") {
             newItems[index].product_id = "";
             newItems[index].service_id = "";
             newItems[index].attributes = {};
+            newItems[index].serial_numbers = [];
             fetchItemsByCategory(index, newItems[index].type, value);
         } else if (field === "product_id" || field === "service_id") {
             newItems[index].attributes = {};
+            newItems[index].serial_numbers = [];
+
+            // Auto-fill amount based on selected item
+            const selectedId = value;
+            const selectedItem = (rowItems[index] || []).find((i: any) => i.id === selectedId);
+            if (selectedItem) {
+                // For products, look in product_pricing array
+                if (newItems[index].type === "PRODUCT") {
+                    const priceObj = selectedItem.product_pricing?.[0] || selectedItem.pricing?.[0];
+                    if (priceObj && priceObj.price) {
+                        newItems[index].amount = priceObj.price;
+                    } else if (selectedItem.price) {
+                        newItems[index].amount = selectedItem.price;
+                    }
+                }
+                // For services, look for price or pricing_models
+                else {
+                    const priceVal = selectedItem.price || selectedItem.pricing_models?.[0]?.price;
+                    if (priceVal) {
+                        newItems[index].amount = priceVal;
+                    }
+                }
+
+                // Fetch available serial numbers
+                if (newItems[index].type === "PRODUCT") {
+                    fetchAvailableSerials(selectedId, index);
+                }
+            }
+        } else if (field === "quantity") {
+            // Update serial numbers array length if quantity changes
+            const qty = Math.max(1, parseInt(value) || 0);
+            const currentSNS = [...(newItems[index].serial_numbers || [])];
+            if (currentSNS.length < qty) {
+                while (currentSNS.length < qty) currentSNS.push("");
+            } else if (currentSNS.length > qty) {
+                currentSNS.splice(qty);
+            }
+            newItems[index].serial_numbers = currentSNS;
         }
+        setForm({ ...form, items: newItems });
+    };
+
+    const handleSerialNumberChange = (itemIndex: number, snIndex: number, value: string) => {
+        const newItems = [...form.items];
+        const sns = [...(newItems[itemIndex].serial_numbers || [])];
+        sns[snIndex] = value;
+        newItems[itemIndex].serial_numbers = sns;
         setForm({ ...form, items: newItems });
     };
 
@@ -394,6 +504,22 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         }
         if (form.items.length === 0) { toast.error("Add at least one item"); return; }
 
+        // Validate Serial Numbers for Products (Only for Cases 1, 2, 3)
+        if (["1", "2", "3"].includes(scenario)) {
+            for (let i = 0; i < form.items.length; i++) {
+                const item = form.items[i];
+                if (item.type === "PRODUCT" && item.product_id) {
+                    const sns = item.serial_numbers || [];
+                    const productName = (rowItems[i] || []).find((p: any) => p.id === item.product_id)?.name || `Item ${i + 1}`;
+
+                    if (sns.length < item.quantity || sns.some(s => !s.trim())) {
+                        toast.error(`Please provide all serial numbers for ${productName}`);
+                        return;
+                    }
+                }
+            }
+        }
+
         try {
             setLoading(true);
 
@@ -402,7 +528,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                 user_id: null,
                 latitude: form.latitude ? Number(form.latitude) : null,
                 longitude: form.longitude ? Number(form.longitude) : null,
-                slot_id: form.is_instant_slot ? null : form.slot_id,
+                slot_id: (form.is_instant_slot || !form.slot_id) ? null : form.slot_id,
                 is_instant_slot: !!form.is_instant_slot,
                 items: form.items?.map((item: any) => {
                     const priceVal = Number(item.amount);
@@ -413,7 +539,8 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                         type: item.type,
                         quantity: Number(item.quantity),
                         issue_description_text: item.issue_description_text,
-                        attributes: cleanAttributes
+                        attributes: cleanAttributes,
+                        serial_numbers: item.serial_numbers?.filter((sn: string) => sn.trim() !== "") || []
                     };
                     if (item.type === "PRODUCT") {
                         baseItem.product_id = item.product_id;
@@ -943,6 +1070,59 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                             placeholder="Enter issue details"
                                         />
                                     </div>
+
+                                    {/* Serial Numbers for Products - Only for Case 1, 2, 3 (No Agent) */}
+                                    {item.type === "PRODUCT" && ["1", "2", "3"].includes(scenario) && (
+                                        <div className="md:col-span-12 mt-2 bg-white/50 p-3 rounded-lg border border-orange-100">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <label className="text-[10px] font-bold text-orange-600 uppercase tracking-wider block">Serial Numbers ({item.quantity})</label>
+                                                {(!availableSerials[index] || availableSerials[index].length === 0) && item.product_id && (
+                                                    <span className="text-[10px] font-medium text-red-500 italic">No stock found in this hub</span>
+                                                )}
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                {Array.from({ length: Math.max(1, item.quantity || 1) }).map((_, snIdx) => {
+                                                    const currentSns = item.serial_numbers || [];
+
+                                                    const otherSelectedSns = form.items.flatMap((it, itIdx) => {
+                                                        if (it.product_id === item.product_id) {
+                                                            return (it.serial_numbers || []).filter((_, sIdx) => !(itIdx === index && sIdx === snIdx));
+                                                        }
+                                                        return [];
+                                                    });
+
+                                                    return (
+                                                        <select
+                                                            key={snIdx}
+                                                            className="w-full px-3 py-1.5 border rounded-lg bg-white text-xs focus:ring-1 focus:ring-orange-500 outline-none"
+                                                            value={currentSns[snIdx] || ""}
+                                                            onChange={(e) => handleSerialNumberChange(index, snIdx, e.target.value)}
+                                                        >
+                                                            <option value="">Choose S/N {snIdx + 1}</option>
+                                                            {(() => {
+                                                                const pool = availableSerials[index] || [];
+                                                                const filteredOptions = pool.filter(sn => !otherSelectedSns.includes(sn));
+
+                                                                if (pool.length === 0) {
+                                                                    return <option disabled className="text-red-500 font-bold">🚫 No available stock in hub</option>;
+                                                                }
+
+                                                                if (filteredOptions.length === 0 && pool.length > 0) {
+                                                                    return <option disabled>No more units left in selection</option>;
+                                                                }
+
+                                                                return filteredOptions.map(sn => (
+                                                                    <option key={sn} value={sn}>
+                                                                        {sn}
+                                                                    </option>
+                                                                ));
+                                                            })()}
+                                                        </select>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

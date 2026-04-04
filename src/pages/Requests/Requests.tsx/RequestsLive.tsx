@@ -254,7 +254,7 @@ const RequestsLive: React.FC = () => {
             <h1 className="text-xl font-bold">Requests (Live)</h1>
 
             {/* 🔎 FILTER DESIGN */}
-            <div className="bg-white p-4 rounded-lg border flex flex-wrap gap-4 items-center">
+            <div className="bg-white  p-4 rounded-lg border flex flex-wrap gap-4 items-center">
                 {/* SEARCH */}
                 <div className="relative flex-1 min-w-[250px]">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
