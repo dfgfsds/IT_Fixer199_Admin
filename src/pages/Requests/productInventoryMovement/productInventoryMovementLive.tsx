@@ -4,6 +4,7 @@ import axiosInstance from "../../../configs/axios-middleware";
 import Api from "../../../api-endpoints/ApiUrls";
 import toast from "react-hot-toast";
 import { extractErrorMessage } from "../../../utils/extractErrorMessage ";
+import Select from 'react-select';
 interface MovementType {
     id: string;
     product: any;
@@ -28,9 +29,78 @@ const ProductInventoryMovementLive: React.FC = () => {
     const [showModal, setShowModal] = useState(false);
     const [selectedItem, setSelectedItem] = useState<any>(null);
 
+
+    const [approveModal, setApproveModal] = useState(false);
+    const [approveItem, setApproveItem] = useState<any>(null);
+    // const [serialOptions, setSerialOptions] = useState<any[]>([]);
+    const [selectedSerials, setSelectedSerials] = useState<string[]>([]);
+
+    const [serialNumberData, setSerialNumberData] = useState<any[]>([]);
+
+    const fetchSerialNumbers = async (item: any) => {
+        try {
+            const res = await axiosInstance.get(
+                `${Api?.productSerialAvailability}?hub_id=${item.hub_id}&product_id=${item.product_id}`
+            );
+            console.log("Serial Numbers:", res?.data?.availability);
+            setSerialNumberData(
+                res?.data?.availability || []
+            );
+
+        } catch (err) {
+            toast.error("Serial fetch failed");
+        }
+    };
+    const handleOpenApproveModal = (item: any) => {
+        setApproveItem(item);
+        setSelectedSerials([]);
+        setApproveModal(true);
+
+        fetchSerialNumbers(item);
+    };
+
+    const serialOptions = useMemo(() => {
+        return serialNumberData?.[0]?.available_serial_numbers?.map((item: any) => {
+            const isSelected = selectedSerials.includes(item);
+
+            return {
+                value: item,
+                label: item,
+                isDisabled:
+                    !isSelected && selectedSerials.length >= (approveItem?.stock || 0)
+            };
+        });
+    }, [serialNumberData, selectedSerials, approveItem]);
+
     const handleView = (item: any) => {
         setSelectedItem(item);
         setShowModal(true);
+    };
+
+    const handleApproveSubmit = async () => {
+        try {
+            if (selectedSerials.length !== approveItem.stock) {
+                return toast.error(`Select ${approveItem.stock} serial numbers`);
+            }
+
+            await axiosInstance.post(
+                `/api/product-inventory/movement/approve/?movement_id=${approveItem.id}`,
+                {
+                    serial_numbers: selectedSerials
+                }
+            );
+
+            toast.success("Approved successfully");
+
+            setApproveModal(false);
+            setSelectedSerials([]);
+
+            socketRef.current?.close();
+            connectWebSocket();
+
+        } catch (err) {
+            toast.error(extractErrorMessage(err));
+        }
     };
 
     // ---------------- CONNECT WEBSOCKET ----------------
@@ -56,7 +126,7 @@ const ProductInventoryMovementLive: React.FC = () => {
 
             const data = JSON.parse(event.data);
             console.log("WS DATA:", data);
-                setLoading(false);
+            setLoading(false);
 
             // 🔵 Initial load
             if (data.type === "initial_data" && data.movements) {
@@ -311,9 +381,16 @@ const ProductInventoryMovementLive: React.FC = () => {
                                                 </span>
                                             ) : (
                                                 <div className="flex gap-2">
-                                                    <button
+                                                    {/* <button
                                                         onClick={() => handleAdminApproval(item.id, "approve")}
                                                         className="px-3 py-1 text-xs font-semibold rounded-full bg-green-600 text-white hover:bg-green-700 transition"
+                                                    >
+                                                        Approve
+                                                    </button> */}
+
+                                                    <button
+                                                        onClick={() => handleOpenApproveModal(item)}
+                                                        className="px-3 py-1 text-xs font-semibold rounded-full bg-green-600 text-white"
                                                     >
                                                         Approve
                                                     </button>
@@ -579,6 +656,63 @@ ${selectedItem.approved_status === "APPROVED"
 
                 </div>
 
+            )}
+
+            {approveModal && approveItem && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+                    <div className="bg-white w-full max-w-lg rounded-xl p-6">
+
+                        <h2 className="text-lg font-semibold text-orange-600 mb-4">
+                            Approve Movement
+                        </h2>
+
+                        <p className="text-sm mb-3">
+                            Product: <b>{approveItem.product?.name}</b>
+                        </p>
+
+                        <p className="text-sm mb-3">
+                            Required Qty: <b>{approveItem.stock}</b>
+                        </p>
+
+                        {/* SERIAL SELECT */}
+                        <Select
+                            options={serialOptions}
+                            isMulti
+                            value={serialOptions?.filter((o: any) =>
+                                selectedSerials?.includes(o?.value)
+                            )}
+                            onChange={(selected: any) => {
+                                const values = selected.map((s: any) => s.value);
+                                setSelectedSerials(values);
+                            }}
+                            placeholder="Select Serial Numbers"
+                            className="text-sm"
+                        />
+
+                        <p className="text-xs text-gray-500 mt-2">
+                            Select exactly {approveItem.stock} serial numbers
+                        </p>
+
+                        {/* ACTION */}
+                        <div className="flex justify-end gap-3 mt-5">
+                            <button
+                                onClick={() => setApproveModal(false)}
+                                className="px-4 py-2 border rounded"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                onClick={handleApproveSubmit}
+                                className="px-4 py-2 bg-orange-600 text-white rounded"
+                            >
+                                Approve
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
             )}
 
         </div>
