@@ -82,13 +82,6 @@ const ProductsInventory: React.FC = () => {
         fetchSerialNumber();
     }, [stockModal, selectedItem?.hub_id, selectedItem?.product?.id])
 
-    // const serialOptions = serialNumberData?.[0]?.available_serial_numbers?.map((item: any) => ({
-    //     value: item,
-    //     label: item,
-    //     isDisabled:
-    //         serialNumbers.includes(item) ||
-    //         (serialNumbers.length >= (quantity || 0) && !serialNumbers.includes(item))
-    // })) || [];
 
     const serialOptions = useMemo(() => {
         return serialNumberData?.[0]?.available_serial_numbers?.map((item: any) => ({
@@ -109,7 +102,7 @@ const ProductsInventory: React.FC = () => {
         try {
             setLoading(true);
             const res = await axiosInstance.get(
-                `${Api.productInventory}?page=${pageNumber}&size=${size}`
+                `${Api.productInventory}?page=${pageNumber}&size=${size}&search=${search}`
             );
 
             setData(res?.data?.inventories || []);
@@ -129,7 +122,7 @@ const ProductsInventory: React.FC = () => {
 
     useEffect(() => {
         fetchInventory();
-    }, []);
+    }, [search]);
 
     const handlePageChange = (newPage: number) => {
         setPage(newPage);

@@ -182,6 +182,15 @@ const activeLogs = `${baseUrl}/api/user/active-logs/user/`;
 // productSerialAvailability
 const productSerialAvailability = `${baseUrl}/api/product-serial/availability/`;
 
+// productSerialAgentPossession
+const productSerialAgentPossession = `${baseUrl}/api/product-serial/agent-possession/`;
+
+// OrderModificationManualActivate
+const OrderModify = `${baseUrl}/api/order/orders/`; 
+
+// vendor
+const vendor= `${baseUrl}/api/vendor/`;
+
 export default {
   login,
   allUsers,
@@ -257,6 +266,9 @@ export default {
   loginLogs,
   activeLogs,
   productSerialAvailability,
+  productSerialAgentPossession,
+  OrderModify,
+  vendor,
 };
 
 

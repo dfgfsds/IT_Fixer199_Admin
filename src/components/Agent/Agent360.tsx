@@ -9,7 +9,6 @@ import toast from 'react-hot-toast';
 import AgentLoginLogs from './AgentLoginLogs';
 import AgentActiveLogs from './AgentActiveLogs';
 
-
 const Agents360: React.FC = () => {
     const { id } = useParams()
     const [agent, setAgent] = useState<any | null>(null)
@@ -270,9 +269,15 @@ const Agents360: React.FC = () => {
     };
 
 
+    // useEffect(() => {
+    //     fetchAgentProduct()
+    // }, [id, activeTab === 'product'])
+
     useEffect(() => {
-        fetchAgentProduct()
-    }, [id, activeTab === 'product'])
+        if (activeTab === "product") {
+            fetchAgentProduct();
+        }
+    }, [id, activeTab, page, pageSize]);
 
     const fetchAgentProduct = async () => {
         try {
@@ -280,9 +285,17 @@ const Agents360: React.FC = () => {
             setAgent(res?.data?.agent)
             // Product Stocks
             const productRes = await axiosInstance.get(
-                `${Api?.agentProductStock}?agent_id=${id}`
+                `${Api?.agentProductStock}?agent_id=${id}&page=${page}&size=${pageSize}`
             )
-            setProductStocks(productRes?.data?.data)
+            console.log(productRes)
+            setProductStocks(productRes?.data?.agent_stocks)
+            const p = productRes?.data?.pagination
+
+            if (p) {
+                setPagination(p)
+                setPage(p.page)
+                setTotalPages(p.total_pages)
+            }
             // const toolRes = await axiosInstance.get(`${Api?.agentToolsStock}/?agent_id=${id}`);
             // setToolStocks(toolRes?.data?.data)
         } catch (err) {
@@ -984,6 +997,21 @@ const Agents360: React.FC = () => {
                                         )}
                                     </tbody>
                                 </table>
+
+                                {!loading && pagination && (
+                                    <Pagination
+                                        page={page}
+                                        totalPages={totalPages}
+                                        pageSize={pageSize}
+                                        totalItems={pagination.total_elements}
+                                        onPageChange={(newPage) => setPage(newPage)}
+                                        onPageSizeChange={(size) => {
+                                            setPageSize(size);
+                                            setPage(1);
+                                        }}
+                                    />
+                                )}
+
                             </div>
                         </div>
                     )}

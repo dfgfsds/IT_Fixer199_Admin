@@ -1,4 +1,4 @@
-import { Calendar, Clock, Copy, Eye, MapPin, MoreVertical, SearchX } from "lucide-react";
+import { Calendar, Clock, Copy, Eye, MapPin, MoreVertical, Printer, SearchX } from "lucide-react";
 import { Order } from '../../types';
 import { useEffect, useRef, useState } from "react";
 import OrderViewModal from "./OrderViewModal";
@@ -14,6 +14,7 @@ import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 import ManualActivateModal from "./ManualActivateModal";
 import AgentAssign from "../../pages/Requests/Requests.tsx/AgentAssign";
 import ShopStatusUpdateModal from "./ShopStatusUpdateModal";
+import InvoiceModal from "./InvoiceModal";
 
 interface OrdersTableProps {
   orders: Order[];
@@ -43,6 +44,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
   const [shopUpdateOrder, setShopUpdateOrder] = useState<any>(null);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [invoiceOrder, setInvoiceOrder] = useState<any>(null);
 
   const openSlotChange = (order: any) => {
     setSlotChangeOrder(order);
@@ -282,6 +284,15 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                       >
                         <MapPin className="w-4 h-4" />
                       </button>
+
+
+                      <button
+                        onClick={() => setInvoiceOrder(order)}
+                        className="text-orange-600 hover:text-orange-800"
+                      >
+                        <Printer className="w-4 h-4" />
+                      </button>
+
 
                       {/* Dropdown trigger */}
                       <button
@@ -610,6 +621,13 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
             setShopUpdateOrder(null);
             fetchOrders();
           }}
+        />
+      )}
+
+      {invoiceOrder && (
+        <InvoiceModal
+          order={invoiceOrder}
+          onClose={() => setInvoiceOrder(null)}
         />
       )}
     </div>
