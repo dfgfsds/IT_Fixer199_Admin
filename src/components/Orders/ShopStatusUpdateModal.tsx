@@ -22,17 +22,12 @@ const ShopStatusUpdateModal: React.FC<ShopStatusUpdateModalProps> = ({
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [loading, setLoading] = useState(false);
   const [orderDetail, setOrderDetail] = useState<any>(order);
-
-  // Serial Numbers State: { order_item_id: ["sn1", "sn2"] }
-  const [itemSerials, setItemSerials] = useState<{ [key: string]: string[] }>(
-    {}
-  );
-  // Available Serials Pool: { product_id: ["snA", "snB"] }
+  const [itemSerials, setItemSerials] = useState<{ [key: string]: string[] }>({});
   const [availableSerials, setAvailableSerials] = useState<{
     [key: string]: string[];
   }>({});
 
-  // Fetch full order details on mount to ensure we have serial numbers
+  // Fetch full order details on mount
   useEffect(() => {
     const fetchFullDetails = async () => {
       try {
@@ -44,7 +39,6 @@ const ShopStatusUpdateModal: React.FC<ShopStatusUpdateModalProps> = ({
         }
       } catch (error) {
         console.error("Failed to fetch order details", error);
-        // Fallback to order from props if fetch fails
         setOrderDetail(order);
       } finally {
         setLoading(false);
@@ -90,15 +84,12 @@ const ShopStatusUpdateModal: React.FC<ShopStatusUpdateModalProps> = ({
             existingSns = [item.device_id.trim()];
           }
 
-          // Fill an array of length 'quantity' with existing serials, then pad with empty strings
           const sns = [...existingSns];
           while (sns.length < item.quantity) sns.push("");
-          // Trim to quantity if there were more
           if (sns.length > item.quantity) sns.length = item.quantity;
 
           initialSerials[item.id] = sns;
 
-          // Fetch availability for this product
           fetchAvailability(item?.item_details?.id || item?.product_id);
         }
       });
@@ -185,7 +176,10 @@ const ShopStatusUpdateModal: React.FC<ShopStatusUpdateModalProps> = ({
       const updateData = response.data?.data || response.data;
       const message = response.data?.message || "";
 
-      const otpRequired = updateData?.is_otp_required && !updateData?.is_otp_verified;
+      // Check for OTP requirement in data OR message
+      const otpRequired =
+        (updateData?.is_otp_required && !updateData?.is_otp_verified) ||
+        message.toLowerCase().includes("otp sent");
 
       if (otpRequired && status === "COMPLETED") {
         setShowOtpInput(true);
@@ -210,9 +204,9 @@ const ShopStatusUpdateModal: React.FC<ShopStatusUpdateModalProps> = ({
     try {
       setLoading(true);
 
-      // Endpoint: /api/order/public/order/{id}/manual-update/verify-otp/
+      // verify otp
       const response = await axiosInstance.post(
-        `${Api?.manualActivate}${order?.id}/manual-update/verify-otp/`,
+        `${Api?.orderCancel}/${order?.id}/manual-update/verify-otp/`,
         { otp }
       );
 
@@ -284,11 +278,9 @@ const ShopStatusUpdateModal: React.FC<ShopStatusUpdateModalProps> = ({
                             const currentSns = itemSerials[item.id] || [];
                             const productId = item?.item_details?.id || item?.product_id;
 
-                            // Get serials selected in ANY other slot across the whole order
                             const otherSelectedSns: string[] = [];
                             Object.entries(itemSerials).forEach(([oId, sns]) => {
                               sns.forEach((sn, idx) => {
-                                // Add to excluded list if it's not the CURRENT slot
                                 if (!(oId === item.id && idx === snIdx) && sn) {
                                   otherSelectedSns.push(sn);
                                 }
@@ -298,12 +290,9 @@ const ShopStatusUpdateModal: React.FC<ShopStatusUpdateModalProps> = ({
                             const pool = availableSerials[productId] || [];
                             const currentVal = currentSns[snIdx] || "";
 
-                            // Combine existing serial numbers from the order into the pool 
-                            // so they remain selectable even if not in "available stock"
                             const existingInOrder = item.serial_numbers || [];
                             const combinedPool = [...new Set([...pool, ...existingInOrder])];
 
-                            // Filter: show if it's the current value OR it's not taken by someone else
                             const options = combinedPool.filter(sn =>
                               sn === currentVal || !otherSelectedSns.includes(sn)
                             );
@@ -344,9 +333,9 @@ const ShopStatusUpdateModal: React.FC<ShopStatusUpdateModalProps> = ({
                 onChange={(e) => setOtp(e.target.value)}
                 disabled={loading}
               />
-              <div className="mt-4 bg-green-50 p-3 rounded-lg border border-green-100 italic text-xs text-green-700">
+              {/* <div className="mt-4 bg-green-50 p-3 rounded-lg border border-green-100 italic text-xs text-green-700">
                 Special verification is required as this order contains restricted items.
-              </div>
+              </div> */}
             </div>
           )}
         </div>
