@@ -186,10 +186,10 @@ const productSerialAvailability = `${baseUrl}/api/product-serial/availability/`;
 const productSerialAgentPossession = `${baseUrl}/api/product-serial/agent-possession/`;
 
 // OrderModificationManualActivate
-const OrderModify = `${baseUrl}/api/order/orders/`; 
+const OrderModify = `${baseUrl}/api/order/orders/`;
 
 // vendor
-const vendor= `${baseUrl}/api/vendor/`;
+const vendor = `${baseUrl}/api/vendor/`;
 
 export default {
   login,
