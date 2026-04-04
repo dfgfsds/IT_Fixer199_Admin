@@ -51,7 +51,8 @@ const ProductModal: React.FC<Props> = ({
         attributes: [],
         pricing: [
             { type: "", price: "" }
-        ]
+        ],
+        is_otp_required: false,
     });
 
 
@@ -68,7 +69,8 @@ const ProductModal: React.FC<Props> = ({
         status: "ACTIVE",
         category_ids: [],
         attributes: [],
-        pricing: [{ type: "", price: "" }]
+        pricing: [{ type: "", price: "" }],
+        is_otp_required: false,
     });
 
     const resetAll = () => {
@@ -244,6 +246,7 @@ const ProductModal: React.FC<Props> = ({
                 price: p.price
             })) || [{ type: "", price: "" }],
             specification: parsedSpecification,
+            is_otp_required: editProduct.is_otp_required || false,
         });
 
         if (editProduct.media) {
@@ -412,6 +415,8 @@ const ProductModal: React.FC<Props> = ({
                     formData.append("barcode", form.barcode);
                     formData.append("hsn", form.hsn);
                     formData.append("status", form.status);
+                    formData.append("is_otp_required", form.is_otp_required.toString());
+
 
                     // 🔹 CATEGORY FORMAT ✅
                     const categoryPayload = form.category_ids.map((id: string) => ({
@@ -830,7 +835,7 @@ const ProductModal: React.FC<Props> = ({
                         </div>
                     )}
                     {/* Status */}
-                    <div>
+                    {/* <div>
                         <label className="block text-sm font-medium mb-1">
                             Status
                         </label>
@@ -844,6 +849,53 @@ const ProductModal: React.FC<Props> = ({
                             <option value="ACTIVE">ACTIVE</option>
                             <option value="INACTIVE">INACTIVE</option>
                         </select>
+                    </div> */}
+
+                    <div className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
+
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 pr-2">
+                                Status
+                            </label>
+                            <select
+                                value={form.status}
+                                onChange={(e) =>
+                                    setForm({ ...form, status: e.target.value })
+                                }
+                                className="mt-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500"
+                            >
+                                <option value="ACTIVE">ACTIVE</option>
+                                <option value="INACTIVE">INACTIVE</option>
+                            </select>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium text-gray-700">
+                                OTP Required
+                            </span>
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setForm({
+                                        ...form,
+                                        is_otp_required: !form.is_otp_required,
+                                    })
+                                }
+                                className={`relative w-12 h-6 rounded-full transition ${form.is_otp_required
+                                    ? "bg-orange-600"
+                                    : "bg-gray-300"
+                                    }`}
+                            >
+                                <span
+                                    className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition ${form.is_otp_required
+                                        ? "translate-x-6"
+                                        : ""
+                                        }`}
+                                />
+                            </button>
+                        </div>
+
                     </div>
 
 
