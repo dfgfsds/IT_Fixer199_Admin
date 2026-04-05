@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import Api from "../../api-endpoints/ApiUrls";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 
 interface Props {
     show: boolean;
@@ -150,8 +151,10 @@ const InventoryModal: React.FC<Props> = ({
             onSuccess();
             handleClose();
         } catch (err) {
-            console.error(err);
-            setApiErrors("Something went wrong");
+            setApiErrors(extractErrorMessage(err));
+
+            // console.error(err);
+            // setApiErrors("Something went wrong");
         } finally {
             setLoading(false);
         }
