@@ -191,6 +191,8 @@ const OrderModify = `${baseUrl}/api/order/orders/`;
 // vendor
 const vendor = `${baseUrl}/api/vendor/`;
 
+// orderPurchase
+const orderPurchase = `${baseUrl}/api/purchase/order/`;
 export default {
   login,
   allUsers,
@@ -269,6 +271,7 @@ export default {
   productSerialAgentPossession,
   OrderModify,
   vendor,
+  orderPurchase,
 };
 
 

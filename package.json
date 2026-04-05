@@ -29,6 +29,7 @@
     "react-leaflet-draw": "^0.20.4",
     "react-router-dom": "^6.26.1",
     "react-select": "^5.10.2",
+    "react-to-print": "^3.3.0",
     "recharts": "^2.15.4",
     "xlsx": "^0.18.5",
     "yup": "^1.4.0"
