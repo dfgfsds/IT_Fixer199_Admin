@@ -37,6 +37,8 @@ const ProductsInventory: React.FC = () => {
     // ADD STATE
     const [serialNumbers, setSerialNumbers] = useState<string[]>([""]);
 
+    const [viewModal, setViewModal] = useState(false);
+    const [viewItem, setViewItem] = useState<any>(null);
 
     // SYNC SERIALS WITH QUANTITY (🔥 important)
     useEffect(() => {
@@ -245,12 +247,12 @@ const ProductsInventory: React.FC = () => {
                     Product Inventory
                 </h1>
 
-                <button
+                {/* <button
                     onClick={() => setShowModal(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg"
                 >
                     <Plus size={16} /> Add Inventory
-                </button>
+                </button> */}
             </div>
 
             {/* FILTERS */}
@@ -372,6 +374,17 @@ const ProductsInventory: React.FC = () => {
                                                     >
                                                         📦 Allocate
                                                     </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setViewItem(item);
+                                                            setViewModal(true);
+                                                        }}
+                                                        className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs flex items-center"
+                                                    >
+                                                        👁 View
+                                                    </button>
+
+
                                                     {/* DIVIDER */}
                                                     {/* <div className="h-6 w-px bg-gray-300 mx-1" /> */}
 
@@ -630,6 +643,104 @@ const ProductsInventory: React.FC = () => {
                             </div>
 
                         </div>
+                    </div>
+                </div>
+            )}
+            {viewModal && viewItem && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+
+                    <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden">
+
+                        {/* HEADER */}
+                        <div className="flex justify-between items-center px-6 py-4 border-b bg-gray-50">
+                            <h2 className="text-lg font-semibold">Inventory Details</h2>
+
+                            <button
+                                onClick={() => {
+                                    setViewModal(false);
+                                    setViewItem(null);
+                                }}
+                                className="text-gray-400 hover:text-red-500 text-xl"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* BODY */}
+                        <div className="p-6 space-y-6 text-sm max-h-[80vh] overflow-y-auto">
+
+                            {/* PRODUCT */}
+                            <div>
+                                <h3 className="font-semibold mb-2">Product</h3>
+                                <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                                    <p><b>Name:</b> {viewItem.product?.name}</p>
+                                    <p><b>SKU:</b> {viewItem.product?.sku}</p>
+                                    <p><b>Model:</b> {viewItem.product?.model_name}</p>
+                                    <p><b>Type:</b> {viewItem.product?.type}</p>
+                                </div>
+                            </div>
+
+                            {/* HUB */}
+                            <div>
+                                <h3 className="font-semibold mb-2">Hub</h3>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    {viewItem.hub_name}
+                                </div>
+                            </div>
+
+                            {/* VENDOR */}
+                            <div>
+                                <h3 className="font-semibold mb-2">Vendor</h3>
+                                <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                                    <p><b>Name:</b> {viewItem.vendor_details?.name}</p>
+                                    <p><b>Phone:</b> {viewItem.vendor_details?.phone_number}</p>
+                                    <p><b>Email:</b> {viewItem.vendor_details?.email}</p>
+                                    <p><b>GST:</b> {viewItem.vendor_details?.gst}</p>
+                                    <p className="col-span-2">
+                                        <b>Address:</b> {viewItem.vendor_details?.address}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* PURCHASE */}
+                            <div>
+                                <h3 className="font-semibold mb-2">Purchase Details</h3>
+                                <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                                    <p><b>MRP:</b> ₹{viewItem.purchase_details?.mrp}</p>
+                                    <p><b>Amount:</b> ₹{viewItem.purchase_details?.amount}</p>
+                                    <p><b>GST %:</b> {viewItem.purchase_details?.gst_percent}%</p>
+                                    <p><b>GST Amount:</b> ₹{viewItem.purchase_details?.gst_amount}</p>
+                                    <p className="col-span-2">
+                                        <b>GST Included:</b>{" "}
+                                        {viewItem.purchase_details?.gst_included ? "Yes" : "No"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* STOCK */}
+                            <div>
+                                <h3 className="font-semibold mb-2">Stock</h3>
+                                <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                                    <p><b>Stock in Hub:</b> {viewItem.stock_in_hub}</p>
+                                    <p><b>Total Stock:</b> {viewItem.total_stock}</p>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        {/* FOOTER */}
+                        <div className="px-6 py-4 border-t flex justify-end">
+                            <button
+                                onClick={() => {
+                                    setViewModal(false);
+                                    setViewItem(null);
+                                }}
+                                className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm"
+                            >
+                                Close
+                            </button>
+                        </div>
+
                     </div>
                 </div>
             )}

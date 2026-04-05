@@ -40,6 +40,7 @@ import ZoneSlots from './pages/ZoneSlots/ZoneSlots';
 import ToolsInventory from './pages/ToolsInventory/ToolsInventory';
 import OrderModify from './pages/OrderModify';
 import Vendors from './pages/Vendors/Vendors';
+import OrderPurchase from './pages/OrderPurchase/OrderPurchase';
 
 
 const queryClient = new QueryClient();
@@ -110,6 +111,7 @@ const AppRoutes: React.FC = () => {
         <Route path='toolsInventory' element={<ToolsInventory />} />
         <Route path="OrderModify" element={<OrderModify />} />
         <Route path="vendors" element={<Vendors />} />
+        <Route path="orderPurchase" element={<OrderPurchase />} />
 
       </Route>
     </Routes>
