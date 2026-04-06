@@ -247,12 +247,12 @@ const ProductsInventory: React.FC = () => {
                     Product Inventory
                 </h1>
 
-                {/* <button
+                <button
                     onClick={() => setShowModal(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg"
                 >
                     <Plus size={16} /> Add Inventory
-                </button> */}
+                </button>
             </div>
 
             {/* FILTERS */}

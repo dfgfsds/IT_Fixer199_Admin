@@ -127,8 +127,8 @@ const Vendors: React.FC = () => {
             {/* HEADER */}
             <div className="flex justify-between flex-wrap">
                 <div>
-                    <h1 className="text-2xl font-bold">Vendor Management</h1>
-                    <p className="text-gray-600">Manage vendors</p>
+                    <h1 className="text-2xl font-bold">Supplier Management</h1>
+                    <p className="text-gray-600">Manage suppliers</p>
                 </div>
 
                 <div className="flex space-x-3">
@@ -145,7 +145,7 @@ const Vendors: React.FC = () => {
                         className="px-4 py-2 bg-orange-600 text-white rounded-lg flex items-center"
                     >
                         <Plus className="w-4 h-4 mr-2" />
-                        Add Vendor
+                        Add Supplier
                     </button>
                 </div>
             </div>
