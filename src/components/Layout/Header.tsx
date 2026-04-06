@@ -51,8 +51,8 @@ const Header: React.FC = () => {
       setLoadingNotif(true);
 
       const res = await fetch(
-        "https://api-test.itfixer199.com/api/notifications/",
-        // "https://api.itfixer199.com/api/notifications/",
+        // "https://api-test.itfixer199.com/api/notifications/",
+        "https://api.itfixer199.com/api/notifications/",
 
         {
           headers: {
@@ -125,16 +125,16 @@ const Header: React.FC = () => {
 
         if (token) {
           await fetch(
-            "https://api-test.itfixer199.com/api/notifications/register-fcm/"
-            //  "https://api.itfixer199.com/api/notifications/register-fcm/"
+            // "https://api-test.itfixer199.com/api/notifications/register-fcm/"
+             "https://api.itfixer199.com/api/notifications/register-fcm/"
             , {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({ fcm_token: token }),
-          });
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+              body: JSON.stringify({ fcm_token: token }),
+            });
 
           console.log("✅ Token sent to backend");
         }
