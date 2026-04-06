@@ -128,13 +128,13 @@ const Header: React.FC = () => {
             "https://api-test.itfixer199.com/api/notifications/register-fcm/"
             //  "https://api.itfixer199.com/api/notifications/register-fcm/"
             , {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({ fcm_token: token }),
-          });
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+              body: JSON.stringify({ fcm_token: token }),
+            });
 
           console.log("✅ Token sent to backend");
         }

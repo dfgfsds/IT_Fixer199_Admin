@@ -693,6 +693,9 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                     >
                                         <option value="CASH">CASH</option>
                                         <option value="BANK_TRANSFER">BANK_TRANSFER</option>
+                                        <option value="UPI">UPI</option>
+                                        <option value="CHEQUE">CHEQUE</option>
+
                                     </select>
                                 </div>
 
