@@ -222,7 +222,7 @@ const Sidebar: React.FC = () => {
       , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
     },
     {
-      name: 'Vendors', icon: Users, path: '/vendors'
+      name: 'Supplier', icon: Users, path: '/vendors'
       , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
     },
     {
