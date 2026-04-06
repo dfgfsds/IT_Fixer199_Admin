@@ -111,7 +111,7 @@ const AddVendorModal: React.FC<Props> = ({
                 {/* HEADER */}
                 <div className="flex justify-between mb-6">
                     <h2 className="text-xl font-bold">
-                        {editVendor ? "Edit Vendor" : "Add Vendor"}
+                        {editVendor ? "Edit Supplier" : "Add Supplier"}
                     </h2>
 
                     <button
@@ -280,9 +280,9 @@ const AddVendorModal: React.FC<Props> = ({
                                     Saving...
                                 </span>
                             ) : editVendor ? (
-                                "Update Vendor"
+                                "Update Supplier"
                             ) : (
-                                "Add Vendor"
+                                "Add Supplier"
                             )}
                         </button>
                     </div>

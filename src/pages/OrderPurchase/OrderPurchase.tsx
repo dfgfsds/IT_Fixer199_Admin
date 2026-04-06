@@ -13,7 +13,7 @@ const OrderPurchase: React.FC = () => {
 
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-
+    console.log(data)
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
@@ -124,7 +124,7 @@ const OrderPurchase: React.FC = () => {
             setLoading(true);
             const query = new URLSearchParams({
                 page: String(p),
-                size: "10000",
+                size: String(size),
                 ...(filters.vendor_id && { vendor_id: filters.vendor_id }),
                 ...(filters.hub_id && { hub_id: filters.hub_id }),
                 ...(search && { search: search }), // 🔥 ADD THIS
@@ -134,18 +134,18 @@ const OrderPurchase: React.FC = () => {
             // const res = await axiosInstance.get(
             //     `${Api.orderPurchase}?page=${p}&size=${size}`
             // );
-            console.log("API Response:", res);
             const response = res.data;
-
             // handle both formats
-            const list = response?.data?.items || response || [];
+            // const list = response?.data?.items || [];
+            if (res) {
+                setData(res?.data?.items);
 
-            setData(list);
-
-            if (response?.pagination) {
-                setPagination(response?.page);
-                setPage(response?.page);
-                setTotalPages(response?.total);
+                if (res?.data?.pagination) {
+                    const p = res?.data?.pagination;
+                    setPagination(p);
+                    setPage(p?.page);
+                    setTotalPages(p?.total_pages);
+                }
             }
 
         } catch (err) {
@@ -188,8 +188,8 @@ const OrderPurchase: React.FC = () => {
             {/* HEADER */}
             <div className="flex justify-between items-end mb-6">
                 <div>
-                    <h1 className="text-2xl font-black tracking-tight text-gray-900">Purchase Orders</h1>
-                    <p className="text-sm text-gray-500 font-medium">Manage and track your inventory procurements</p>
+                    <h1 className="text-xl font-bold">Purchase Orders</h1>
+                    {/* <p className="text-sm text-gray-500 font-medium">Manage and track your inventory procurements</p> */}
                 </div>
 
                 <button
@@ -197,7 +197,7 @@ const OrderPurchase: React.FC = () => {
                         setEditData(null);
                         setShowModal(true);
                     }}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-orange-700 hover:bg-orange-600 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-gray-200 active:scale-95"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-gray-200 active:scale-95"
                 >
                     <Plus size={18} strokeWidth={3} /> Create Order
                 </button>
@@ -219,7 +219,7 @@ const OrderPurchase: React.FC = () => {
 
                 {/* VENDOR FILTER */}
                 <select
-                    className="px-4 py-2.5 bg-gray-50 border-2 border-transparent focus:border-orange-500 focus:bg-white rounded-xl text-sm font-bold outline-none cursor-pointer transition-all"
+                    className="px-4 py-2.5 capitalize bg-gray-50 border-2 border-transparent focus:border-orange-500 focus:bg-white rounded-xl text-sm  outline-none cursor-pointer transition-all"
                     value={filters.vendor_id}
                     onChange={(e) => setFilters({ ...filters, vendor_id: e.target.value })}
                 >
@@ -231,7 +231,7 @@ const OrderPurchase: React.FC = () => {
 
                 {/* HUB FILTER */}
                 <select
-                    className="px-4 py-2.5 bg-gray-50 border-2 border-transparent focus:border-orange-500 focus:bg-white rounded-xl text-sm font-bold outline-none cursor-pointer transition-all"
+                    className="px-4 py-2.5 capitalize bg-gray-50 border-2 border-transparent focus:border-orange-500 focus:bg-white rounded-xl text-sm  outline-none cursor-pointer transition-all"
                     value={filters.hub_id}
                     onChange={(e) => setFilters({ ...filters, hub_id: e.target.value })}
                 >
@@ -250,7 +250,7 @@ const OrderPurchase: React.FC = () => {
                         setSearch("");
                         fetchData(1, pageSize);
                     }}
-                    className="px-4 py-2.5 bg-red-100 text-red-600 rounded-xl text-sm font-bold hover:bg-red-200"
+                    className="px-4 py-2.5 bg-red-100 text-red-600 rounded-xl text-sm  hover:bg-red-200"
                 >
                     Clear All
                 </button>
@@ -258,8 +258,8 @@ const OrderPurchase: React.FC = () => {
 
             {/* TABLE */}
             <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-               
-                     <div className="w-full overflow-x-auto"> {loading ? (
+
+                <div className="w-full overflow-x-auto"> {loading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <Loader2 className="animate-spin text-orange-600 mb-2" size={32} />
                         <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Loading Data...</p>
@@ -279,14 +279,14 @@ const OrderPurchase: React.FC = () => {
                         </thead>
 
                         <tbody className="divide-y divide-gray-50">
-                            {data.length === 0 ? (
+                            {data?.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="text-center py-20 text-gray-400 font-bold italic">
                                         No Purchase Orders Found
                                     </td>
                                 </tr>
                             ) : (
-                                data.map((item: any, index: number) => {
+                                data?.map((item: any, index: number) => {
                                     const balance = Number(item.grand_total) - Number(item.total_paid);
                                     const isFullyPaid = balance <= 0;
 
@@ -297,26 +297,26 @@ const OrderPurchase: React.FC = () => {
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                <p className="font-black text-gray-900">{item.po_number}</p>
+                                                <p className="font-bold text-gray-900">{item.po_number}</p>
                                                 <p className="text-[11px] text-gray-500 font-bold uppercase">{item.vendor_name}</p>
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                <span className="px-2 py-1 bg-gray-100 rounded text-[10px] font-black text-gray-600 uppercase">
+                                                <span className="px-2 py-1 bg-gray-100 rounded text-[10px] font-semibold text-gray-600 uppercase">
                                                     {item.hub_name}
                                                 </span>
                                             </td>
 
-                                            <td className="px-6 py-4 text-right font-black text-gray-900">
+                                            <td className="px-6 py-4 text-right  text-gray-900">
                                                 ₹{Number(item.grand_total).toLocaleString('en-IN')}
                                             </td>
 
-                                            <td className="px-6 py-4 text-right font-bold text-green-600">
+                                            <td className="px-6 py-4 text-right  text-green-600">
                                                 ₹{Number(item.total_paid).toLocaleString('en-IN')}
                                             </td>
 
                                             <td className="px-6 py-4 text-right">
-                                                <span className={`font-black ${isFullyPaid ? 'text-gray-300' : 'text-red-500'}`}>
+                                                <span className={`font-semibold ${isFullyPaid ? 'text-gray-300' : 'text-red-500'}`}>
                                                     ₹{balance.toLocaleString('en-IN')}
                                                 </span>
                                                 {!isFullyPaid && (
@@ -372,23 +372,23 @@ const OrderPurchase: React.FC = () => {
                     </table>
                 )}
 
-                {/* PAGINATION */}
-                {!loading && pagination && (
-                    <div className="border-t border-gray-50 bg-gray-50/30">
-                        <Pagination
-                            page={page}
-                            totalPages={totalPages}
-                            pageSize={pageSize}
-                            totalItems={pagination.total_elements}
-                            onPageChange={(p: number) => fetchData(p, pageSize)}
-                            onPageSizeChange={(size: number) => {
-                                setPageSize(size);
-                                fetchData(1, size);
-                            }}
-                        />
-                    </div>
-                )}
-</div>
+                    {/* PAGINATION */}
+                    {!loading && pagination && (
+                        <div className="border-t border-gray-50 bg-gray-50/30">
+                            <Pagination
+                                page={page}
+                                totalPages={totalPages}
+                                pageSize={pageSize}
+                                totalItems={pagination.total_elements}
+                                onPageChange={(p: number) => fetchData(p, pageSize)}
+                                onPageSizeChange={(size: number) => {
+                                    setPageSize(size);
+                                    fetchData(1, size);
+                                }}
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* MODAL */}
