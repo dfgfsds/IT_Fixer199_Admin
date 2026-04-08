@@ -768,7 +768,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                             Cancel
                         </button>
                         <button onClick={handleSubmit} className="px-8 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg shadow-orange-200 flex items-center gap-2 transition-all disabled:opacity-50">
-                            {loading ? <Loader2 className="animate-spin" size={18} /> : "Create Order"}
+                            {loading ? <Loader2 className="animate-spin" size={18} /> : "Purchase Order"}
                         </button>
                     </div>
                 </div>
