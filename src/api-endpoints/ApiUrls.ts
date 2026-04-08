@@ -193,6 +193,19 @@ const vendor = `${baseUrl}/api/vendor/`;
 
 // orderPurchase
 const orderPurchase = `${baseUrl}/api/purchase/order/`;
+
+// RatingQuestions
+const RatingQuestions = `${baseUrl}/api/ratings/rating-questions`;
+
+// purchaseGRN
+const purchaseGRN = `${baseUrl}/api/purchase/grn/`;
+
+// purchaseGRNList
+const purchaseGRNList = `${baseUrl}/api/purchase/order`;
+
+// purchaseOrderAddSerial
+const purchaseOrderAddSerial = `${baseUrl}/api/product-inventory/movement/purchase-order-add-serial/`;
+
 export default {
   login,
   allUsers,
@@ -272,6 +285,10 @@ export default {
   OrderModify,
   vendor,
   orderPurchase,
+  RatingQuestions,
+  purchaseGRN,
+  purchaseGRNList,
+  purchaseOrderAddSerial
 };
 
 
