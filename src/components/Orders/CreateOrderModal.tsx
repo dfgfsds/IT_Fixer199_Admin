@@ -79,13 +79,16 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
     const [scenario, setScenario] = useState("");
     const [rowItems, setRowItems] = useState<{ [key: number]: any[] }>({});
     const [loadingRows, setLoadingRows] = useState<{ [key: number]: boolean }>({});
-
+    const [apiErrors, setApiErrors] = useState<string>("");
     // Map state
     const [mapOpen, setMapOpen] = useState(false);
     const [mapLoading, setMapLoading] = useState(false);
     const mapRef = useRef<HTMLDivElement>(null);
     const googleMapRef = useRef<any>(null);
     const markerRef = useRef<any>(null);
+    const [paymentType, setPaymentType] = useState("");
+
+
 
     const [form, setForm] = useState({
         customer_name: "",
@@ -120,6 +123,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         ]
     });
 
+
     const [locationData, setLocationData] = useState<any>(null);
     const [fetchingSlots, setFetchingSlots] = useState(false);
     const [availableSerials, setAvailableSerials] = useState<{ [key: number]: string[] }>({});
@@ -134,6 +138,22 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         if (!mapOpen) return;
         initMap();
     }, [mapOpen]);
+
+    useEffect(() => {
+        if (paymentType === "PAID") {
+            setForm(prev => ({
+                ...prev,
+                is_paid: true,
+                payment_method: "CASH"
+            }));
+        } else if (paymentType === "RAZORPAY") {
+            setForm(prev => ({
+                ...prev,
+                is_paid: false,
+                payment_method: "RAZORPAY"
+            }));
+        }
+    }, [paymentType]);
 
     const initMap = async () => {
         setMapLoading(true);
@@ -257,7 +277,8 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
     };
 
     const fetchZoneAndSlots = async (lat: string, lon: string) => {
-        if (!lat || !lon || !scenario || form.no_assignment) return;
+        // if (!lat || !lon || !scenario || form.no_assignment) return;
+        if (!lat || !lon || form.no_assignment) return;
 
         setFetchingSlots(true);
         try {
@@ -285,7 +306,8 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         } else {
             setLocationData(null);
         }
-    }, [form.latitude, form.longitude, form.no_assignment, scenario]);
+    }, [form.latitude, form.longitude, form.no_assignment]);
+    // }, [form.latitude, form.longitude, form.no_assignment, scenario]);
 
     const fetchInitialData = async () => {
         try {
@@ -479,7 +501,8 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
     };
 
     const handleSubmit = async () => {
-        if (!scenario) { toast.error("Please select a business scenario preset first"); return; }
+        setApiErrors('')
+        // if (!scenario) { toast.error("Please select a business scenario preset first"); return; }
         if (!form.customer_name || !form.customer_number || !form.address || !form.hub_id || !form.zone_id || !form.order_platform) {
             toast.error("Please fill all required fields (Name, Number, Address, Hub, Zone, and Platform)"); return;
         }
@@ -500,19 +523,19 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         if (form.items.length === 0) { toast.error("Add at least one item"); return; }
 
         // Validate Serial Numbers for Products (Only for Cases 1, 2, 3)
-        if (["1", "2", "3"].includes(scenario)) {
-            for (let i = 0; i < form.items.length; i++) {
-                const item = form.items[i];
-                if (item.type === "PRODUCT" && item.product_id) {
-                    const sns = item.serial_numbers || [];
-                    const productName = (rowItems[i] || []).find((p: any) => p.id === item.product_id)?.name || `Item ${i + 1}`;
+        // if (["1", "2", "3"].includes(scenario)) {
+        for (let i = 0; i < form.items.length; i++) {
+            const item = form.items[i];
+            if (item.type === "PRODUCT" && item.product_id) {
+                const sns = item.serial_numbers || [];
+                const productName = (rowItems[i] || []).find((p: any) => p.id === item.product_id)?.name || `Item ${i + 1}`;
 
-                    if (sns.length < item.quantity || sns.some(s => !s.trim())) {
-                        toast.error(`Please provide all serial numbers for ${productName}`);
-                        return;
-                    }
+                if (sns.length < item.quantity || sns.some(s => !s.trim())) {
+                    toast.error(`Please provide all serial numbers for ${productName}`);
+                    return;
                 }
             }
+            // }
         }
 
         try {
@@ -572,7 +595,8 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                 }
             }
         } catch (error) {
-            console.error("Order creation error:", error);
+            setApiErrors(extractErrorMessage(error));
+            // console.error("Order creation error:", error);
             toast.error(extractErrorMessage(error));
         } finally {
             setLoading(false);
@@ -600,7 +624,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                 <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-thin scrollbar-thumb-gray-300">
 
                     {/* Preset Scenario Selector */}
-                    <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    {/* <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center text-white">
                                 <Plus size={24} />
@@ -637,7 +661,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                             <option value="5">Case 5: Pending Payment, No Razorpay, With Agent Assignment</option>
                             <option value="6">Case 6: Success Payment, With Agent Assignment</option>
                         </select>
-                    </div>
+                    </div> */}
 
                     {/* Customer Details */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -816,14 +840,17 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                         </div>
                         <div className="flex items-center gap-6 pt-6">
                             <label
-                                onClick={(e) => { if (scenario) e.preventDefault(); }}
+                                // onClick={(e) => { if (scenario) e.preventDefault(); }}
                                 className="flex items-center gap-2 group transition-all"
-                                style={{ cursor: scenario ? "not-allowed" : "pointer", opacity: scenario ? 0.9 : 1 }}
+                                // style={{ cursor: scenario ? "not-allowed" : "pointer", opacity: scenario ? 0.9 : 1 }}
+                                onClick={(e) => e.preventDefault()}
+                                style={{ cursor: "pointer" }}
                             >
                                 <input
                                     type="checkbox"
                                     checked={!form.no_assignment}
-                                    style={{ pointerEvents: scenario ? "none" : "auto" }}
+                                    // style={{ pointerEvents: scenario ? "none" : "auto" }}
+                                    style={{ pointerEvents: "auto" }}
                                     onChange={(e) => {
                                         const needsAssign = e.target.checked;
                                         setForm({ ...form, no_assignment: !needsAssign });
@@ -1076,57 +1103,59 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                     </div>
 
                                     {/* Serial Numbers for Products - Only for Case 1, 2, 3 (No Agent) */}
-                                    {item.type === "PRODUCT" && ["1", "2", "3"].includes(scenario) && (
-                                        <div className="md:col-span-12 mt-2 bg-white/50 p-3 rounded-lg border border-orange-100">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <label className="text-[10px] font-bold text-orange-600 uppercase tracking-wider block">Serial Numbers ({item.quantity})</label>
-                                                {(!availableSerials[index] || availableSerials[index].length === 0) && item.product_id && (
-                                                    <span className="text-[10px] font-medium text-red-500 italic">No stock found in this hub</span>
-                                                )}
+                                    {item.type === "PRODUCT" &&
+                                        // ["1", "2", "3"].includes(scenario) &&
+                                        (
+                                            <div className="md:col-span-12 mt-2 bg-white/50 p-3 rounded-lg border border-orange-100">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <label className="text-[10px] font-bold text-orange-600 uppercase tracking-wider block">Serial Numbers ({item.quantity})</label>
+                                                    {(!availableSerials[index] || availableSerials[index].length === 0) && item.product_id && (
+                                                        <span className="text-[10px] font-medium text-red-500 italic">No stock found in this hub</span>
+                                                    )}
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                    {Array.from({ length: Math.max(1, item.quantity || 1) }).map((_, snIdx) => {
+                                                        const currentSns = item.serial_numbers || [];
+
+                                                        const otherSelectedSns = form.items.flatMap((it, itIdx) => {
+                                                            if (it.product_id === item.product_id) {
+                                                                return (it.serial_numbers || []).filter((_, sIdx) => !(itIdx === index && sIdx === snIdx));
+                                                            }
+                                                            return [];
+                                                        });
+
+                                                        return (
+                                                            <select
+                                                                key={snIdx}
+                                                                className="w-full px-3 py-1.5 border rounded-lg bg-white text-xs focus:ring-1 focus:ring-orange-500 outline-none"
+                                                                value={currentSns[snIdx] || ""}
+                                                                onChange={(e) => handleSerialNumberChange(index, snIdx, e.target.value)}
+                                                            >
+                                                                <option value="">Choose S/N {snIdx + 1}</option>
+                                                                {(() => {
+                                                                    const pool = availableSerials[index] || [];
+                                                                    const filteredOptions = pool.filter(sn => !otherSelectedSns.includes(sn));
+
+                                                                    if (pool.length === 0) {
+                                                                        return <option disabled className="text-red-500 font-bold">🚫 No available stock in hub</option>;
+                                                                    }
+
+                                                                    if (filteredOptions.length === 0 && pool.length > 0) {
+                                                                        return <option disabled>No more units left in selection</option>;
+                                                                    }
+
+                                                                    return filteredOptions.map(sn => (
+                                                                        <option key={sn} value={sn}>
+                                                                            {sn}
+                                                                        </option>
+                                                                    ));
+                                                                })()}
+                                                            </select>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                {Array.from({ length: Math.max(1, item.quantity || 1) }).map((_, snIdx) => {
-                                                    const currentSns = item.serial_numbers || [];
-
-                                                    const otherSelectedSns = form.items.flatMap((it, itIdx) => {
-                                                        if (it.product_id === item.product_id) {
-                                                            return (it.serial_numbers || []).filter((_, sIdx) => !(itIdx === index && sIdx === snIdx));
-                                                        }
-                                                        return [];
-                                                    });
-
-                                                    return (
-                                                        <select
-                                                            key={snIdx}
-                                                            className="w-full px-3 py-1.5 border rounded-lg bg-white text-xs focus:ring-1 focus:ring-orange-500 outline-none"
-                                                            value={currentSns[snIdx] || ""}
-                                                            onChange={(e) => handleSerialNumberChange(index, snIdx, e.target.value)}
-                                                        >
-                                                            <option value="">Choose S/N {snIdx + 1}</option>
-                                                            {(() => {
-                                                                const pool = availableSerials[index] || [];
-                                                                const filteredOptions = pool.filter(sn => !otherSelectedSns.includes(sn));
-
-                                                                if (pool.length === 0) {
-                                                                    return <option disabled className="text-red-500 font-bold">🚫 No available stock in hub</option>;
-                                                                }
-
-                                                                if (filteredOptions.length === 0 && pool.length > 0) {
-                                                                    return <option disabled>No more units left in selection</option>;
-                                                                }
-
-                                                                return filteredOptions.map(sn => (
-                                                                    <option key={sn} value={sn}>
-                                                                        {sn}
-                                                                    </option>
-                                                                ));
-                                                            })()}
-                                                        </select>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    )}
+                                        )}
                                 </div>
                             ))}
                         </div>
@@ -1143,12 +1172,14 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                             <div className="space-y-1">
                                 <label className="text-sm font-medium text-gray-700">Payment Method</label>
                                 <select
-                                    value={!form.no_razorpay ? "RAZORPAY" : form.payment_method}
-                                    style={{ pointerEvents: !form.no_razorpay ? "none" : "auto", opacity: !form.no_razorpay ? 0.9 : 1, cursor: !form.no_razorpay ? "not-allowed" : "pointer" }}
+                                    // value={!form.no_razorpay ? "RAZORPAY" : form.payment_method}
+                                    value={form.payment_method}
+                                    disabled={paymentType === "RAZORPAY"}
+                                    // style={{ pointerEvents: !form.no_razorpay ? "none" : "auto", opacity: !form.no_razorpay ? 0.9 : 1, cursor: !form.no_razorpay ? "not-allowed" : "pointer" }}
                                     onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
                                     className="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500 transition bg-white"
                                 >
-                                    {form.no_razorpay ? (
+                                    {paymentType !== "RAZORPAY" ? (
                                         <>
                                             <option value="">Choose Payment Method</option>
                                             <option value="CASH">Cash</option>
@@ -1161,16 +1192,19 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 </select>
                             </div>
 
-                            <div className="flex items-center gap-10 pt-6 md:col-span-2">
+                            {/* <div className="flex items-center gap-10 pt-6 md:col-span-2">
                                 <label
-                                    onClick={(e) => { if (scenario) e.preventDefault(); }}
+                                    // onClick={(e) => { if (scenario) e.preventDefault(); }}
+                                    onClick={(e) => e.preventDefault()}
                                     className="flex items-center gap-2 group transition-all"
-                                    style={{ cursor: scenario ? "not-allowed" : "pointer", opacity: scenario ? 0.9 : 1 }}
+                                    // style={{ cursor: scenario ? "not-allowed" : "pointer", opacity: scenario ? 0.9 : 1 }}
+                                    style={{ cursor: "pointer", opacity: 1 }}
                                 >
                                     <input
                                         type="checkbox"
                                         checked={form.is_paid}
-                                        style={{ pointerEvents: scenario ? "none" : "auto" }}
+                                        // style={{ pointerEvents: scenario ? "none" : "auto" }}
+                                        style={{ pointerEvents: "auto" }}
                                         onChange={(e) => setForm({ ...form, is_paid: e.target.checked })}
                                         className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                                     />
@@ -1178,19 +1212,64 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 </label>
 
                                 <label
-                                    onClick={(e) => { if (scenario) e.preventDefault(); }}
+                                    // onClick={(e) => { if (scenario) e.preventDefault(); }}
+                                    onClick={(e) => e.preventDefault()}
                                     className="flex items-center gap-2 group transition-all"
-                                    style={{ cursor: scenario ? "not-allowed" : "pointer", opacity: scenario ? 0.9 : 1 }}
+                                    // style={{ cursor: scenario ? "not-allowed" : "pointer", opacity: scenario ? 0.9 : 1 }}
+                                    style={{ cursor: "pointer", opacity: 1 }}
                                 >
                                     <input
                                         type="checkbox"
                                         checked={!form.no_razorpay}
-                                        style={{ pointerEvents: scenario ? "none" : "auto" }}
+                                        // style={{ pointerEvents: scenario ? "none" : "auto" }}
+                                        style={{ pointerEvents: "auto" }}
                                         onChange={(e) => setForm({ ...form, no_razorpay: !e.target.checked })}
                                         className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                                     />
                                     <span className="text-sm text-gray-700 group-hover:text-gray-900 transition font-medium">Enable Razorpay</span>
                                 </label>
+                            </div> */}
+                            <div className="flex items-center gap-10 pt-6 md:col-span-2">
+
+                                {/* Payment Received */}
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={paymentType === "PAID"}
+                                        onChange={(e) => {
+                                            setPaymentType("PAID")
+                                            setForm({ ...form, is_paid: e.target.checked })
+                                        }}
+                                        className="w-4 h-4 text-orange-600"
+                                    />
+                                    <span className="text-sm">Payment Received</span>
+                                </label>
+
+                                {/* Razorpay */}
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    {/* <input
+                                        type="checkbox"
+                                        checked={paymentType === "RAZORPAY"}
+                                        onChange={() => setPaymentType("RAZORPAY")}
+                                        className="w-4 h-4 text-orange-600"
+                                    /> */}
+                                    <input
+                                        type="checkbox"
+                                        checked={paymentType === "RAZORPAY"}
+                                        onChange={(e) => {
+                                            const isRazorpay = e.target.checked;
+                                            setPaymentType("RAZORPAY")
+                                            setForm(prev => ({
+                                                ...prev,
+                                                no_razorpay: !isRazorpay,
+                                                payment_method: isRazorpay ? "RAZORPAY" : ""
+                                            }));
+                                        }}
+                                        className="w-4 h-4 text-orange-600"
+                                    />
+                                    <span className="text-sm">Enable Razorpay</span>
+                                </label>
+
                             </div>
 
                             {form.is_paid && (
@@ -1208,7 +1287,11 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                         </div>
                     </div>
                 </div>
-
+   {apiErrors && (
+                        <p className="text-red-500 mt-2 text-end px-6">
+                            {apiErrors}
+                        </p>
+                    )}
                 {/* Footer */}
                 <div className="p-6 border-t bg-gray-50 flex items-center justify-end gap-4">
                     <button

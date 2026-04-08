@@ -21,7 +21,7 @@ interface OrdersTableProps {
   onViewOrder: (order: Order) => void;
   onEditOrder: (order: Order) => void;
   onAssignAgent: (order: Order) => void;
-  fetchOrders: any
+  fetchOrders: any;
 }
 
 const OrdersTable: React.FC<OrdersTableProps> = ({
