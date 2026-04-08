@@ -41,6 +41,7 @@ import ToolsInventory from './pages/ToolsInventory/ToolsInventory';
 import OrderModify from './pages/OrderModify';
 import Vendors from './pages/Vendors/Vendors';
 import OrderPurchase from './pages/OrderPurchase/OrderPurchase';
+import RatingQuestions from './pages/RatingQuestions/RatingQuestions';
 
 
 const queryClient = new QueryClient();
@@ -112,7 +113,7 @@ const AppRoutes: React.FC = () => {
         <Route path="OrderModify" element={<OrderModify />} />
         <Route path="vendors" element={<Vendors />} />
         <Route path="orderPurchase" element={<OrderPurchase />} />
-
+        <Route path="ratingQuestions" element={<RatingQuestions />} />
       </Route>
     </Routes>
   );

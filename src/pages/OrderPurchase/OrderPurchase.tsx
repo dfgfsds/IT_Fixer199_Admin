@@ -8,12 +8,16 @@ import Api from "../../api-endpoints/ApiUrls";
 import PurchaseInvoicePrint from "./PurchaseInvoicePrint";
 import { useReactToPrint } from "react-to-print";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import GRNModal from "./GRNModal";
+import GRNInvoiceModal from "./GRNInvoiceModal";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import SerialNumberModal from "./SerialNumberModal";
 
 const OrderPurchase: React.FC = () => {
 
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    console.log(data)
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
@@ -28,9 +32,33 @@ const OrderPurchase: React.FC = () => {
 
     const [showViewModal, setShowViewModal] = useState(false);
     const [viewData, setViewData] = useState<any>(null);
-
     const [search, setSearch] = useState("");
+    const [showGRNModal, setShowGRNModal] = useState(false);
+    const [selectedPOForGRN, setSelectedPOForGRN] = useState<any>(null);
 
+    const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+    const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+    const [grnInvoiceData, setGrnInvoiceData] = useState<any>(null);
+    const [showSerialModal, setShowSerialModal] = useState(false);
+    const [selectedGRNData, setSelectedGRNData] = useState<any[]>([]);
+    const [serialData, setSerialData] = useState<any>({});
+
+    useEffect(() => {
+        if (selectedGRNData?.length) {
+            const init: any = {};
+
+            selectedGRNData.forEach((grn: any) => {
+                grn.items.forEach((item: any) => {
+                    const qty = Math.floor(Number(item.received_quantity || 0));
+
+                    init[item.id] = Array(qty).fill(""); // 🔥 use GRN item id
+                });
+            });
+
+            setSerialData(init);
+        }
+
+    }, [selectedGRNData]);
     const handleView = (item: any) => {
         setViewData(item);
         setShowViewModal(true);
@@ -95,6 +123,7 @@ const OrderPurchase: React.FC = () => {
             setApiErrors(extractErrorMessage(err));
         }
     };
+
     useEffect(() => {
         if (showPayModal) {
             setForm({
@@ -182,6 +211,95 @@ const OrderPurchase: React.FC = () => {
         }, 200);
     };
 
+    const handleGrnInvoice = async (item: any) => {
+        try {
+            const updatedApi: any = await axiosInstance.get(`${Api.purchaseGRNList}/${item.id}/grns/`);
+            console.log(updatedApi)
+            if (updatedApi) {
+                setGrnInvoiceData(updatedApi?.data?.data);
+                setSelectedInvoice(item);
+                setShowInvoiceModal(true);
+            }
+        } catch (error) {
+
+        }
+    }
+
+    const handleDownloadExcel = async () => {
+        try {
+            const query = new URLSearchParams({
+                ...(filters.vendor_id && { vendor_id: filters.vendor_id }),
+                ...(filters.hub_id && { hub_id: filters.hub_id }),
+                ...(search && { search }),
+                size: "100000",
+            }).toString();
+
+            const res = await axiosInstance.get(`${Api.orderPurchase}?${query}&size=100000`);
+
+            const list = res?.data?.items || [];
+
+            if (!list.length) {
+                return alert("No data to export");
+            }
+
+            let totalGrand = 0;
+            let totalPaid = 0;
+
+            const excelData = list.map((item: any, index: number) => {
+                const grand = Number(item.grand_total || 0);
+                const paid = Number(item.total_paid || 0);
+
+                totalGrand += grand;
+                totalPaid += paid;
+
+                return {
+                    "S.No": index + 1,
+                    "PO Number": item.po_number,
+                    "Vendor": item.vendor_name,
+                    "Hub": item.hub_name,
+                    "Grand Total": grand,
+                    "Total Paid": paid,
+                    "Balance": grand - paid,
+                    "Status": item.payment_status,
+                    "Order Date": item.order_date,
+                };
+            });
+
+            // 🔥 ADD TOTAL ROW
+            excelData.push({
+                "S.No": "",
+                "PO Number": "TOTAL",
+                "Vendor": "",
+                "Hub": "",
+                "Grand Total": totalGrand,
+                "Total Paid": totalPaid,
+                "Balance": totalGrand - totalPaid,
+                "Status": "",
+                "Order Date": "",
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Purchase Orders");
+
+            const excelBuffer = XLSX.write(workbook, {
+                bookType: "xlsx",
+                type: "array",
+            });
+
+            const blob = new Blob([excelBuffer], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            });
+
+            saveAs(blob, "PurchaseOrders.xlsx");
+
+        } catch (error) {
+            console.log(error);
+            alert("Excel download failed");
+        }
+    };
+
     return (
         <div className="space-y-6">
 
@@ -199,7 +317,7 @@ const OrderPurchase: React.FC = () => {
                     }}
                     className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-gray-200 active:scale-95"
                 >
-                    <Plus size={18} strokeWidth={3} /> Create Order
+                    <Plus size={18} strokeWidth={3} /> Purchase Order
                 </button>
             </div>
 
@@ -242,6 +360,13 @@ const OrderPurchase: React.FC = () => {
                 </select>
 
                 <button
+                    onClick={handleDownloadExcel}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700"
+                >
+                    Download Excel
+                </button>
+
+                <button
                     onClick={() => {
                         setFilters({
                             vendor_id: "",
@@ -271,9 +396,14 @@ const OrderPurchase: React.FC = () => {
                                 <th className="px-6 py-4 text-left">S.No</th>
                                 <th className="px-6 py-4 text-left">Order Details</th>
                                 <th className="px-6 py-4 text-left">Hub / Location</th>
+                                <th className="px-6 py-4 text-right">Received Quantity</th>
+                                <th className="px-6 py-4 text-right">Pending Quantity</th>
+
                                 <th className="px-6 py-4 text-right">Grand Total</th>
                                 <th className="px-6 py-4 text-right">Paid</th>
                                 <th className="px-6 py-4 text-right">Balance</th>
+                                <th className="px-6 py-4 text-center">GRN</th>
+                                <th className="px-6 py-4 text-center">Serial</th>
                                 <th className="px-6 py-4 text-center">Actions</th>
                             </tr>
                         </thead>
@@ -287,7 +417,7 @@ const OrderPurchase: React.FC = () => {
                                 </tr>
                             ) : (
                                 data?.map((item: any, index: number) => {
-                                    const balance = Number(item.grand_total) - Number(item.total_paid);
+                                    const balance = Number(item.grand_total) - Number(item?.grn_actual_pending_amount);
                                     const isFullyPaid = balance <= 0;
 
                                     return (
@@ -308,6 +438,17 @@ const OrderPurchase: React.FC = () => {
                                             </td>
 
                                             <td className="px-6 py-4 text-right  text-gray-900">
+                                                {Number(item.items?.map((i: any) => i.received_quantity).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
+                                            </td>
+
+                                            <td className="px-6 py-4 text-right  text-gray-900">
+                                                {Number(item.items?.map((i: any) => i.pending_delivery_quantity).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
+                                            </td>
+                                            {/* <td className="px-6 py-4 text-right  text-gray-900">
+                                                ₹{Number(item.item?.map((i: any) => i.pending_delivery_quantity).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
+                                            </td> */}
+
+                                            <td className="px-6 py-4 text-right  text-gray-900">
                                                 ₹{Number(item.grand_total).toLocaleString('en-IN')}
                                             </td>
 
@@ -316,20 +457,65 @@ const OrderPurchase: React.FC = () => {
                                             </td>
 
                                             <td className="px-6 py-4 text-right">
-                                                <span className={`font-semibold ${isFullyPaid ? 'text-gray-300' : 'text-red-500'}`}>
-                                                    ₹{balance.toLocaleString('en-IN')}
+                                                <span className={`font-semibold ${item?.po_pending_amount > 0 ? 'text-red-500 ' : 'text-gray-300'}`}>
+                                                    ₹{item?.po_pending_amount?.toLocaleString('en-IN')}
                                                 </span>
-                                                {!isFullyPaid && (
+                                                {/* {!isFullyPaid && (
                                                     <div className="w-1 h-1 bg-red-500 rounded-full inline-block ml-1 animate-pulse" />
-                                                )}
+                                                )} */}
+                                            </td>
+
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center justify-center gap-2">
+
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedPOForGRN(item);
+                                                            setShowGRNModal(true);
+                                                        }}
+                                                        className="px-3 py-1.5 text-[10px] font-bold bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200"
+                                                    >
+                                                        Create GRN
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => {
+                                                            handleGrnInvoice(item);
+                                                            // setSelectedInvoice(item);
+                                                            // setShowInvoiceModal(true);
+                                                        }}
+                                                        className="px-3 py-1.5 text-[10px] font-bold bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
+                                                    >
+                                                        GRN View
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <button
+                                                    onClick={async () => {
+                                                        try {
+                                                            const res = await axiosInstance.get(
+                                                                `${Api.purchaseGRNList}/${item.id}/grns/`
+                                                            );
+
+                                                            setSelectedGRNData(res?.data?.data); // 🔥 store full GRN list
+                                                            setShowSerialModal(true);
+                                                        } catch (err) {
+                                                            console.log(err);
+                                                        }
+                                                    }}
+                                                    className="px-3 py-1.5 text-[10px] font-bold bg-orange-100 text-red-700 rounded-lg"
+                                                >
+                                                    Add
+                                                </button>
                                             </td>
 
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
-                                                        disabled={isFullyPaid}
+                                                        disabled={item?.po_pending_amount === 0}
                                                         onClick={() => handlePay(item)}
-                                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all ${!isFullyPaid
+                                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all ${item?.po_pending_amount > 0
                                                             ? "bg-green-100 text-green-700 hover:bg-green-600 hover:text-white"
                                                             : "bg-gray-100 text-gray-300 cursor-not-allowed"
                                                             }`}
@@ -355,6 +541,7 @@ const OrderPurchase: React.FC = () => {
                                         >
                                             <Edit3 size={16} />
                                         </button> */}
+
                                                     <button
                                                         onClick={() => handleView(item)}
                                                         className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -364,6 +551,7 @@ const OrderPurchase: React.FC = () => {
                                                     </button>
                                                 </div>
                                             </td>
+
                                         </tr>
                                     );
                                 })
@@ -556,8 +744,6 @@ const OrderPurchase: React.FC = () => {
                 </div>
             )}
 
-
-
             {showPayModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[100] p-4">
                     <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
@@ -658,6 +844,28 @@ const OrderPurchase: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <GRNModal
+                show={showGRNModal}
+                onClose={() => setShowGRNModal(false)}
+                onSuccess={() => fetchData(page, pageSize)}
+                poData={selectedPOForGRN}
+            />
+
+            <GRNInvoiceModal
+                show={showInvoiceModal}
+                onClose={() => setShowInvoiceModal(false)}
+                data={grnInvoiceData}
+                selectedInvoice={selectedInvoice}
+            />
+
+            <SerialNumberModal
+                show={showSerialModal}
+                onClose={() => setShowSerialModal(false)}
+                grnData={selectedGRNData}
+                serialData={serialData}
+                setSerialData={setSerialData}
+            />
 
             <div style={{ display: "none" }}>
                 <PurchaseInvoicePrint ref={componentRef} data={selectedOrder} />

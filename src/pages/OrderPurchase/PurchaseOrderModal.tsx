@@ -3,6 +3,7 @@ import axiosInstance from "../../configs/axios-middleware";
 import { Loader2, X, Plus, Trash2, IndianRupee } from "lucide-react";
 import Api from "../../api-endpoints/ApiUrls";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import { removeEmptyFields } from "../../utils/removeEmptyFields ";
 
 const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
     // ... (States and Logic remain exactly same)
@@ -34,7 +35,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
     const initialState = {
         vendor: "",
         hub: "",
-        po_number: "",
+        // po_number: "",
         order_date: "",
         due_date: "",
         bill_to: "",
@@ -288,15 +289,17 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                 ],
             };
             delete payload.initial_payment;
+
+            const cleanedUser = removeEmptyFields(payload);
             if (editData) {
-                const updatedApi = await axiosInstance.put(`${Api.orderPurchase}/${editData.id}/`, payload);
+                const updatedApi = await axiosInstance.put(`${Api.orderPurchase}/${editData.id}/`, cleanedUser);
                 if (updatedApi) {
                     onSuccess();
                     onClose();
                 }
             }
             else {
-                const updatedApi = await axiosInstance.post(`${Api.orderPurchase}`, payload);
+                const updatedApi = await axiosInstance.post(`${Api.orderPurchase}`, cleanedUser);
                 if (updatedApi) {
                     onSuccess();
                     onClose();
@@ -356,10 +359,10 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                 {hubs.map((h: any) => (<option key={h.id} value={h.id}>{h.name}</option>))}
                             </select>
                         </div>
-                        <div>
+                        {/* <div>
                             <label className={labelClass}>PO Number</label>
                             <input type="text" className={inputClass} placeholder="Enter PO#" value={form.po_number} onChange={(e) => setForm({ ...form, po_number: e.target.value })} />
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* DATES & TERMS */}
@@ -765,7 +768,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                             Cancel
                         </button>
                         <button onClick={handleSubmit} className="px-8 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg shadow-orange-200 flex items-center gap-2 transition-all disabled:opacity-50">
-                            {loading ? <Loader2 className="animate-spin" size={18} /> : "Create Order"}
+                            {loading ? <Loader2 className="animate-spin" size={18} /> : "Purchase Order"}
                         </button>
                     </div>
                 </div>

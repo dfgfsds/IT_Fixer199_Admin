@@ -1,0 +1,224 @@
+import React, { useEffect, useState } from "react";
+import axiosInstance from "../../configs/axios-middleware";
+import Api from "../../api-endpoints/ApiUrls";
+import { extractErrorMessage } from "../../utils/extractErrorMessage ";
+import { X, Save, ClipboardList, Package, Calendar, AlertCircle } from "lucide-react";
+
+const SerialNumberModal = ({
+    show,
+    onClose,
+    grnData,
+}: any) => {
+
+    const [selectedGrn, setSelectedGrn] = useState<any>(null);
+    const [serialData, setSerialData] = useState<any>({});
+    const [apiErrors, setApiErrors] = useState<string>("");
+
+    // 🔥 INIT SERIAL INPUTS BASED ON SELECTED GRN
+    useEffect(() => {
+        if (selectedGrn) {
+            const init: any = {};
+
+            selectedGrn.items.forEach((item: any) => {
+                const qty = Math.floor(Number(item.received_quantity || 0));
+                init[item.id] = Array(qty).fill("");
+            });
+
+            setSerialData(init);
+        }
+    }, [selectedGrn]);
+
+    const handleChange = (itemId: string, index: number, value: string) => {
+        const updated = { ...serialData };
+        updated[itemId][index] = value;
+        setSerialData(updated);
+    };
+
+    // 🔥 FINAL SUBMIT (SINGLE GRN ONLY)
+    const handleSubmit = async () => {
+        try {
+            setApiErrors("");
+            if (!selectedGrn) {
+                alert("Select GRN first");
+                return;
+            }
+
+            const products = selectedGrn.items.map((item: any) => ({
+                product_id: item.product_id,
+                serial_numbers: serialData[item.id]?.filter((s: any) => s),
+            }));
+
+            const payload = {
+                purchase_order_id: selectedGrn.purchase_order,
+                grn_id: selectedGrn.id,
+                products,
+            };
+
+            console.log("FINAL PAYLOAD", payload);
+
+            await axiosInstance.post(Api.purchaseOrderAddSerial, payload);
+
+            alert("Serial numbers added successfully");
+            onClose();
+
+        } catch (error) {
+            setApiErrors(extractErrorMessage(error));
+        }
+    };
+
+    if (!show) return null;
+
+    return (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-[999] p-4">
+            <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+
+                {/* HEADER */}
+                <div className="bg-slate-50 px-8 py-5 border-b border-slate-100 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-100">
+                            <ClipboardList size={22} />
+                        </div>
+                        <div>
+                            <h2 className="font-bold text-slate-800 text-xl tracking-tight">Serial Number Entry</h2>
+                            <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Inventory Assignment</p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={onClose}
+                        className="p-2 hover:bg-slate-200 rounded-full transition-all text-slate-400 hover:text-slate-600"
+                    >
+                        <X size={24} />
+                    </button>
+                </div>
+
+                <div className="p-8 overflow-y-auto custom-scrollbar">
+                    {/* GRN SELECTOR */}
+                    <div className="mb-8">
+                        <label className="block text-xs font-black text-slate-400 uppercase mb-2 tracking-widest px-1">Select Goods Receipt Note (GRN)</label>
+                        <div className="relative group">
+                            <select
+                                value={selectedGrn?.id || ""}
+                                onChange={(e) => {
+                                    const g = grnData.find((x: any) => x.id === e.target.value);
+                                    setSelectedGrn(g);
+                                }}
+                                className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-2xl p-4 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+                            >
+                                <option value="">Choose a GRN from list...</option>
+                                {grnData?.map((g: any) => (
+                                    <option key={g.id} value={g.id}>
+                                        {g.grn_number} — Received {new Date(g.received_date).toLocaleDateString()}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
+                                <Package size={18} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* BODY SECTION */}
+                    {selectedGrn ? (
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                            {/* SELECTED GRN INFO CARD */}
+                            <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-xl shadow-indigo-100 flex justify-between items-center">
+                                <div className="flex gap-6">
+                                    <div>
+                                        <p className="text-indigo-200 text-[10px] font-bold uppercase tracking-widest mb-1">Active GRN</p>
+                                        <p className="font-black text-lg">{selectedGrn.grn_number}</p>
+                                    </div>
+                                    <div className="border-l border-indigo-500/50 pl-6">
+                                        <p className="text-indigo-200 text-[10px] font-bold uppercase tracking-widest mb-1">Received Date</p>
+                                        <p className="font-bold flex items-center gap-2 italic">
+                                            <Calendar size={14} /> {new Date(selectedGrn.received_date).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="hidden md:block opacity-20">
+                                    <Package size={60} />
+                                </div>
+                            </div>
+
+                            {/* ITEMS LIST */}
+                            <div className="space-y-6">
+                                {selectedGrn.items.map((item: any) => (
+                                    <div key={item.id} className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex justify-between items-center mb-5 pb-4 border-b border-slate-50">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500">
+                                                    <Package size={20} />
+                                                </div>
+                                                <h3 className="font-bold text-slate-800 tracking-tight">{item.product_name}</h3>
+                                            </div>
+                                            <span className="px-4 py-1.5 bg-slate-900 text-white text-[11px] font-black rounded-full uppercase">
+                                                Qty: {Math.floor(item.received_quantity)}
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                            {serialData[item.id]?.map((val: any, i: number) => (
+                                                <div key={i} className="relative group">
+                                                    <span className="absolute -top-2 left-3 px-1.5 bg-white text-[9px] font-black text-slate-400 uppercase tracking-tighter z-10">
+                                                        SN #{String(i + 1).padStart(2, '0')}
+                                                    </span>
+                                                    <input
+                                                        value={val}
+                                                        placeholder="Enter serial..."
+                                                        onChange={(e) => handleChange(item.id, i, e.target.value)}
+                                                        className="w-full bg-white border border-slate-200 p-3.5 pt-4 rounded-xl text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none font-medium text-slate-700"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="h-64 border-2 border-dashed border-slate-100 rounded-3xl flex flex-col items-center justify-center text-slate-400">
+                            <Package size={48} strokeWidth={1} className="mb-3 opacity-20" />
+                            <p className="text-sm font-medium">Please select a GRN to start entering serial numbers</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Error Banner */}
+                {apiErrors && (
+                    <div className="mx-8 mt-2 bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold animate-pulse">
+                        <AlertCircle size={18} />
+                        {apiErrors}
+                    </div>
+                )}
+
+                {/* FOOTER */}
+                <div className="p-8 border-t border-slate-100 flex justify-end gap-4 bg-slate-50/50">
+                    <button
+                        onClick={() => {
+                            onClose();
+                            setApiErrors("");
+                        }}
+                        className="px-6 py-3 text-slate-500 font-bold text-sm hover:bg-slate-200 rounded-2xl transition-all uppercase tracking-widest"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        onClick={handleSubmit}
+                        disabled={!selectedGrn}
+                        className={`flex items-center gap-2 px-10 py-3 rounded-2xl text-sm font-black uppercase tracking-widest transition-all shadow-xl ${
+                            selectedGrn 
+                            ? "bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200 active:scale-95" 
+                            : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                        }`}
+                    >
+                        <Save size={18} />
+                        Save Serials
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    );
+};
+
+export default SerialNumberModal;
