@@ -317,7 +317,7 @@ const OrderPurchase: React.FC = () => {
                     }}
                     className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-gray-200 active:scale-95"
                 >
-                    <Plus size={18} strokeWidth={3} /> Create Order
+                    <Plus size={18} strokeWidth={3} /> Purchase Order
                 </button>
             </div>
 
@@ -417,7 +417,7 @@ const OrderPurchase: React.FC = () => {
                                 </tr>
                             ) : (
                                 data?.map((item: any, index: number) => {
-                                    const balance = Number(item.grand_total) - Number(item.total_paid);
+                                    const balance = Number(item.grand_total) - Number(item?.grn_actual_pending_amount);
                                     const isFullyPaid = balance <= 0;
 
                                     return (
@@ -444,7 +444,7 @@ const OrderPurchase: React.FC = () => {
                                             <td className="px-6 py-4 text-right  text-gray-900">
                                                 {Number(item.items?.map((i: any) => i.pending_delivery_quantity).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
                                             </td>
-                                              {/* <td className="px-6 py-4 text-right  text-gray-900">
+                                            {/* <td className="px-6 py-4 text-right  text-gray-900">
                                                 ₹{Number(item.item?.map((i: any) => i.pending_delivery_quantity).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
                                             </td> */}
 
@@ -457,12 +457,12 @@ const OrderPurchase: React.FC = () => {
                                             </td>
 
                                             <td className="px-6 py-4 text-right">
-                                                <span className={`font-semibold ${isFullyPaid ? 'text-gray-300' : 'text-red-500'}`}>
-                                                    ₹{balance.toLocaleString('en-IN')}
+                                                <span className={`font-semibold ${item?.po_pending_amount > 0 ? 'text-red-500 ' : 'text-gray-300'}`}>
+                                                    ₹{item?.po_pending_amount?.toLocaleString('en-IN')}
                                                 </span>
-                                                {!isFullyPaid && (
+                                                {/* {!isFullyPaid && (
                                                     <div className="w-1 h-1 bg-red-500 rounded-full inline-block ml-1 animate-pulse" />
-                                                )}
+                                                )} */}
                                             </td>
 
                                             <td className="px-6 py-4">
@@ -475,7 +475,7 @@ const OrderPurchase: React.FC = () => {
                                                         }}
                                                         className="px-3 py-1.5 text-[10px] font-bold bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200"
                                                     >
-                                                        GRN
+                                                        Create GRN
                                                     </button>
 
                                                     <button
@@ -486,7 +486,7 @@ const OrderPurchase: React.FC = () => {
                                                         }}
                                                         className="px-3 py-1.5 text-[10px] font-bold bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
                                                     >
-                                                        GRN Invoice
+                                                        GRN View
                                                     </button>
                                                 </div>
                                             </td>
@@ -509,12 +509,13 @@ const OrderPurchase: React.FC = () => {
                                                     Add
                                                 </button>
                                             </td>
+
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
-                                                        disabled={isFullyPaid}
+                                                        disabled={item?.po_pending_amount === 0}
                                                         onClick={() => handlePay(item)}
-                                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all ${!isFullyPaid
+                                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all ${item?.po_pending_amount > 0
                                                             ? "bg-green-100 text-green-700 hover:bg-green-600 hover:text-white"
                                                             : "bg-gray-100 text-gray-300 cursor-not-allowed"
                                                             }`}
@@ -540,6 +541,7 @@ const OrderPurchase: React.FC = () => {
                                         >
                                             <Edit3 size={16} />
                                         </button> */}
+
                                                     <button
                                                         onClick={() => handleView(item)}
                                                         className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -547,9 +549,9 @@ const OrderPurchase: React.FC = () => {
                                                     >
                                                         <Eye size={16} />
                                                     </button>
-
                                                 </div>
                                             </td>
+
                                         </tr>
                                     );
                                 })
