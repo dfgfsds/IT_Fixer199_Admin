@@ -1,14 +1,14 @@
 // LIVE
 
-// const baseUrl =
-//   import.meta.env.VITE_API_BASE_URL ||
-//   "https://api.itfixer199.com";
+const baseUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://api.itfixer199.com";
 
 // TEST
 
-const baseUrl =
-  import.meta.env.VITE_API_BASE_URL ||
-  "https://api-test.itfixer199.com";
+// const baseUrl =
+//   import.meta.env.VITE_API_BASE_URL ||
+//   "https://api-test.itfixer199.com";
 
 const login = `${baseUrl}/api/login`;
 const allUsers = `${baseUrl}/api/user/all`;
@@ -193,6 +193,19 @@ const vendor = `${baseUrl}/api/vendor/`;
 
 // orderPurchase
 const orderPurchase = `${baseUrl}/api/purchase/order/`;
+
+// RatingQuestions
+const RatingQuestions = `${baseUrl}/api/ratings/rating-questions`;
+
+// purchaseGRN
+const purchaseGRN = `${baseUrl}/api/purchase/grn/`;
+
+// purchaseGRNList
+const purchaseGRNList = `${baseUrl}/api/purchase/order`;
+
+// purchaseOrderAddSerial
+const purchaseOrderAddSerial = `${baseUrl}/api/product-inventory/movement/purchase-order-add-serial/`;
+
 export default {
   login,
   allUsers,
@@ -272,6 +285,10 @@ export default {
   OrderModify,
   vendor,
   orderPurchase,
+  RatingQuestions,
+  purchaseGRN,
+  purchaseGRNList,
+  purchaseOrderAddSerial
 };
 
 

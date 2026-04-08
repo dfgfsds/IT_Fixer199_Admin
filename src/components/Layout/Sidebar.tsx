@@ -114,7 +114,8 @@ import {
   MapPin,
   Store,
   Wrench,
-  UserCog
+  UserCog,
+  FileQuestion
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -262,6 +263,10 @@ const Sidebar: React.FC = () => {
       ],
     },
     // { name: 'Reports', icon: BarChart3, path: '/reports' },
+    {
+      name: 'Rating Questions', icon: FileQuestion, path: '/ratingQuestions'
+      , roles: ["SUPER_ADMIN", "ADMIN"]
+    },
     {
       name: 'Settings', icon: Settings, path: '/settings'
       , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
