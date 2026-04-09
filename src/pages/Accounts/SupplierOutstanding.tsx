@@ -116,7 +116,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen">
       {/* 🔥 HEADER */}
       <div className="bg-white p-5 rounded-2xl shadow flex flex-wrap gap-4 items-center justify-between">
         <div>

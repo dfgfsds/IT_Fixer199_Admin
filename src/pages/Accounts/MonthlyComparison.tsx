@@ -87,9 +87,9 @@ const MonthlyComparison: React.FC = () => {
     };
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
+        <div className=" bg-gray-50 min-h-screen">
             {/* HEADER */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-2">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Monthly Comparison</h1>
                     {/* <p className="text-gray-500">Manage and track all service orders</p> */}
