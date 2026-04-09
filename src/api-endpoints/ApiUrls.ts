@@ -1,14 +1,14 @@
 // LIVE
 
-// const baseUrl =
-//   import.meta.env.VITE_API_BASE_URL ||
-//   "https://api.itfixer199.com";
+const baseUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://api.itfixer199.com";
 
 // TEST
 
-const baseUrl =
-  import.meta.env.VITE_API_BASE_URL ||
-  "https://api-test.itfixer199.com";
+// const baseUrl =
+//   import.meta.env.VITE_API_BASE_URL ||
+//   "https://api-test.itfixer199.com";
 
 const login = `${baseUrl}/api/login`;
 const allUsers = `${baseUrl}/api/user/all`;
@@ -206,6 +206,23 @@ const purchaseGRNList = `${baseUrl}/api/purchase/order`;
 // purchaseOrderAddSerial
 const purchaseOrderAddSerial = `${baseUrl}/api/product-inventory/movement/purchase-order-add-serial/`;
 
+// ACCOUNTS 
+const monthlyComparison = `${baseUrl}/api/stats/reports/finance/monthly-comparison`;
+
+// supplierOutstanding
+const supplierOutstanding = `${baseUrl}/api/stats/reports/finance/supplier-outstanding`;
+
+// paymentModeWise
+const paymentModeWise = `${baseUrl}/api/stats/reports/sales/payment-mode-wise`;
+// productWise
+const productWise = `${baseUrl}/api/stats/reports/sales/product-wise`;
+
+// purchaseReturn
+const purchaseReturn = `${baseUrl}/api/purchase/return/`;
+
+// consolidatedStock
+const consolidatedStock = `${baseUrl}/api/product-inventory/movements/consolidated-stock/`;
+
 export default {
   login,
   allUsers,
@@ -288,7 +305,13 @@ export default {
   RatingQuestions,
   purchaseGRN,
   purchaseGRNList,
-  purchaseOrderAddSerial
+  purchaseOrderAddSerial,
+  monthlyComparison,
+  supplierOutstanding,
+  paymentModeWise,
+  productWise,
+  purchaseReturn,
+  consolidatedStock,
 };
 
 

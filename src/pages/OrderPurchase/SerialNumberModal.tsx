@@ -9,7 +9,6 @@ const SerialNumberModal = ({
     onClose,
     grnData,
 }: any) => {
-
     const [selectedGrn, setSelectedGrn] = useState<any>(null);
     const [serialData, setSerialData] = useState<any>({});
     const [apiErrors, setApiErrors] = useState<string>("");
@@ -28,6 +27,22 @@ const SerialNumberModal = ({
         }
     }, [selectedGrn]);
 
+    // 🔥 INIT SERIAL INPUTS BASED ON SELECTED GRN
+    useEffect(() => {
+        if (selectedGrn) {
+            const init: any = {};
+
+            selectedGrn.items.forEach((item: any) => {
+                const qty = Math.floor(Number(item.received_quantity || 0));
+                const existingSerials = item.assigned_serial_numbers || [];
+                init[item.id] = Array.from({ length: qty }, (_, index) => {
+                    return existingSerials[index] || "";
+                });
+            });
+            setSerialData(init);
+        }
+    }, [selectedGrn]);
+
     const handleChange = (itemId: string, index: number, value: string) => {
         const updated = { ...serialData };
         updated[itemId][index] = value;
@@ -35,35 +50,79 @@ const SerialNumberModal = ({
     };
 
     // 🔥 FINAL SUBMIT (SINGLE GRN ONLY)
+    // const handleSubmit = async () => {
+    //     try {
+    //         setApiErrors("");
+    //         if (!selectedGrn) {
+    //             alert("Select GRN first");
+    //             return;
+    //         }
+
+    //         const products = selectedGrn.items.map((item: any) => ({
+    //             product_id: item.product_id,
+    //             grn_id: selectedGrn.id,
+    //             serial_numbers: serialData[item.id]?.filter((s: any) => s),
+    //         }));
+
+    //         const payload = {
+    //             purchase_order_id: selectedGrn.purchase_order,
+    //             products,
+    //         };
+
+    //         console.log("FINAL PAYLOAD", payload);
+
+    //         await axiosInstance.post(Api.purchaseOrderAddSerial, payload);
+
+    //         alert("Serial numbers added successfully");
+    //         onClose();
+
+    //     } catch (error) {
+    //         setApiErrors(extractErrorMessage(error));
+    //     }
+    // };
     const handleSubmit = async () => {
         try {
             setApiErrors("");
-            if (!selectedGrn) {
-                alert("Select GRN first");
+            if (!selectedGrn) return;
+
+            const products = selectedGrn.items.map((item: any) => {
+                const existingSerials = item.assigned_serial_numbers || [];
+
+                // Pudusa input panna values mattum filter panrom
+                const newSerials = serialData[item.id]?.filter(
+                    (s: string) => s && !existingSerials.includes(s)
+                );
+
+                return {
+                    product_id: item.product_id,
+                    grn_id: selectedGrn.id,
+                    serial_numbers: newSerials,
+                };
+            }).filter((p: any) => p.serial_numbers.length > 0); // Only send products with new serials
+
+            if (products.length === 0) {
+                alert("No new serial numbers to add");
                 return;
             }
 
-            const products = selectedGrn.items.map((item: any) => ({
-                product_id: item.product_id,
-                serial_numbers: serialData[item.id]?.filter((s: any) => s),
-            }));
-
             const payload = {
                 purchase_order_id: selectedGrn.purchase_order,
-                grn_id: selectedGrn.id,
                 products,
             };
 
-            console.log("FINAL PAYLOAD", payload);
-
             await axiosInstance.post(Api.purchaseOrderAddSerial, payload);
-
-            alert("Serial numbers added successfully");
+            alert("New serial numbers added successfully");
             onClose();
-
         } catch (error) {
             setApiErrors(extractErrorMessage(error));
         }
+    };
+
+    const handleClose = () => {
+        setSelectedGrn(null);
+        setSerialData({});
+        setApiErrors("");
+        onClose();
     };
 
     if (!show) return null;
@@ -83,7 +142,7 @@ const SerialNumberModal = ({
                             <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Inventory Assignment</p>
                         </div>
                     </div>
-                    <button 
+                    <button
                         onClick={onClose}
                         className="p-2 hover:bg-slate-200 rounded-full transition-all text-slate-400 hover:text-slate-600"
                     >
@@ -156,7 +215,7 @@ const SerialNumberModal = ({
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                            {serialData[item.id]?.map((val: any, i: number) => (
+                                            {/* {serialData[item.id]?.map((val: any, i: number) => (
                                                 <div key={i} className="relative group">
                                                     <span className="absolute -top-2 left-3 px-1.5 bg-white text-[9px] font-black text-slate-400 uppercase tracking-tighter z-10">
                                                         SN #{String(i + 1).padStart(2, '0')}
@@ -168,7 +227,30 @@ const SerialNumberModal = ({
                                                         className="w-full bg-white border border-slate-200 p-3.5 pt-4 rounded-xl text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none font-medium text-slate-700"
                                                     />
                                                 </div>
-                                            ))}
+                                            ))} */}
+                                            {serialData[item.id]?.map((val: any, i: number) => {
+                                                // Check if this index was already filled by the API
+                                                const isExisting = item.assigned_serial_numbers && !!item.assigned_serial_numbers[i];
+
+                                                return (
+                                                    <div key={i} className="relative group">
+                                                        <span className="absolute -top-2 left-3 px-1.5 bg-white text-[9px] font-black text-slate-400 uppercase tracking-tighter z-10">
+                                                            SN #{String(i + 1).padStart(2, '0')} {isExisting && "(SAVED)"}
+                                                        </span>
+                                                        <input
+                                                            value={val}
+                                                            placeholder="Enter serial..."
+                                                            disabled={isExisting} // Read-only logic
+                                                            onChange={(e) => handleChange(item.id, i, e.target.value)}
+                                                            className={`w-full border p-3.5 pt-4 rounded-xl text-sm transition-all outline-none font-medium 
+                    ${isExisting
+                                                                    ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed italic"
+                                                                    : "bg-white border-slate-200 text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5"
+                                                                }`}
+                                                        />
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 ))}
@@ -194,8 +276,9 @@ const SerialNumberModal = ({
                 <div className="p-8 border-t border-slate-100 flex justify-end gap-4 bg-slate-50/50">
                     <button
                         onClick={() => {
-                            onClose();
-                            setApiErrors("");
+                            // onClose();
+                            // setApiErrors("");
+                            handleClose();
                         }}
                         className="px-6 py-3 text-slate-500 font-bold text-sm hover:bg-slate-200 rounded-2xl transition-all uppercase tracking-widest"
                     >
@@ -205,11 +288,10 @@ const SerialNumberModal = ({
                     <button
                         onClick={handleSubmit}
                         disabled={!selectedGrn}
-                        className={`flex items-center gap-2 px-10 py-3 rounded-2xl text-sm font-black uppercase tracking-widest transition-all shadow-xl ${
-                            selectedGrn 
-                            ? "bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200 active:scale-95" 
+                        className={`flex items-center gap-2 px-10 py-3 rounded-2xl text-sm font-black uppercase tracking-widest transition-all shadow-xl ${selectedGrn
+                            ? "bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200 active:scale-95"
                             : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
-                        }`}
+                            }`}
                     >
                         <Save size={18} />
                         Save Serials

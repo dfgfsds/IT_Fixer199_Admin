@@ -42,6 +42,12 @@ import OrderModify from './pages/OrderModify';
 import Vendors from './pages/Vendors/Vendors';
 import OrderPurchase from './pages/OrderPurchase/OrderPurchase';
 import RatingQuestions from './pages/RatingQuestions/RatingQuestions';
+import MonthlyComparison from './pages/Accounts/MonthlyComparison';
+import SupplierOutstanding from './pages/Accounts/SupplierOutstanding';
+import PaymentModeWise from './pages/Accounts/PaymentModeWise';
+import ProductWise from './pages/Accounts/ProductWise';
+import PurchaseReturn from './pages/Accounts/PurchaseReturn/PurchaseReturn';
+import Stocks from './pages/Accounts/Stocks';
 
 
 const queryClient = new QueryClient();
@@ -114,6 +120,13 @@ const AppRoutes: React.FC = () => {
         <Route path="vendors" element={<Vendors />} />
         <Route path="orderPurchase" element={<OrderPurchase />} />
         <Route path="ratingQuestions" element={<RatingQuestions />} />
+        <Route path="monthlyComparison" element={<MonthlyComparison />} />
+        <Route path="supplierOutstanding" element={<SupplierOutstanding />} />
+        <Route path="paymentModeWise" element={<PaymentModeWise />} />
+        <Route path="productWise" element={<ProductWise />} />
+        <Route path="purchaseReturn" element={<PurchaseReturn />} />
+        <Route path="stocks" element={<Stocks />} />
+
       </Route>
     </Routes>
   );
