@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Edit3, Eye, Loader2, Plus, Printer, Search } from "lucide-react";
+import { Edit3, Eye, Loader2, Plus, Printer, Search, Undo2 } from "lucide-react";
 import axiosInstance from "../../configs/axios-middleware";
 import Pagination from "../../components/Pagination";
 import PurchaseOrderModal from "./PurchaseOrderModal";
@@ -13,6 +13,7 @@ import GRNInvoiceModal from "./GRNInvoiceModal";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import SerialNumberModal from "./SerialNumberModal";
+import ReturnModal from "./ReturnModal";
 
 const OrderPurchase: React.FC = () => {
 
@@ -42,6 +43,11 @@ const OrderPurchase: React.FC = () => {
     const [showSerialModal, setShowSerialModal] = useState(false);
     const [selectedGRNData, setSelectedGRNData] = useState<any[]>([]);
     const [serialData, setSerialData] = useState<any>({});
+
+    const [dateFilter, setDateFilter] = useState({
+        start_date: "",
+        end_date: "",
+    });
 
     useEffect(() => {
         if (selectedGRNData?.length) {
@@ -157,6 +163,8 @@ const OrderPurchase: React.FC = () => {
                 ...(filters.vendor_id && { vendor_id: filters.vendor_id }),
                 ...(filters.hub_id && { hub_id: filters.hub_id }),
                 ...(search && { search: search }), // 🔥 ADD THIS
+                start_date: dateFilter.start_date,
+                end_date: dateFilter.end_date,
             }).toString();
 
             const res = await axiosInstance.get(`${Api.orderPurchase}?${query}`);
@@ -186,7 +194,7 @@ const OrderPurchase: React.FC = () => {
 
     useEffect(() => {
         fetchData(1, pageSize);
-    }, [filters, search]);
+    }, [filters, search, dateFilter]);
 
     useEffect(() => {
         const delay = setTimeout(() => {
@@ -300,6 +308,57 @@ const OrderPurchase: React.FC = () => {
         }
     };
 
+    const handleExportFromAPI = async () => {
+        try {
+            if (!dateFilter.start_date || !dateFilter.end_date) {
+                return alert("Select start and end date");
+            }
+
+            const res = await axiosInstance.get(
+                `/api/purchase/order/export/`,
+                {
+                    params: {
+                        start_date: dateFilter.start_date,
+                        end_date: dateFilter.end_date,
+                        ...(filters.vendor_id && { vendor_id: filters.vendor_id }),
+                        ...(filters.hub_id && { hub_id: filters.hub_id }),
+                    },
+                    responseType: "blob",
+                }
+            );
+
+            // ✅ CORRECT TYPE (CSV)
+            const blob = new Blob([res.data], {
+                type: "text/csv;charset=utf-8;",
+            });
+
+            // ✅ correct extension
+            saveAs(blob, "Purchase_Order_Report.csv");
+
+        } catch (err) {
+            console.log(err);
+            alert("Export failed");
+        }
+    };
+
+    const [showRefundModal, setShowRefundModal] = useState(false);
+    const [selectedGRNsForRefund, setSelectedGRNsForRefund] = useState<any[]>([]);
+
+    const handleRefundClick = async (item: any) => {
+        try {
+            // Unga existing handleGrnInvoice logic mariye 
+            // GRN list fetch panni state-la veikanum
+            const res: any = await axiosInstance.get(`${Api.purchaseGRNList}/${item.id}/grns/`);
+            if (res) {
+                setSelectedGRNsForRefund(res?.data?.data);
+                setShowRefundModal(true);
+            }
+        } catch (error) {
+            alert("Failed to fetch GRN data");
+        }
+    };
+
+
     return (
         <div className="space-y-6">
 
@@ -317,7 +376,7 @@ const OrderPurchase: React.FC = () => {
                     }}
                     className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-gray-200 active:scale-95"
                 >
-                    <Plus size={18} strokeWidth={3} /> Create Order
+                    <Plus size={18} strokeWidth={3} /> Purchase Order
                 </button>
             </div>
 
@@ -359,12 +418,53 @@ const OrderPurchase: React.FC = () => {
                     ))}
                 </select>
 
+                {/* START DATE */}
+                <input
+                    type="date"
+                    value={dateFilter.start_date}
+                    onChange={(e) =>
+                        setDateFilter({ ...dateFilter, start_date: e.target.value })
+                    }
+                    className="px-4 py-2.5 bg-gray-50 border-2 border-transparent focus:border-orange-500 focus:bg-white rounded-xl text-sm outline-none"
+                />
+
+                {/* END DATE */}
+                <input
+                    type="date"
+                    value={dateFilter.end_date}
+                    onChange={(e) =>
+                        setDateFilter({ ...dateFilter, end_date: e.target.value })
+                    }
+                    className="px-4 py-2.5 bg-gray-50 border-2 border-transparent focus:border-orange-500 focus:bg-white rounded-xl text-sm outline-none"
+                />
+
                 <button
                     onClick={handleDownloadExcel}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700"
                 >
                     Download Excel
                 </button>
+
+                <div className="flex gap-3">
+                    {/* EXPORT BUTTON 🔥 */}
+                    <button
+                        onClick={handleExportFromAPI}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm shadow-lg"
+                    >
+                        ⬇ PurchaseOrder Export Excel
+                    </button>
+
+                    {/* EXISTING BUTTON */}
+                    {/* <button
+                        onClick={() => {
+                            setEditData(null);
+                            setShowModal(true);
+                        }}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm shadow-lg"
+                    >
+                        <Plus size={18} strokeWidth={3} /> Purchase Order
+                    </button> */}
+                </div>
 
                 <button
                     onClick={() => {
@@ -396,9 +496,9 @@ const OrderPurchase: React.FC = () => {
                                 <th className="px-6 py-4 text-left">S.No</th>
                                 <th className="px-6 py-4 text-left">Order Details</th>
                                 <th className="px-6 py-4 text-left">Hub / Location</th>
+                                <th className="px-6 py-4 text-right">Total Quantity</th>
                                 <th className="px-6 py-4 text-right">Received Quantity</th>
                                 <th className="px-6 py-4 text-right">Pending Quantity</th>
-
                                 <th className="px-6 py-4 text-right">Grand Total</th>
                                 <th className="px-6 py-4 text-right">Paid</th>
                                 <th className="px-6 py-4 text-right">Balance</th>
@@ -417,7 +517,7 @@ const OrderPurchase: React.FC = () => {
                                 </tr>
                             ) : (
                                 data?.map((item: any, index: number) => {
-                                    const balance = Number(item.grand_total) - Number(item.total_paid);
+                                    const balance = Number(item.grand_total) - Number(item?.grn_actual_pending_amount);
                                     const isFullyPaid = balance <= 0;
 
                                     return (
@@ -438,13 +538,17 @@ const OrderPurchase: React.FC = () => {
                                             </td>
 
                                             <td className="px-6 py-4 text-right  text-gray-900">
+                                                {Number(item.items?.map((i: any) => Number(i?.quantity)).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
+                                            </td>
+
+                                            <td className="px-6 py-4 text-right  text-gray-900">
                                                 {Number(item.items?.map((i: any) => i.received_quantity).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
                                             </td>
 
                                             <td className="px-6 py-4 text-right  text-gray-900">
                                                 {Number(item.items?.map((i: any) => i.pending_delivery_quantity).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
                                             </td>
-                                              {/* <td className="px-6 py-4 text-right  text-gray-900">
+                                            {/* <td className="px-6 py-4 text-right  text-gray-900">
                                                 ₹{Number(item.item?.map((i: any) => i.pending_delivery_quantity).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
                                             </td> */}
 
@@ -457,12 +561,12 @@ const OrderPurchase: React.FC = () => {
                                             </td>
 
                                             <td className="px-6 py-4 text-right">
-                                                <span className={`font-semibold ${isFullyPaid ? 'text-gray-300' : 'text-red-500'}`}>
-                                                    ₹{balance.toLocaleString('en-IN')}
+                                                <span className={`font-semibold ${item?.po_pending_amount > 0 ? 'text-red-500 ' : 'text-gray-300'}`}>
+                                                    ₹{item?.po_pending_amount?.toLocaleString('en-IN')}
                                                 </span>
-                                                {!isFullyPaid && (
+                                                {/* {!isFullyPaid && (
                                                     <div className="w-1 h-1 bg-red-500 rounded-full inline-block ml-1 animate-pulse" />
-                                                )}
+                                                )} */}
                                             </td>
 
                                             <td className="px-6 py-4">
@@ -475,7 +579,7 @@ const OrderPurchase: React.FC = () => {
                                                         }}
                                                         className="px-3 py-1.5 text-[10px] font-bold bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200"
                                                     >
-                                                        GRN
+                                                        Create GRN
                                                     </button>
 
                                                     <button
@@ -486,7 +590,7 @@ const OrderPurchase: React.FC = () => {
                                                         }}
                                                         className="px-3 py-1.5 text-[10px] font-bold bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
                                                     >
-                                                        GRN Invoice
+                                                        GRN View
                                                     </button>
                                                 </div>
                                             </td>
@@ -509,12 +613,13 @@ const OrderPurchase: React.FC = () => {
                                                     Add
                                                 </button>
                                             </td>
+
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
-                                                        disabled={isFullyPaid}
+                                                        disabled={item?.po_pending_amount === 0}
                                                         onClick={() => handlePay(item)}
-                                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all ${!isFullyPaid
+                                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all ${item?.po_pending_amount > 0
                                                             ? "bg-green-100 text-green-700 hover:bg-green-600 hover:text-white"
                                                             : "bg-gray-100 text-gray-300 cursor-not-allowed"
                                                             }`}
@@ -540,6 +645,7 @@ const OrderPurchase: React.FC = () => {
                                         >
                                             <Edit3 size={16} />
                                         </button> */}
+
                                                     <button
                                                         onClick={() => handleView(item)}
                                                         className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -547,9 +653,17 @@ const OrderPurchase: React.FC = () => {
                                                     >
                                                         <Eye size={16} />
                                                     </button>
+                                                    <button
+                                                        onClick={() => handleRefundClick(item)}
+                                                        className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all"
+                                                        title="Refund"
+                                                    >
+                                                        <Undo2 size={16} />
+                                                    </button>
 
                                                 </div>
                                             </td>
+
                                         </tr>
                                     );
                                 })
@@ -868,6 +982,12 @@ const OrderPurchase: React.FC = () => {
             <div style={{ display: "none" }}>
                 <PurchaseInvoicePrint ref={componentRef} data={selectedOrder} />
             </div>
+
+            <ReturnModal
+                show={showRefundModal}
+                onClose={() => setShowRefundModal(false)}
+                grnData={selectedGRNsForRefund}
+            />
         </div>
     );
 };

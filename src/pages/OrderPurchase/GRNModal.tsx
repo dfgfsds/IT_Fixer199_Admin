@@ -196,44 +196,89 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
     //     setItems(newItems);
     // };
 
+    //     const handleItemChange = (i: number, field: string, value: any) => {
+    //   const newItems = [...items];
+
+    //   // ✅ SET VALUE FIRST
+    //   newItems[i][field] = value;
+
+    //   // 🔥 PRODUCT LOGIC
+    //   if (field === "product") {
+    //     if (newItems[i].isFromPO && poData) {
+    //       const selected = poData.items?.find(
+    //         (p: any) => p.product_id === value
+    //       );
+
+    //       if (selected) {
+    //         newItems[i] = {
+    //           ...newItems[i],
+    //           product: selected.product_id,
+    //           purchase_order_item: selected.id,
+    //           rate: String(selected.rate || ""),
+    //           tax_percentage: String(selected.tax_percentage || ""),
+    //         };
+    //       }
+    //     }
+    //   }
+
+    //   // 🔥 QUANTITY CALC (SEPARATE)
+    //   if (field === "received_quantity" || field === "accepted_quantity") {
+    //     const r = Number(newItems[i].received_quantity || 0);
+    //     const a = Number(newItems[i].accepted_quantity || 0);
+
+    //     const rej = r - a;
+
+    //     newItems[i].rejected_quantity = String(rej >= 0 ? rej : 0);
+    //     newItems[i].is_damaged = rej > 0;
+    //   }
+
+    //   setItems(newItems);
+    // };
+
+
     const handleItemChange = (i: number, field: string, value: any) => {
-  const newItems = [...items];
+        const newItems = [...items];
+        newItems[i][field] = value;
 
-  // ✅ SET VALUE FIRST
-  newItems[i][field] = value;
+        if (field === "product") {
+            if (newItems[i].isFromPO && poData) {
+                const selected = poData.items?.find((p: any) => p.product_id === value);
+                if (selected) {
+                    newItems[i] = {
+                        ...newItems[i],
+                        product: selected.product_id,
+                        purchase_order_item: selected.id,
+                        rate: String(selected.rate || ""),
+                        tax_percentage: String(selected.tax_percentage || ""),
+                    };
+                }
+            }
+        }
 
-  // 🔥 PRODUCT LOGIC
-  if (field === "product") {
-    if (newItems[i].isFromPO && poData) {
-      const selected = poData.items?.find(
-        (p: any) => p.product_id === value
-      );
+        if (field === "received_quantity" || field === "accepted_quantity") {
+            const r = Number(newItems[i].received_quantity || 0);
+            const a = Number(newItems[i].accepted_quantity || 0);
+            const rej = r - a;
+            newItems[i].rejected_quantity = String(rej >= 0 ? rej : 0);
+            newItems[i].is_damaged = rej > 0;
 
-      if (selected) {
-        newItems[i] = {
-          ...newItems[i],
-          product: selected.product_id,
-          purchase_order_item: selected.id,
-          rate: String(selected.rate || ""),
-          tax_percentage: String(selected.tax_percentage || ""),
-        };
-      }
-    }
-  }
+            // 🔥 Qty base panni serial numbers array create pandren
+            if (field === "received_quantity") {
+                const qty = Math.max(0, parseInt(value) || 0);
+                // Inga length set pandrom, so input boxes auto-ah generate agum
+                newItems[i].serial_numbers = Array(qty).fill("");
+            }
+        }
 
-  // 🔥 QUANTITY CALC (SEPARATE)
-  if (field === "received_quantity" || field === "accepted_quantity") {
-    const r = Number(newItems[i].received_quantity || 0);
-    const a = Number(newItems[i].accepted_quantity || 0);
+        setItems(newItems);
+    };
 
-    const rej = r - a;
-
-    newItems[i].rejected_quantity = String(rej >= 0 ? rej : 0);
-    newItems[i].is_damaged = rej > 0;
-  }
-
-  setItems(newItems);
-};
+    // Serial number input handle panna oru puthu function
+    const handleSerialChange = (itemIdx: number, serialIdx: number, val: string) => {
+        const newItems = [...items];
+        newItems[itemIdx].serial_numbers[serialIdx] = val;
+        setItems(newItems);
+    };
 
     const cleanObject = (obj: any) => {
         const newObj: any = {};
@@ -251,14 +296,35 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
         return newObj;
     };
 
+    useEffect(() => {
+        setItems((prevItems) =>
+            prevItems.map((item) => {
+                const qty = Number(item.received_quantity || 0);
+
+                if (
+                    qty > 0 &&
+                    (!item.serial_numbers || item.serial_numbers.length !== qty)
+                ) {
+                    return {
+                        ...item,
+                        serial_numbers: Array(qty).fill(""),
+                    };
+                }
+
+                return item;
+            })
+        );
+    }, []);
+
+
     const handleSubmit = async () => {
         setApiErrors("");
         const validItems = items.filter((i) => i.product !== "");
-        if (!validItems.length) return toast.error("Select product");
+        if (!validItems?.length) return toast.error("Select product");
 
         try {
             setLoading(true);
-            const cleanedItems = validItems.map((i) => cleanObject(i));
+            const cleanedItems = validItems?.map((i) => cleanObject(i));
             const payload = cleanObject({
                 ...form,
                 received_date: new Date(form.received_date).toISOString(),
@@ -517,7 +583,7 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
                             </tbody> */}
 
                             <tbody className="divide-y divide-slate-100 text-sm">
-                                {items.map((item, i) => {
+                                {items?.map((item, i) => {
                                     const isPoItem = item?.isFromPO;
 
                                     return (
@@ -598,6 +664,8 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
                                             {/* QUANTITY */}
                                             <td className="p-3">
                                                 <div className="flex flex-col gap-1">
+
+                                                    {/* QTY */}
                                                     <input
                                                         placeholder="Received"
                                                         value={item?.received_quantity || ""}
@@ -607,18 +675,23 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
                                                         className="w-24 border p-1.5 rounded text-center text-xs"
                                                     />
 
-                                                    {/* <input
-                                                        placeholder="Accepted"
-                                                        value={item.accepted_quantity || ""}
-                                                        onChange={(e) =>
-                                                            handleItemChange(i, "accepted_quantity", e.target.value)
-                                                        }
-                                                        className="w-24 border p-1.5 rounded text-center text-xs bg-indigo-50"
-                                                    /> */}
+                                                    {/* 🔥 SCROLLABLE SERIAL NUMBERS */}
+                                                    {item.serial_numbers && item.serial_numbers.length > 0 && (
+                                                        <div className="mt-2 w-52 max-h-40 overflow-y-auto space-y-1 border rounded p-2 bg-gray-50">
+                                                            {item.serial_numbers.map((sn: any, snIndex: number) => (
+                                                                <input
+                                                                    key={snIndex}
+                                                                    placeholder={`Serial ${snIndex + 1}`}
+                                                                    value={sn || ""}
+                                                                    onChange={(e) =>
+                                                                        handleSerialChange(i, snIndex, e.target.value)
+                                                                    }
+                                                                    className="w-full border p-1.5 rounded text-xs"
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    )}
 
-                                                    {/* <div className="text-xs text-red-500 font-bold text-center">
-                                                        Rej: {item.rejected_quantity}
-                                                    </div> */}
                                                 </div>
                                             </td>
 
@@ -690,6 +763,7 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
                                                         }
                                                         className="w-24 border p-1 rounded text-[10px]"
                                                     />
+
                                                 </div>
                                             </td>
 
@@ -703,7 +777,7 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
                                                     className="w-24 border p-1 rounded text-[10px]"
                                                 >
                                                     <option value="PURCHASE">PURCHASE</option>
-                                                    <option value="RETURN">RETURN</option>
+                                                    {/* <option value="RETURN">RETURN</option> */}
                                                 </select>
                                             </td>
 

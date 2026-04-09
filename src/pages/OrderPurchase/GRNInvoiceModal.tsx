@@ -12,8 +12,8 @@ const GRNInvoiceModal = ({ show, onClose, data, selectedInvoice }: any) => {
         contentRef: componentRef,
     });
 
-    console.log(selectedInvoice)
-    console.log(data)
+    console.log("selectedInvoice", selectedInvoice)
+    console.log("data", data)
 
     if (!show || !selectedInvoice) return null;
 
@@ -82,6 +82,10 @@ const GRNInvoiceModal = ({ show, onClose, data, selectedInvoice }: any) => {
                                         <span className="font-bold text-indigo-400 uppercase">Total Paid:</span>
                                         <span className="font-black text-emerald-600">{selectedInvoice?.currency} {Number(selectedInvoice?.total_paid).toLocaleString()}</span>
                                     </div>
+                                    <div className="flex justify-between text-[11px]">
+                                        <span className="font-bold text-red-400 uppercase">Po Pending Amount:</span>
+                                        <span className="font-black text-red-600"> {Number(selectedInvoice?.po_pending_amount).toLocaleString()}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -103,6 +107,7 @@ const GRNInvoiceModal = ({ show, onClose, data, selectedInvoice }: any) => {
                                             <div>
                                                 <p className="text-[11px] font-black text-slate-900 uppercase leading-none">{grn?.grn_number}</p>
                                                 <p className="text-[9px] text-slate-500 font-bold mt-1">Received on: {new Date(grn?.received_date).toLocaleDateString()}</p>
+                                                <p className="text-[9px] text-slate-500 font-bold mt-1">Received by: {grn?.received_by_details?.name}/{grn?.received_by_details?.mobile_number}</p>
                                             </div>
                                         </div>
                                         <div className="text-right">
@@ -187,9 +192,13 @@ const GRNInvoiceModal = ({ show, onClose, data, selectedInvoice }: any) => {
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     );
 };
 
 export default GRNInvoiceModal;
+
+
+

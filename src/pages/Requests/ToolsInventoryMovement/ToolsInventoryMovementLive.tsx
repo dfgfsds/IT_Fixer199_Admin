@@ -41,7 +41,6 @@ const ToolsInventoryMovementLive: React.FC = () => {
             const ws = new WebSocket(
                 // `wss://api-test.itfixer199.com/ws/tool-movements/?token=${token}&size=1000`
                 `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
-
             );
 
             socketRef.current = ws;
