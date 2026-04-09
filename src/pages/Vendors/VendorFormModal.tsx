@@ -494,14 +494,14 @@ const AddVendorModal: React.FC<Props> = ({ show, onClose, onSuccess, editVendor 
                         <h3 className="text-sm font-bold text-orange-600 uppercase tracking-wider">Business Information</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <InputField label="Vendor Name" value={vendor.name} onChange={(v:any) => setVendor({...vendor, name: v})} placeholder="Enter name" required />
-                            <InputField label="GST Number" value={vendor.gst} onChange={(v:any) => setVendor({...vendor, gst: v})} placeholder="Ex: 22AAAAA0000A1Z5" />
-                            <InputField label="Email Address" type="email" value={vendor.email} onChange={(v:any) => setVendor({...vendor, email: v})} placeholder="vendor@mail.com" />
-                            <InputField label="Contact Person" value={vendor.contact_person} onChange={(v:any) => setVendor({...vendor, contact_person: v})} placeholder="Person Name" />
-                            <InputField label="Phone Number" value={vendor.phone_number} onChange={(v:any) => setVendor({...vendor, phone_number: v})} placeholder="98765 43210" />
+                            <InputField label="GST Number" value={vendor.gst} onChange={(v:any) => setVendor({...vendor, gst: v})} placeholder="Ex: 22AAAAA0000A1Z5" required />
+                            <InputField label="Email Address" type="email" value={vendor.email} onChange={(v:any) => setVendor({...vendor, email: v})} placeholder="vendor@mail.com" required/>
+                            <InputField label="Contact Person" value={vendor.contact_person} onChange={(v:any) => setVendor({...vendor, contact_person: v})} placeholder="Person Name" required/>
+                            <InputField label="Phone Number" value={vendor.phone_number} onChange={(v:any) => setVendor({...vendor, phone_number: v})} placeholder="98765 43210" required />
                             <InputField label="Alternate Number" value={vendor.alternate_number} onChange={(v:any) => setVendor({...vendor, alternate_number: v})} placeholder="Optional" />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-xs font-semibold text-gray-600">Primary Address</label>
+                            <label className="text-xs font-semibold text-gray-600">Primary Address</label> <span className="text-red-500">*</span>
                             <textarea 
                                 rows={3}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all text-sm"
@@ -515,7 +515,7 @@ const AddVendorModal: React.FC<Props> = ({ show, onClose, onSuccess, editVendor 
                     {/* BANKING DETAILS */}
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                            <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider">Bank Accounts</h3>
+                            <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider">Bank Accounts <span className="text-red-500">*</span></h3>
                             <button type="button" onClick={addBank} className="flex items-center gap-2 text-xs font-bold bg-blue-50 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-100 transition-all border border-blue-200">
                                 <Plus size={14} /> Add Bank Account
                             </button>

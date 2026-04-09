@@ -247,12 +247,12 @@ const ProductsInventory: React.FC = () => {
                     Product Inventory
                 </h1>
 
-                <button
+                {/* <button
                     onClick={() => setShowModal(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg"
                 >
                     <Plus size={16} /> Add Inventory
-                </button>
+                </button> */}
             </div>
 
             {/* FILTERS */}
@@ -343,7 +343,7 @@ const ProductsInventory: React.FC = () => {
                                                 <div className="flex justify-end items-center gap-2">
 
                                                     {/* ADD STOCK */}
-                                                    <button
+                                                    {/* <button
                                                         onClick={() => {
                                                             setSelectedItem(item);
                                                             setStockType("add");
@@ -352,10 +352,10 @@ const ProductsInventory: React.FC = () => {
                                                         className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition shadow-sm"
                                                     >
                                                         + Add
-                                                    </button>
+                                                    </button> */}
 
                                                     {/* REMOVE STOCK */}
-                                                    <button
+                                                    {/* <button
                                                         onClick={() => {
                                                             setSelectedItem(item);
                                                             setStockType("remove");
@@ -364,7 +364,7 @@ const ProductsInventory: React.FC = () => {
                                                         className="flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium rounded-lg transition shadow-sm"
                                                     >
                                                         − Remove
-                                                    </button>
+                                                    </button> */}
                                                     <button
                                                         onClick={() => {
                                                             setSelectedItem(item);
@@ -689,7 +689,7 @@ const ProductsInventory: React.FC = () => {
                             </div>
 
                             {/* VENDOR */}
-                            <div>
+                            {/* <div>
                                 <h3 className="font-semibold mb-2">Vendor</h3>
                                 <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                                     <p><b>Name:</b> {viewItem.vendor_details?.name}</p>
@@ -700,10 +700,10 @@ const ProductsInventory: React.FC = () => {
                                         <b>Address:</b> {viewItem.vendor_details?.address}
                                     </p>
                                 </div>
-                            </div>
+                            </div> */}
 
                             {/* PURCHASE */}
-                            <div>
+                            {/* <div>
                                 <h3 className="font-semibold mb-2">Purchase Details</h3>
                                 <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                                     <p><b>MRP:</b> ₹{viewItem.purchase_details?.mrp}</p>
@@ -715,7 +715,7 @@ const ProductsInventory: React.FC = () => {
                                         {viewItem.purchase_details?.gst_included ? "Yes" : "No"}
                                     </p>
                                 </div>
-                            </div>
+                            </div> */}
 
                             {/* STOCK */}
                             <div>
