@@ -124,7 +124,7 @@ const PurchaseReturn: React.FC = () => {
     }, [filters]);
 
     return (
-        <div className="p-4 space-y-6">
+        <div className=" space-y-6">
             {/* 🔥 HEADER SECTION */}
             <div className="flex justify-between items-center">
                 <div>

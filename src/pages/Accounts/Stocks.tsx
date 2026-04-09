@@ -173,7 +173,7 @@ const Stocks: React.FC = () => {
   };
 
   return (
-    <div className="p-8 bg-[#f8fafc] min-h-screen font-sans">
+    <div className="bg-[#f8fafc] min-h-screen font-sans">
 
       {/* 🔥 HEADER & ACTIONS */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -198,11 +198,10 @@ const Stocks: React.FC = () => {
           <button
             onClick={handleDownload}
             disabled={!data.length}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-md ${
-              data.length
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-md ${data.length
                 ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-100"
                 : "bg-slate-200 text-slate-500 cursor-not-allowed shadow-none"
-            }`}
+              }`}
           >
             <Download size={16} />
             Excel
@@ -213,7 +212,7 @@ const Stocks: React.FC = () => {
       {/* 🔥 FILTERS CARD */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          
+
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Vendor</label>
             <Select
@@ -310,9 +309,8 @@ const Stocks: React.FC = () => {
                     <td className="px-6 py-4 text-slate-600">{item.vendor_name}</td>
                     <td className="px-6 py-4 text-center">
                       {/* Using a subtle badge for stock for better readability */}
-                      <span className={`inline-block px-3 py-1 rounded-full font-bold text-xs ${
-                        item.available_stock > 0 ? 'bg-indigo-50 text-indigo-700' : 'bg-red-50 text-red-700'
-                      }`}>
+                      <span className={`inline-block px-3 py-1 rounded-full font-bold text-xs ${item.available_stock > 0 ? 'bg-indigo-50 text-indigo-700' : 'bg-red-50 text-red-700'
+                        }`}>
                         {item.available_stock}
                       </span>
                     </td>
