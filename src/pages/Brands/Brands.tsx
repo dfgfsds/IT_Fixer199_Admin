@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import { Plus, Edit, Trash2, Search } from "lucide-react";
 import BrandModal from "./BrandModal";

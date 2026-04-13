@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Eye, Loader2, Search } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
 import axiosInstance from "../../../configs/axios-middleware";
@@ -58,8 +58,8 @@ const RequestsLive: React.FC = () => {
 
         const connect = () => {
             const ws = new WebSocket(
-                `wss://api-test.itfixer199.com/ws/requests/?token=${token}&size=1000`
-                // `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
+                // `wss://api-test.itfixer199.com/ws/requests/?token=${token}&size=1000`
+                `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
             );
 
             socketRef.current = ws;

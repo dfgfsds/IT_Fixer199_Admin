@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import * as React from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Search, Loader2, Eye } from "lucide-react";
 import axiosInstance from "../../../configs/axios-middleware";
 import Api from "../../../api-endpoints/ApiUrls";
@@ -39,8 +40,8 @@ const ToolsInventoryMovementLive: React.FC = () => {
 
         const connect = () => {
             const ws = new WebSocket(
-                `wss://api-test.itfixer199.com/ws/tool-movements/?token=${token}&size=1000`
-                // `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
+                // `wss://api-test.itfixer199.com/ws/tool-movements/?token=${token}&size=1000`
+                `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
             );
 
             socketRef.current = ws;
