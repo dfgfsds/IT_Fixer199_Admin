@@ -1,14 +1,14 @@
 // LIVE
 
-const baseUrl =
-  import.meta.env.VITE_API_BASE_URL ||
-  "https://api.itfixer199.com";
+// const baseUrl =
+//   import.meta.env.VITE_API_BASE_URL ||
+//   "https://api.itfixer199.com";
 
 // TEST
 
-// const baseUrl =
-//   import.meta.env.VITE_API_BASE_URL ||
-//   "https://api-test.itfixer199.com";
+const baseUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://api-test.itfixer199.com";
 
 const login = `${baseUrl}/api/login`;
 const allUsers = `${baseUrl}/api/user/all`;
@@ -226,6 +226,9 @@ const consolidatedStock = `${baseUrl}/api/product-inventory/movements/consolidat
 // salesReturns
 const salesReturns = `${baseUrl}/api/sales-returns/`;
 
+// createOrderPayment
+const createOrderPayment = `${baseUrl}/api/order/public/order/`;
+
 export default {
   login,
   allUsers,
@@ -316,6 +319,7 @@ export default {
   purchaseReturn,
   consolidatedStock,
   salesReturns,
+  createOrderPayment,
 };
 
 
