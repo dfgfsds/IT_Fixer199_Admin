@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Search, Loader2, Eye } from "lucide-react";
 import axiosInstance from "../../../configs/axios-middleware";
 import Api from "../../../api-endpoints/ApiUrls";
@@ -111,8 +111,8 @@ const ProductInventoryMovementLive: React.FC = () => {
         const today = new Date().toISOString().split("T")[0];
 
         const ws = new WebSocket(
-            `wss://api-test.itfixer199.com/ws/movements/?token=${token}&date=${today}&size=1000`
-            // `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
+            // `wss://api-test.itfixer199.com/ws/movements/?token=${token}&date=${today}&size=1000`
+            `wss://api.itfixer199.com/ws/requests/?token=${token}&size=1000`
 
         );
 

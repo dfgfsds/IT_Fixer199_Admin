@@ -1,6 +1,6 @@
 
 
-import React, { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Barcode from "react-barcode";
 import { QRCodeSVG } from "qrcode.react";
 import { Download, Printer, Barcode as BarcodeIcon, QrCode, Info as InfoIcon } from "lucide-react";
@@ -103,7 +103,7 @@ const ProductViewModal = ({ show, onClose, product }: any) => {
                         left: 50%;
                         transform: translateX(-50%);
                         width: 33mm;
-                        font-size: 7px;
+                        font-size: 8px;
                         text-align: center;
                         margin: 0;
                         line-height: 1.1;
@@ -1634,6 +1634,21 @@ const ProductViewModal = ({ show, onClose, product }: any) => {
     //     }, 500);
     // };
 
+    const BarcodeComponent = ({ value }: { value: string }) => {
+        const ref = useRef<SVGSVGElement>(null);
+
+        useEffect(() => {
+            if (ref.current) {
+                JsBarcode(ref.current, value, {
+                    format: "CODE128",
+                    displayValue: true,
+                });
+            }
+        }, [value]);
+
+        return <svg ref={ref}></svg>;
+    };
+
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
             <iframe id="ifmcontentstoprint" style={{ height: '0px', width: '0px', position: 'absolute' }}></iframe>
@@ -1775,11 +1790,13 @@ const ProductViewModal = ({ show, onClose, product }: any) => {
                                 <div className="border border-gray-200 rounded-2xl p-6 flex flex-col items-center gap-6 hover:shadow-md transition-shadow">
                                     <h4 className="font-bold text-gray-700 flex items-center gap-2"><BarcodeIcon size={18} /> Barcode Label</h4>
                                     <div id="barcode-print-box" className="p-4 bg-white border rounded-lg">
-                                        <Barcode
+                                        {/* <Barcode
                                             id="product-barcode-svg"
                                             value={product.barcode || product.sku || "N/A"}
                                             width={1.5} height={50} fontSize={12}
-                                        />
+                                        /> */}
+
+                                        <BarcodeComponent value={product.barcode} />
                                         <h3 className="hidden-in-web text-center text-xs mt-1 font-bold">{product.name}</h3>
                                     </div>
                                     <div className="grid grid-cols-2 gap-3 w-full">
