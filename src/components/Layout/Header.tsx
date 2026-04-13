@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import  { useEffect, useState, useRef } from 'react';
 import { Bell, Search, User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
@@ -22,11 +22,11 @@ const messaging = getMessaging(app);
 
 const Header: React.FC = () => {
   const { user }: any = useAuth();
-  const [notifications, setNotifications] = React.useState<any[]>([]);
-  const [notifOpen, setNotifOpen] = React.useState(false);
-  const [loadingNotif, setLoadingNotif] = React.useState(false);
-  const notificationSound = React.useRef<HTMLAudioElement | null>(null);
-  const notifRef = React.useRef<HTMLDivElement>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [loadingNotif, setLoadingNotif] = useState(false);
+  const notificationSound = useRef<HTMLAudioElement | null>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: any) => {
@@ -178,7 +178,7 @@ const Header: React.FC = () => {
       // 🔔 Play sound
       if (notificationSound.current) {
         notificationSound.current.currentTime = 0;
-        notificationSound.current.play().catch((err) => {
+        notificationSound.current.play().catch((err:any) => {
           console.log("Sound blocked:", err);
         });
       }
@@ -201,8 +201,8 @@ const Header: React.FC = () => {
       const updatedApi = await axiosInstance.patch(`${Api?.notifications}/${id}/read/`);
 
       if (updatedApi) {
-        setNotifications((prev) =>
-          prev.map((n) =>
+        setNotifications((prev:any) =>
+          prev.map((n:any) =>
             n.id === id ? { ...n, is_read: true } : n
           )
         );
@@ -235,7 +235,7 @@ const Header: React.FC = () => {
             className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <Bell className="w-5 h-5 animate-[bellShake_0.5s]" />
-            {notifications?.some(n => !n.is_read) && (
+            {notifications?.some((n:any) => !n.is_read) && (
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             )}
           </button>
@@ -256,7 +256,7 @@ const Header: React.FC = () => {
                   No notifications
                 </div>
               ) : (
-                notifications?.filter((i: any) => i?.is_read === false)?.map((notif) => (
+                notifications?.filter((i: any) => i?.is_read === false)?.map((notif:any) => (
                   <div
                     key={notif.id}
                     onClick={() => markAsRead(notif.id)}
