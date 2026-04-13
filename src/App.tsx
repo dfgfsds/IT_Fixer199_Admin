@@ -48,6 +48,7 @@ import PaymentModeWise from './pages/Accounts/PaymentModeWise';
 import ProductWise from './pages/Accounts/ProductWise';
 import PurchaseReturn from './pages/Accounts/PurchaseReturn/PurchaseReturn';
 import Stocks from './pages/Accounts/Stocks';
+import SalesReturn from './pages/SalesReturn/SalesReturn';
 
 
 const queryClient = new QueryClient();
@@ -126,6 +127,7 @@ const AppRoutes: React.FC = () => {
         <Route path="productWise" element={<ProductWise />} />
         <Route path="purchaseReturn" element={<PurchaseReturn />} />
         <Route path="stocks" element={<Stocks />} />
+        <Route path="salesReturn" element={<SalesReturn />} />
 
       </Route>
     </Routes>

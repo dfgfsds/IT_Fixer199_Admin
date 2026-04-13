@@ -46,6 +46,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
         currency: "INR",
         notes: "",
         internal_notes: "",
+        invoice_number:"",
         items: [
             {
                 category: "",
@@ -427,10 +428,10 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                 {hubs.map((h: any) => (<option key={h.id} value={h.id}>{h.name}</option>))}
                             </select>
                         </div>
-                        {/* <div>
-                            <label className={labelClass}>PO Number</label>
-                            <input type="text" className={inputClass} placeholder="Enter PO#" value={form.po_number} onChange={(e) => setForm({ ...form, po_number: e.target.value })} />
-                        </div> */}
+                        <div>
+                            <label className={labelClass}>Invoice number</label>
+                            <input type="text" className={inputClass} placeholder="Enter Invoice #" value={form.invoice_number} onChange={(e) => setForm({ ...form, invoice_number: e.target.value })} />
+                        </div>
                     </div>
 
                     {/* DATES & TERMS */}
