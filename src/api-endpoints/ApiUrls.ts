@@ -226,6 +226,9 @@ const consolidatedStock = `${baseUrl}/api/product-inventory/movements/consolidat
 // salesReturns
 const salesReturns = `${baseUrl}/api/sales-returns/`;
 
+// createOrderPayment
+const createOrderPayment = `${baseUrl}/api/order/public/order/`;
+
 export default {
   login,
   allUsers,
@@ -316,6 +319,7 @@ export default {
   purchaseReturn,
   consolidatedStock,
   salesReturns,
+  createOrderPayment,
 };
 
 
