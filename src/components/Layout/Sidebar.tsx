@@ -295,6 +295,10 @@ const Sidebar: React.FC = () => {
           name: 'Stocks ', path: '/stocks'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
+         {
+          name: 'Sales Return', path: '/salesReturn'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
         // { name: 'Attendance', path: '/attendance' },
       ],
     },
