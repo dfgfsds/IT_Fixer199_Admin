@@ -223,6 +223,9 @@ const purchaseReturn = `${baseUrl}/api/purchase/return/`;
 // consolidatedStock
 const consolidatedStock = `${baseUrl}/api/product-inventory/movements/consolidated-stock/`;
 
+// salesReturns
+const salesReturns = `${baseUrl}/api/sales-returns/`;
+
 export default {
   login,
   allUsers,
@@ -312,6 +315,7 @@ export default {
   productWise,
   purchaseReturn,
   consolidatedStock,
+  salesReturns,
 };
 
 
