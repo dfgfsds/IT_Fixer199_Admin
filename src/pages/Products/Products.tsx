@@ -155,7 +155,7 @@ const Products: React.FC = () => {
             const params = new URLSearchParams();
 
             params.append("page", String(pageNumber));
-            params.append("size", String(size));
+            params.append("size", String(10000));
 
             params.append("include_attribute", "true");
             params.append("include_category", "true");
@@ -219,9 +219,159 @@ const Products: React.FC = () => {
         setShowCreateModal(true);
         setOpenDropdown(null);
     }
+
+    const selectedProducts = filteredProducts?.slice(0, 11); // 0 to 10 index
+
+selectedProducts.forEach((product: any) => {
+            let labelsHtml = "";
+    for (let i = 0; i < 3; i++) {
+        labelsHtml += `
+            <div class="label">
+                <svg class="barcode"></svg>
+                <h3>${product.name}</h3>
+            </div>
+        `;
+    }
+});
+
+const handlePrint = () => {
+    const iframe = document.getElementById("ifmcontentstoprint") as HTMLIFrameElement;
+    const pri = iframe?.contentWindow;
+    if (!pri) {
+        alert("Iframe not found");
+        return;
+    }
+
+    let labelsHtml = "";
+
+    // ✅ 0 to 10 index
+    const selectedProducts = filteredProducts.slice(17, 22);
+
+    selectedProducts.forEach((product: any) => {
+        for (let i = 0; i < 2; i++) {
+            labelsHtml += `
+                <div class="label">
+                    <svg class="barcode" data-value="${product.barcode}"></svg>
+                    <h2>${product.barcode}\n</h3>
+                    
+                    <h3>${product.name}</h3>
+                </div>
+            `;
+        }
+    });
+
+    const htmlContent = `
+        <html>
+            <head>
+                <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+                <style>
+                    @page {
+                        size: 105mm auto;
+                        margin: 0;
+                    }
+
+                    body {
+                        margin: 0;
+                        padding: 0;
+                        
+                    }
+
+                    .sheet {
+                        display: grid;
+                        grid-template-columns: repeat(3, 35mm);
+                        width: 105mm;
+                        row-gap: 5mm;
+                        margin-bottom: 14.5mm;
+                    }
+
+                    .label {
+                        width: 35mm;
+                        height: 25mm;
+                        position: relative;
+                        overflow: hidden;
+                        box-sizing: border-box;
+                    }
+
+                    .label svg {
+                        position: absolute;
+                        top: 2mm;
+                        left: 14%;
+                        transform: translateX(-50%);
+                        width: 25mm !important;
+                        height: 12mm !important;
+                    }
+
+                     .label h2 {
+                        position: absolute;
+                       top: 14mm;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        width: 33mm;
+                        font-size: 8px;
+                        text-align: center;
+                        margin: 0;
+                        line-height: 1.1;
+                    }
+
+
+                    .label h3 {
+                        position: absolute;
+                        top: 17mm;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        width: 33mm;
+                        font-size: 7px;
+                        text-align: center;
+                        margin: 0;
+                        line-height: 1.1;
+                    }
+
+                    .label p {
+                        display: none;
+                    }
+                </style>
+            </head>
+
+            <body>
+                <div class="sheet">
+                    ${labelsHtml}
+                </div>
+
+                <script>
+                    window.onload = function () {
+
+                        // 🔥 barcode render
+                        document.querySelectorAll(".barcode").forEach(el => {
+                            const value = el.getAttribute("data-value");
+
+                            JsBarcode(el, value, {
+                                format: "CODE128",
+                                displayValue: false,
+                                width: 2,
+                                height: 40
+                            });
+                        });
+
+                        setTimeout(function () {
+                            window.focus();
+                            window.print();
+                        }, 300);
+                    };
+                </script>
+            </body>
+        </html>
+    `;
+
+    // ✅ SAME METHOD (your working style)
+    pri.document.open();
+    pri.document.write(htmlContent);
+    pri.document.close();
+};
+
     return (
         <div className="space-y-6">
-
+<iframe id="ifmcontentstoprint" style={{ display: "none" }} />
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -244,11 +394,16 @@ const Products: React.FC = () => {
                         <Plus className="w-4 h-4 mr-2" />
                         Add Product
                     </button>
+
+   <button onClick={handlePrint}>
+    Print Barcode
+</button>
+
                 </div>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                 <StatCard title="Total Products" value={products.length} />
 
@@ -263,7 +418,7 @@ const Products: React.FC = () => {
                     value={products?.filter(p => p.status === "INACTIVE").length}
                     color="text-red-600"
                 />
-            </div>
+            </div> */}
 
             {/* Filters */}
             <div className="bg-white p-4 rounded-lg border border-gray-200 flex flex-col md:flex-row gap-4">
@@ -332,6 +487,7 @@ const Products: React.FC = () => {
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">S.No</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barcode</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
@@ -370,6 +526,22 @@ const Products: React.FC = () => {
                                                     {index + 1}
                                                 </td>
 
+
+                                                <td className="px-6 py-4 text-sm text-gray-900">
+                                                    {product.barcode}
+
+ <button
+                                                            onClick={() => {
+                                                                setViewProduct(product);
+                                                                setShowViewModal(true);
+                                                            }}
+                                                            className="text-gray-600 hover:text-black transition-colors"
+                                                            title="View"
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                        </button>
+                                                        
+                                                </td>
                                                 {/* Product */}
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="flex items-center">

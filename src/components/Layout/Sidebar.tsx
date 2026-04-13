@@ -115,7 +115,8 @@ import {
   Store,
   Wrench,
   UserCog,
-  FileQuestion
+  FileQuestion,
+  Calculator
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -188,10 +189,10 @@ const Sidebar: React.FC = () => {
           name: 'Products Inventory', path: '/productsInventory'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
-        {
-          name: 'Order Purchase', path: '/orderPurchase'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
-        },
+        // {
+        //   name: 'Order Purchase', path: '/orderPurchase'
+        //   , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        // },
         // { name: 'Inventory', path: '/inventory' },
       ],
     },
@@ -260,6 +261,45 @@ const Sidebar: React.FC = () => {
         // { name: 'Coupons & Promotions', path: '/coupons' },
         // { name: 'Payments & Settlements', path: '/payments' },
 
+      ],
+    },
+    {
+      name: 'Accounts',
+      icon: Calculator,
+      children: [
+         {
+          name: 'Order Purchase', path: '/orderPurchase'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Monthly Comparison', path: '/monthlyComparison'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Supplier Outstanding', path: '/supplierOutstanding'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Payment mode wise', path: '/paymentModeWise'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Product Wise', path: '/productWise'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Purchase Return ', path: '/purchaseReturn'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+         {
+          name: 'Stocks ', path: '/stocks'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+         {
+          name: 'Sales Return', path: '/salesReturn'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        // { name: 'Attendance', path: '/attendance' },
       ],
     },
     // { name: 'Reports', icon: BarChart3, path: '/reports' },

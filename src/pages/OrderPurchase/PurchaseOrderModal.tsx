@@ -46,6 +46,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
         currency: "INR",
         notes: "",
         internal_notes: "",
+        invoice_number:"",
         items: [
             {
                 category: "",
@@ -61,7 +62,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                 amount: 0,
             },
         ],
-        initial_payment: { payment_date: "", payment_method: "CASH", payment_reference: "", amount_paid: 0, notes: "" },
+        initial_payment: { payment_date: "", payment_method: "", payment_reference: "", amount_paid: 0, notes: "" },
     };
 
     const [form, setForm] = useState<any>(initialState);
@@ -255,20 +256,77 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
 
     const total = form.items.reduce((sum: number, i: any) => sum + Number(i.amount || 0), 0);
 
+    // const handleSubmit = async () => {
+    //     try {
+    //         setLoading(true);
+    //         const formatDateTime = (date: string) => {
+    //             if (!date) return null;
+    //             return new Date(date).toISOString(); // 🔥 correct format
+    //         };
+
+    //         const payload = {
+    //             ...form,
+    //             items: form.items.map((i: any) => ({
+    //                 // ...i,
+    //                 // quantity: Number(i.quantity),
+    //                 // rate: Number(i.rate),
+    //                 product: i.product,
+    //                 item_name: i.item_name,
+    //                 quantity: Number(i.quantity),
+    //                 rate: Number(i.rate),
+    //                 unit: "Units",
+    //                 description: i.description || "",
+    //                 discount_type: i.discount_type,
+    //                 discount_value: Number(i.discount_value),
+    //                 tax_percentage: Number(i.tax_percentage),
+    //                 serial_numbers: (i.serial_numbers || []).filter((sn: string) => sn),
+    //             })),
+    //             initial_payments: [
+    //                 {
+    //                     ...form.initial_payment,
+    //                     payment_date: formatDateTime(form.initial_payment.payment_date), // 🔥 FIX
+    //                     amount_paid: Number(form.initial_payment.amount_paid),
+    //                 },
+    //             ],
+    //         };
+    //         delete payload.initial_payment;
+
+    //         const cleanedUser = removeEmptyFields(payload);
+    //         if (editData) {
+    //             const updatedApi = await axiosInstance.put(`${Api.orderPurchase}/${editData.id}/`, cleanedUser);
+    //             if (updatedApi) {
+    //                 onSuccess();
+    //                 onClose();
+    //             }
+    //         }
+    //         else {
+    //             const updatedApi = await axiosInstance.post(`${Api.orderPurchase}`, cleanedUser);
+    //             if (updatedApi) {
+    //                 onSuccess();
+    //                 onClose();
+    //             }
+    //         }
+
+    //     } catch (err) {
+    //         setApiErrors(extractErrorMessage(err));
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
     const handleSubmit = async () => {
         try {
             setLoading(true);
+
             const formatDateTime = (date: string) => {
                 if (!date) return null;
-                return new Date(date).toISOString(); // 🔥 correct format
+                return new Date(date).toISOString();
             };
 
-            const payload = {
+            // 1. Build initial payload
+            const payload: any = {
                 ...form,
                 items: form.items.map((i: any) => ({
-                    // ...i,
-                    // quantity: Number(i.quantity),
-                    // rate: Number(i.rate),
                     product: i.product,
                     item_name: i.item_name,
                     quantity: Number(i.quantity),
@@ -280,30 +338,41 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                     tax_percentage: Number(i.tax_percentage),
                     serial_numbers: (i.serial_numbers || []).filter((sn: string) => sn),
                 })),
-                initial_payments: [
+            };
+
+            // 2. CHECK: Amount 0-va illama irundha mattum payment key-ah add pannu
+            const paidAmount = Number(form.initial_payment.amount_paid);
+
+            if (paidAmount > 0) {
+                payload.initial_payments = [
                     {
                         ...form.initial_payment,
-                        payment_date: formatDateTime(form.initial_payment.payment_date), // 🔥 FIX
-                        amount_paid: Number(form.initial_payment.amount_paid),
+                        payment_date: formatDateTime(form.initial_payment.payment_date),
+                        amount_paid: paidAmount,
                     },
-                ],
-            };
+                ];
+            } else {
+                // Amount 0-na indha key-ayum delete pannidu, empty array-um anupadha
+                delete payload.initial_payments;
+            }
+
+            // initial_payment (singular) key-a clean panna marandhuradha
             delete payload.initial_payment;
 
+            // 3. Clean other empty strings/nulls
             const cleanedUser = removeEmptyFields(payload);
-            if (editData) {
-                const updatedApi = await axiosInstance.put(`${Api.orderPurchase}/${editData.id}/`, cleanedUser);
-                if (updatedApi) {
-                    onSuccess();
-                    onClose();
-                }
-            }
-            else {
-                const updatedApi = await axiosInstance.post(`${Api.orderPurchase}`, cleanedUser);
-                if (updatedApi) {
-                    onSuccess();
-                    onClose();
-                }
+
+            console.log("Payload being sent:", cleanedUser);
+
+            const endpoint = editData ? `${Api.orderPurchase}/${editData.id}/` : Api.orderPurchase;
+            const method = editData ? axiosInstance.put : axiosInstance.post;
+
+            const response = await method(endpoint, cleanedUser);
+            if (response) {
+                setForm(initialState);
+                setApiErrors("");
+                onSuccess();
+                onClose();
             }
 
         } catch (err) {
@@ -359,10 +428,10 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                 {hubs.map((h: any) => (<option key={h.id} value={h.id}>{h.name}</option>))}
                             </select>
                         </div>
-                        {/* <div>
-                            <label className={labelClass}>PO Number</label>
-                            <input type="text" className={inputClass} placeholder="Enter PO#" value={form.po_number} onChange={(e) => setForm({ ...form, po_number: e.target.value })} />
-                        </div> */}
+                        <div>
+                            <label className={labelClass}>Invoice number</label>
+                            <input type="text" className={inputClass} placeholder="Enter Invoice #" value={form.invoice_number} onChange={(e) => setForm({ ...form, invoice_number: e.target.value })} />
+                        </div>
                     </div>
 
                     {/* DATES & TERMS */}
@@ -670,7 +739,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                             setForm({
                                                 ...form,
                                                 initial_payment: {
-                                                    ...form.initial_payment,
+                                                    ...form?.initial_payment,
                                                     payment_date: e.target.value,
                                                 },
                                             })
@@ -688,12 +757,13 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                             setForm({
                                                 ...form,
                                                 initial_payment: {
-                                                    ...form.initial_payment,
+                                                    ...form?.initial_payment,
                                                     payment_method: e.target.value,
                                                 },
                                             })
                                         }
                                     >
+                                        <option value="">Select Method</option>
                                         <option value="CASH">CASH</option>
                                         <option value="BANK_TRANSFER">BANK_TRANSFER</option>
                                         <option value="UPI">UPI</option>
@@ -714,7 +784,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                             setForm({
                                                 ...form,
                                                 initial_payment: {
-                                                    ...form.initial_payment,
+                                                    ...form?.initial_payment,
                                                     payment_reference: e.target.value,
                                                 },
                                             })
@@ -733,7 +803,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                             setForm({
                                                 ...form,
                                                 initial_payment: {
-                                                    ...form.initial_payment,
+                                                    ...form?.initial_payment,
                                                     amount_paid: e.target.value,
                                                 },
                                             })
@@ -772,6 +842,9 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                         </button>
                     </div>
                 </div>
+
+
+
             </div>
         </div>
     );
