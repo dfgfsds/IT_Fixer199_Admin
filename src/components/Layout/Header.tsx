@@ -1,4 +1,4 @@
-import  { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Bell, Search, User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
@@ -126,7 +126,7 @@ const Header: React.FC = () => {
         if (token) {
           await fetch(
             // "https://api-test.itfixer199.com/api/notifications/register-fcm/"
-             "https://api.itfixer199.com/api/notifications/register-fcm/"
+            "https://api.itfixer199.com/api/notifications/register-fcm/"
             , {
               method: "POST",
               headers: {
@@ -178,7 +178,7 @@ const Header: React.FC = () => {
       // 🔔 Play sound
       if (notificationSound.current) {
         notificationSound.current.currentTime = 0;
-        notificationSound.current.play().catch((err:any) => {
+        notificationSound.current.play().catch((err: any) => {
           console.log("Sound blocked:", err);
         });
       }
@@ -201,8 +201,8 @@ const Header: React.FC = () => {
       const updatedApi = await axiosInstance.patch(`${Api?.notifications}/${id}/read/`);
 
       if (updatedApi) {
-        setNotifications((prev:any) =>
-          prev.map((n:any) =>
+        setNotifications((prev: any) =>
+          prev.map((n: any) =>
             n.id === id ? { ...n, is_read: true } : n
           )
         );
@@ -235,7 +235,7 @@ const Header: React.FC = () => {
             className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <Bell className="w-5 h-5 animate-[bellShake_0.5s]" />
-            {notifications?.some((n:any) => !n.is_read) && (
+            {notifications?.some((n: any) => !n.is_read) && (
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             )}
           </button>
@@ -256,7 +256,7 @@ const Header: React.FC = () => {
                   No notifications
                 </div>
               ) : (
-                notifications?.filter((i: any) => i?.is_read === false)?.map((notif:any) => (
+                notifications?.filter((i: any) => i?.is_read === false)?.map((notif: any) => (
                   <div
                     key={notif.id}
                     onClick={() => markAsRead(notif.id)}
