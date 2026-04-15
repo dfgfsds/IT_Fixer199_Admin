@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Edit3, Eye, Loader2, Plus, Printer, Search, Undo2 } from "lucide-react";
 import axiosInstance from "../../configs/axios-middleware";
 import Pagination from "../../components/Pagination";
@@ -656,7 +656,7 @@ const OrderPurchase: React.FC = () => {
                                                     <button
                                                         onClick={() => handleRefundClick(item)}
                                                         className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all"
-                                                        title="Refund"
+                                                        title="Return"
                                                     >
                                                         <Undo2 size={16} />
                                                     </button>
