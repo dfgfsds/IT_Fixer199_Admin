@@ -9,6 +9,10 @@ import Pagination from "../../components/Pagination";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 import toast from "react-hot-toast";
 
+
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
 const Products: React.FC = () => {
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -220,7 +224,7 @@ const Products: React.FC = () => {
         setOpenDropdown(null);
     }
 
-    const selectedProducts = filteredProducts?.slice(0, 11); // 0 to 10 index
+    const selectedProducts = filteredProducts?.slice(65, 75); // 0 to 10 index
 
 selectedProducts.forEach((product: any) => {
             let labelsHtml = "";
@@ -245,16 +249,18 @@ const handlePrint = () => {
     let labelsHtml = "";
 
     // ✅ 0 to 10 index
-    const selectedProducts = filteredProducts.slice(17, 22);
+    // const selectedProducts = filteredProducts.slice(65, 75);
+    const selectedProducts = filteredProducts.slice(93, 96);
 
+//   <h3>${product.name}</h3>
     selectedProducts.forEach((product: any) => {
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 4; i++) {
             labelsHtml += `
                 <div class="label">
                     <svg class="barcode" data-value="${product.barcode}"></svg>
                     <h2>${product.barcode}\n</h3>
                     
-                    <h3>${product.name}</h3>
+                   
                 </div>
             `;
         }
@@ -282,7 +288,7 @@ const handlePrint = () => {
                         grid-template-columns: repeat(3, 35mm);
                         width: 105mm;
                         row-gap: 5mm;
-                        margin-bottom: 14.5mm;
+                        margin-bottom: 14.7mm;
                     }
 
                     .label {
@@ -308,7 +314,7 @@ const handlePrint = () => {
                         left: 50%;
                         transform: translateX(-50%);
                         width: 33mm;
-                        font-size: 8px;
+                        font-size: 10px;
                         text-align: center;
                         margin: 0;
                         line-height: 1.1;
@@ -369,6 +375,41 @@ const handlePrint = () => {
     pri.document.close();
 };
 
+
+
+const handleDownloadExcel = () => {
+    if (!filteredProducts || filteredProducts.length === 0) {
+        alert("No data to export");
+        return;
+    }
+
+    // ✅ only name + barcode
+    const data = filteredProducts.map((product: any) => ({
+        Name: product.name,
+        Barcode: product.barcode || product.sku
+    }));
+
+    // create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(data);
+
+    // create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+
+    // generate buffer
+    const excelBuffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array"
+    });
+
+    // save file
+    const file = new Blob([excelBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    });
+
+    saveAs(file, "products_barcode.xlsx");
+};
+
     return (
         <div className="space-y-6">
 <iframe id="ifmcontentstoprint" style={{ display: "none" }} />
@@ -394,6 +435,13 @@ const handlePrint = () => {
                         <Plus className="w-4 h-4 mr-2" />
                         Add Product
                     </button>
+
+<button
+    onClick={handleDownloadExcel}
+    className="px-4 py-2 bg-green-600 text-white rounded-md"
+>
+    Download Excel
+</button>
 
    <button onClick={handlePrint}>
     Print Barcode
