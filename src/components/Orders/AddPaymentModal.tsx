@@ -9,6 +9,7 @@ const AddPaymentModal = ({ order, onClose, onSuccess }: any) => {
         amount: "",
         payment_method: "",
         transaction_id: "",
+        transaction_type: "",
         user_id: "",
     });
 
@@ -26,6 +27,10 @@ const AddPaymentModal = ({ order, onClose, onSuccess }: any) => {
     const handleSubmit = async () => {
         if (!form.amount || Number(form.amount) <= 0) {
             toast.error("Please enter a valid amount");
+            return;
+        }
+        if (!form.transaction_type) {
+            toast.error("Please select a transaction type");
             return;
         }
         if (!form.payment_method) {
@@ -47,6 +52,7 @@ const AddPaymentModal = ({ order, onClose, onSuccess }: any) => {
                     amount: form.amount,
                     payment_method: form.payment_method,
                     transaction_id: form.transaction_id,
+                    transaction_type: form.transaction_type,
                     user_id: form.user_id,
                 }
             );
@@ -70,13 +76,28 @@ const AddPaymentModal = ({ order, onClose, onSuccess }: any) => {
 
                 {/* Header */}
                 <div className="mb-6">
-                    <h2 className="text-xl font-bold text-gray-900">Add Order Payment</h2>
+                    <h2 className="text-xl font-bold text-gray-900">Add Payment</h2>
                     <p className="text-sm text-gray-500 mt-1">
-                        Recording manual payment for Order: <span className="font-semibold text-orange-600">#{order?.id}</span>
+                        Adding manual payment for Order: <span className="font-semibold text-orange-600">#{order?.id}</span>
                     </p>
                 </div>
 
                 <div className="space-y-4">
+
+                    {/* Transaction Type */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Transaction Type</label>
+                        <select
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition-all"
+                            value={form.transaction_type}
+                            onChange={(e) => setForm({ ...form, transaction_type: e.target.value })}
+                        >
+                            <option value="">Select Type</option>
+                            <option value="PAYMENT">Payment</option>
+                            <option value="REFUND">Refund</option>
+                        </select>
+                    </div>
+
                     {/* Amount */}
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Amount (₹)</label>
@@ -144,11 +165,13 @@ const AddPaymentModal = ({ order, onClose, onSuccess }: any) => {
                         {loading && (
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                         )}
-                        {loading ? "Recording..." : "Add Payment"}
+                        {loading ? "Adding..." : "Add Payment"}
                     </button>
+
                 </div>
             </div>
         </div>
+
     );
 };
 
