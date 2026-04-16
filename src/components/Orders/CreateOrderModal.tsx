@@ -998,11 +998,16 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 type="number"
                                 min="0"
                                 value={form.partial_payment_amount}
+                                disabled={form.is_paid}
                                 onChange={(e) => {
                                     const val = Math.max(0, parseFloat(e.target.value) || 0);
-                                    setForm({ ...form, partial_payment_amount: val.toString() });
+                                    setForm({ 
+                                        ...form, 
+                                        partial_payment_amount: val.toString(),
+                                        is_paid: val > 0 ? false : form.is_paid 
+                                    });
                                 }}
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition ${form.is_paid ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'bg-white'}`}
                                 placeholder="0.00"
                             />
                         </div>
@@ -1465,40 +1470,42 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                             <div className="flex items-center gap-10 pt-6 md:col-span-2">
 
                                 {/* Payment Received */}
-                                <label className="flex items-center gap-2 cursor-pointer">
+                                <label className={`flex items-center gap-2 ${Number(form.partial_payment_amount) > 0 ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                                     <input
                                         type="checkbox"
                                         checked={paymentType === "PAID"}
+                                        disabled={Number(form.partial_payment_amount) > 0}
                                         onChange={(e) => {
-                                            setPaymentType("PAID")
-                                            setForm({ ...form, is_paid: e.target.checked })
+                                            const isChecking = e.target.checked;
+                                            setPaymentType(isChecking ? "PAID" : "");
+                                            setForm({ 
+                                                ...form, 
+                                                is_paid: isChecking,
+                                                payment_method: isChecking ? "CASH" : "",
+                                                partial_payment_amount: isChecking ? "0" : form.partial_payment_amount
+                                            })
                                         }}
-                                        className="w-4 h-4 text-orange-600"
+                                        className="w-4 h-4 text-orange-600 cursor-pointer disabled:cursor-not-allowed"
                                     />
                                     <span className="text-sm">Payment Received</span>
                                 </label>
 
                                 {/* Razorpay */}
                                 <label className="flex items-center gap-2 cursor-pointer">
-                                    {/* <input
-                                        type="checkbox"
-                                        checked={paymentType === "RAZORPAY"}
-                                        onChange={() => setPaymentType("RAZORPAY")}
-                                        className="w-4 h-4 text-orange-600"
-                                    /> */}
                                     <input
                                         type="checkbox"
                                         checked={paymentType === "RAZORPAY"}
                                         onChange={(e) => {
-                                            const isRazorpay = e.target.checked;
-                                            setPaymentType("RAZORPAY")
+                                            const isChecking = e.target.checked;
+                                            setPaymentType(isChecking ? "RAZORPAY" : "");
                                             setForm(prev => ({
                                                 ...prev,
-                                                no_razorpay: !isRazorpay,
-                                                payment_method: isRazorpay ? "RAZORPAY" : ""
+                                                no_razorpay: !isChecking,
+                                                payment_method: isChecking ? "RAZORPAY" : "",
+                                                is_paid: isChecking ? false : prev.is_paid
                                             }));
                                         }}
-                                        className="w-4 h-4 text-orange-600"
+                                        className="w-4 h-4 text-orange-600 cursor-pointer"
                                     />
                                     <span className="text-sm">Enable Razorpay</span>
                                 </label>

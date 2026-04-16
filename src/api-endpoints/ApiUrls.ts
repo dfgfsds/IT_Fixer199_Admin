@@ -223,6 +223,9 @@ const purchaseReturn = `${baseUrl}/api/purchase/return/`;
 // consolidatedStock
 const consolidatedStock = `${baseUrl}/api/product-inventory/movements/consolidated-stock/`;
 
+// consolidatedInventoryLog
+const consolidatedInventoryLog = `${baseUrl}/api/product-inventory/inventory/consolidated-log/`;
+
 // salesReturns
 const salesReturns = `${baseUrl}/api/sales-returns/`;
 
@@ -320,6 +323,7 @@ export default {
   consolidatedStock,
   salesReturns,
   createOrderPayment,
+  consolidatedInventoryLog
 };
 
 
