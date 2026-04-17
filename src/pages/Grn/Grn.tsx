@@ -8,6 +8,7 @@ import { useReactToPrint } from "react-to-print";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import GrnOrderModal from "./GrnOrderModal";
 
 
 const Grn: React.FC = () => {
@@ -24,7 +25,7 @@ const Grn: React.FC = () => {
     const [showViewModal, setShowViewModal] = useState(false);
     const [viewData, setViewData] = useState<any>(null);
     const [search, setSearch] = useState("");
-
+    const [showModal, setShowModal] = useState(false);
     const [selectedGRNData, setSelectedGRNData] = useState<any[]>([]);
 
     const [dateFilter, setDateFilter] = useState({
@@ -182,19 +183,19 @@ const Grn: React.FC = () => {
         }, 200);
     };
 
-    const handleGrnInvoice = async (item: any) => {
-        try {
-            const updatedApi: any = await axiosInstance.get(`${Api.purchaseGRNList}/${item.id}/grns/`);
-            console.log(updatedApi)
-            if (updatedApi) {
-                setGrnInvoiceData(updatedApi?.data?.data);
-                setSelectedInvoice(item);
-                setShowInvoiceModal(true);
-            }
-        } catch (error) {
+    // const handleGrnInvoice = async (item: any) => {
+    //     try {
+    //         const updatedApi: any = await axiosInstance.get(`${Api.purchaseGRNList}/${item.id}/grns/`);
+    //         console.log(updatedApi)
+    //         if (updatedApi) {
+    //             setGrnInvoiceData(updatedApi?.data?.data);
+    //             setSelectedInvoice(item);
+    //             setShowInvoiceModal(true);
+    //         }
+    //     } catch (error) {
 
-        }
-    }
+    //     }
+    // }
 
     const handleDownloadExcel = async () => {
         try {
@@ -271,6 +272,98 @@ const Grn: React.FC = () => {
         }
     };
 
+    const handlePrintGRN = (data: any) => {
+        const printWindow = window.open("", "_blank");
+
+        if (!printWindow) return;
+
+        const html = `
+  <html>
+    <head>
+      <title>GRN Print</title>
+      <style>
+        body {
+          font-family: Arial;
+          padding: 20px;
+        }
+        h2 {
+          margin-bottom: 5px;
+        }
+        .header, .footer {
+          margin-bottom: 20px;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 10px;
+        }
+        th, td {
+          border: 1px solid #ddd;
+          padding: 8px;
+          text-align: left;
+          font-size: 12px;
+        }
+        th {
+          background: #f5f5f5;
+        }
+        .right {
+          text-align: right;
+        }
+      </style>
+    </head>
+
+    <body onload="window.print(); window.close();">
+
+      <div class="header">
+        <h2>GRN</h2>
+        <p><b>GRN No:</b> ${data.grn_number}</p>
+        <p><b>Invoice No:</b> ${data.invoice_number}</p>
+        <p><b>Vendor:</b> ${data.vendor_name}</p>
+        <p><b>Date:</b> ${data.invoice_date}</p>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Rate</th>
+            <th>Tax %</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.items
+                .map(
+                    (item: any) => `
+              <tr>
+                <td>${item.product_name}</td>
+                <td>${item.received_quantity}</td>
+                <td>₹${item.rate}</td>
+                <td>${item.tax_percentage}%</td>
+                <td>₹${item.net_amount}</td>
+              </tr>
+            `
+                )
+                .join("")}
+        </tbody>
+      </table>
+
+      <div class="footer">
+        <p class="right"><b>Subtotal:</b> ₹${data.subtotal_amount}</p>
+        <p class="right"><b>Tax:</b> ₹${data.total_tax_amount}</p>
+        <p class="right"><b>Discount:</b> ₹${data.total_discount_amount}</p>
+        <h3 class="right">Grand Total: ₹${data.grand_total_amount}</h3>
+      </div>
+
+    </body>
+  </html>
+  `;
+
+        printWindow.document.write(html);
+        printWindow.document.close();
+
+    };
     return (
         <div className="space-y-6">
 
@@ -282,10 +375,10 @@ const Grn: React.FC = () => {
                 </div>
 
                 <button
-                    // onClick={() => {
-                    //     setEditData(null);
-                    //     setShowModal(true);
-                    // }}
+                    onClick={() => {
+                        // setEditData(null);
+                        setShowModal(true);
+                    }}
                     className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-gray-200 active:scale-95"
                 >
                     <Plus size={18} strokeWidth={3} />  GRN
@@ -510,7 +603,7 @@ const Grn: React.FC = () => {
                                                     </button>
 
                                                     <button
-                                                        onClick={() => triggerPrint(item)}
+                                                        onClick={() => handlePrintGRN(item)}
                                                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                         title="Print Invoice"
                                                     >
@@ -812,6 +905,13 @@ const Grn: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <GrnOrderModal
+                show={showModal}
+                onClose={() => setShowModal(false)}
+                onSuccess={() => fetchData(page, pageSize)}
+            // editData={editData}
+            />
 
         </div>
     );
