@@ -27,6 +27,8 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
     const [categories, setCategories] = useState<any[]>([]);
     const [products, setProducts] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState("");
+    const [serialInput, setSerialInput] = useState("");
+    const [activeRowIndex, setActiveRowIndex] = useState(0);
 
     // useEffect(() => {
     //     if (show && poData) {
@@ -346,6 +348,70 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
         }
     };
 
+    // const handleSerialScan = (serial: string) => {
+    //     if (!serial) return;
+
+    //     if (activeRowIndex === null) {
+    //         toast.error("Select a row first ⚠️");
+    //         return;
+    //     }
+
+    //     let updatedItems = [...items];
+
+    //     const row = updatedItems[activeRowIndex];
+
+    //     if (!row || !row.product) {
+    //         toast.error("Invalid row ❌");
+    //         return;
+    //     }
+
+    //     const existingSerials = row.serial_numbers || [];
+
+    //     if (existingSerials.includes(serial)) {
+    //         toast.error("Serial already added ⚠️");
+    //         return;
+    //     }
+
+    //     // ✅ ADD SERIAL TO SPECIFIC INDEX
+    //     updatedItems[activeRowIndex].serial_numbers = [
+    //         ...existingSerials,
+    //         serial,
+    //     ];
+
+    //     // 🔥 AUTO QTY
+    //     updatedItems[activeRowIndex].quantity =
+    //         updatedItems[activeRowIndex].serial_numbers.length;
+
+    //     setItems(updatedItems);
+    // };
+
+    // 1. Function-la index parameter add panniko machan
+    const handleSerialScan = (serial: string, rowIndex: number) => {
+        if (!serial) return;
+
+        let updatedItems = [...items];
+        const row = updatedItems[rowIndex];
+
+        if (!row || !row.product) {
+            toast.error("Invalid row ❌");
+            return;
+        }
+
+        const existingSerials = row.serial_numbers || [];
+
+        if (existingSerials.includes(serial)) {
+            toast.error("Serial already added ⚠️");
+            return;
+        }
+
+        // Row index direct-a irukuradhala zero index issue varaadhu
+        updatedItems[rowIndex].serial_numbers = [...existingSerials, serial];
+        updatedItems[rowIndex].received_quantity = updatedItems[rowIndex].serial_numbers.length;
+
+        setItems(updatedItems);
+    };
+
+
     if (!show) return null;
 
     return (
@@ -445,373 +511,203 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
                     </div>
 
                     {/* ITEMS TABLE */}
-                    <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                        <table className="w-full text-left border-collapse min-w-[1000px]">
-                            <thead className="bg-slate-800 text-white text-[11px] uppercase tracking-wider">
+                    <div className="border border-slate-200 rounded-xl overflow-hidden shadow-lg bg-white">
+                        <table className="w-full text-left border-collapse min-w-[1100px]">
+                            <thead className="bg-slate-900 text-slate-200 text-[11px] uppercase tracking-widest font-bold">
                                 <tr>
-                                    <th className="p-4 font-semibold">Product Details</th>
-                                    {/* <th className="p-4 font-semibold text-center">Quantity (R/A/J)</th> */}
-                                    <th className="p-4 font-semibold text-center">Quantity</th>
-                                    <th className="p-4 font-semibold">Pricing (Rate/Tax)</th>
-                                    <th className="p-4 font-semibold">Discount</th>
-                                    <th className="p-4 font-semibold">Batch & Expiry</th>
-                                    {/* <th className="p-4 font-semibold">Status / Type</th> */}
-                                    <th className="p-4 font-semibold">Type</th>
-                                    {/* <th className="p-4 font-semibold">Serials</th> */}
-                                    <th className="p-4 font-semibold"></th>
+                                    <th className="p-4 w-[25%]">Product Details</th>
+                                    <th className="p-4 w-[20%] text-center">Inventory & Serials</th>
+                                    <th className="p-4 w-[15%]">Pricing (Rate/Tax)</th>
+                                    <th className="p-4 w-[15%]">Discount</th>
+                                    <th className="p-4 w-[15%]">Expiry</th>
+                                    <th className="p-4 w-[10%] text-center">Action</th>
                                 </tr>
                             </thead>
-
-                            {/* <tbody className="divide-y divide-slate-100 text-sm">
-                                {items.map((item, i) => (
-                                    <tr key={i} className="hover:bg-slate-50 transition-colors">
-                                        <td className="p-3 w-64">
-                                            <select
-                                                onChange={(e) => handleItemChange(i, "product", e.target.value)}
-                                                className="w-full border border-slate-200 p-2 rounded-lg bg-white text-xs"
-                                            >
-                                                <option>Select Product</option>
-                                                {poData?.items?.map((p: any) => (
-                                                    <option key={p.product_id} value={p.product_id}>{p.product_name}</option>
-                                                ))}
-                                            </select>
-                                        </td>
-                                        <td className="p-4 align-top">
-                                            <select value={item.product} onChange={(e) => handleItemChange(i, "product", e.target.value)} className="w-full border p-2 rounded-lg text-sm bg-white mb-2">
-                                                <option value="">-- Choose Product --</option>
-                                                {poData?.items?.map((p: any) => (
-                                                    <option key={p.product_id} value={p.product_id}>{p.product_name}</option>
-                                                ))}
-                                            </select>
-                                            {!isPoItem && (
-                                                <select
-                                                    value={item.category}
-                                                    onChange={(e) => fetchProducts(e.target.value, i)}
-                                                    className="w-full border p-2 rounded mb-2"
-                                                >
-                                                    <option value="">Select Category</option>
-                                                    {categories.map((c: any) => (
-                                                        <option key={c.id} value={c.id}>
-                                                            {c.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            )}
-                                            <select
-                                                value={item.product}
-                                                onChange={(e) => handleItemChange(i, "product", e.target.value)}
-                                                disabled={isPoItem}
-                                                className={`w-full border p-2 rounded-lg text-sm bg-white mb-2 ${isPoItem ? "bg-gray-100 cursor-not-allowed" : ""
-                                                    }`}
-                                            >
-                                                <option value="">-- Choose Product --</option>
-
-                                                {poData?.items?.map((p: any) => (
-                                                    <option key={p.product_id} value={p.product_id}>{p.product_name}</option>
-                                                ))}
-
-                                            
-                                                {!isPoItem &&
-                                                    products?.map((p: any) => (
-                                                        <option key={p.id} value={p.id}>
-                                                            {p.name}
-                                                        </option>
-                                                    ))}
-                                            </select>
-                                            <textarea placeholder="Item Remarks" value={item.remarks} onChange={(e) => handleItemChange(i, "remarks", e.target.value)} className="w-full border p-1 text-[11px] rounded" rows={1} />
-                                        </td>
-
-                                        <td className="p-3">
-                                            <div className="flex flex-col gap-1">
-                                                <input placeholder="Rec" onChange={(e) => handleItemChange(i, "received_quantity", e.target.value)} className="w-24 border p-1.5 rounded text-center text-xs" />
-                                             
-                                            </div>
-                                        </td>
-
-                                        <td className="p-3">
-                                            <div className="flex flex-col gap-1">
-                                                <input value={item.rate} onChange={(e) => handleItemChange(i, "rate", e.target.value)} placeholder="Rate" className="w-20 border p-1 rounded text-xs" />
-                                                <input value={item.tax_percentage} onChange={(e) => handleItemChange(i, "tax_percentage", e.target.value)} placeholder="Tax %" className="w-20 border p-1 rounded text-xs" />
-                                            </div>
-                                        </td>
-
-                                        <td className="p-3">
-                                            <div className="flex flex-col gap-1">
-                                                <select onChange={(e) => handleItemChange(i, "discount_type", e.target.value)} className="w-20 border p-1 rounded text-[10px]">
-                                                    <option value="FIXED">FIXED</option>
-                                                    <option value="PERCENT">PERCENT</option>
-                                                </select>
-                                                <input placeholder="Value" onChange={(e) => handleItemChange(i, "discount_value", e.target.value)} className="w-20 border p-1 rounded text-xs" />
-                                            </div>
-                                        </td>
-
-                                        <td className="p-3">
-                                            <div className="flex flex-col gap-1">
-                                                <input placeholder="Batch No" onChange={(e) => handleItemChange(i, "batch_number", e.target.value)} className="w-24 border p-1 rounded text-xs" />
-                                                <input type="date" onChange={(e) => handleItemChange(i, "expiry_date", e.target.value)} className="w-24 border p-1 rounded text-[10px]" />
-                                            </div>
-                                        </td>
-
-                                        <td className="p-3">
-                                            <div className="flex flex-col gap-1">
-                                               
-                                                <select onChange={(e) => handleItemChange(i, "grn_type", e.target.value)} className="w-20 border p-1 rounded text-[10px]">
-                                                    <option value="PURCHASE">PURCHASE</option>
-                                                    <option value="RETURN">RETURN</option>
-                                                </select>
-                                            </div>
-                                        </td>
-
-                                        <td className="p-3">
-                                            <textarea
-                                                placeholder="Serials (S1, S2...)"
-                                                onChange={(e) => handleItemChange(i, "serial_numbers", e.target.value.split(","))}
-                                                className="w-28 border p-1 rounded text-[10px] h-10 resize-none"
-                                            />
-                                        </td>
-
-                                        <td className="p-3 text-center">
-                                            <button
-                                                onClick={() => handleRemoveItem(i)}
-                                                className="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody> */}
 
                             <tbody className="divide-y divide-slate-100 text-sm">
                                 {items?.map((item, i) => {
                                     const isPoItem = item?.isFromPO;
+                                    const isActive = activeRowIndex === i;
 
                                     return (
-                                        <tr key={i} className="hover:bg-slate-50 transition-colors">
-
+                                        <tr
+                                            key={i}
+                                            onClick={() => setActiveRowIndex(i)}
+                                            className={`transition-all duration-200 ${isActive ? "bg-indigo-50/40 ring-1 ring-inset ring-indigo-100" : "hover:bg-slate-50/50"}`}
+                                        >
                                             {/* PRODUCT + CATEGORY */}
-                                            <td className="p-4 align-top">
-
-                                                {/* CATEGORY (ONLY NON-PO) */}
+                                            <td className="p-4 align-top space-y-2">
                                                 {!item?.product && (
                                                     <select
                                                         value={item.category || ""}
                                                         onChange={(e) => fetchProducts(e.target.value, i)}
-                                                        className="w-full border p-2 rounded mb-2"
+                                                        className="w-full border border-slate-200 p-2 rounded-md bg-white focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
                                                     >
                                                         <option value="">Select Category</option>
-                                                        {categories.map((c: any) => (
-                                                            <option key={c.id} value={c.id}>
-                                                                {c.name}
-                                                            </option>
+                                                        {categories.map((c) => (
+                                                            <option key={c.id} value={c.id}>{c.name}</option>
                                                         ))}
                                                     </select>
                                                 )}
 
-                                                {/* PRODUCT */}
-                                                <select
-                                                    value={item?.product || ""}
-                                                    onChange={(e) =>
-                                                        handleItemChange(i, "product", e.target.value)
-                                                    }
-                                                    // disabled={isPoItem}
-                                                    className={`w-full border p-2 rounded-lg text-sm mb-2 ${isPoItem ? "bg-gray-100 cursor-not-allowed" : ""
-                                                        }`}
-                                                >
-                                                    <option value="">-- Choose Product --</option>
-
-                                                    {poData?.items?.map((p: any) => (
-                                                        <option key={p.product_id} value={p.product_id}>{p.product_name}</option>
-                                                    ))}
-
-                                                    {/* PO PRODUCTS */}
-                                                    {/* {isPoItem &&
-                                                        poData?.items?.map((p: any) => (
-                                                            <option key={p.product_id} value={p.product_id}>
-                                                                {p.product_name}
-                                                            </option>
-                                                        ))
-                                                        } */}
-
-                                                    {/* NORMAL PRODUCTS */}
-                                                    {!isPoItem &&
-                                                        (item?.productsList || [])?.map((p: any) => (
-                                                            <option key={p?.id} value={p?.id}>
-                                                                {p?.name}
-                                                            </option>
+                                                <div className="relative">
+                                                    <select
+                                                        value={item?.product || ""}
+                                                        onChange={(e) => handleItemChange(i, "product", e.target.value)}
+                                                        className={`w-full border p-2 rounded-md font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none ${isPoItem ? "bg-slate-50 text-slate-500 cursor-not-allowed border-dashed" : "border-slate-200"}`}
+                                                    >
+                                                        <option value="">-- Choose Product --</option>
+                                                        {poData?.items?.map((p: any) => (
+                                                            <option key={p.product_id} value={p.product_id}>{p.product_name}</option>
                                                         ))}
-                                                </select>
+                                                        {!isPoItem && (item?.productsList || [])?.map((p: any) => (
+                                                            <option key={p?.id} value={p?.id}>{p?.name}</option>
+                                                        ))}
+                                                    </select>
+                                                    {isPoItem && <span className="absolute -top-2 -right-1 bg-indigo-600 text-white text-[9px] px-1.5 py-0.5 rounded-full shadow-sm">PO</span>}
+                                                </div>
 
-                                                {/* REMARKS */}
                                                 <textarea
-                                                    placeholder="Item Remarks"
+                                                    placeholder="Item Remarks..."
                                                     value={item.remarks || ""}
-                                                    onChange={(e) =>
-                                                        handleItemChange(i, "remarks", e.target.value)
-                                                    }
-                                                    className="w-full border p-1 text-[11px] rounded"
+                                                    onChange={(e) => handleItemChange(i, "remarks", e.target.value)}
+                                                    className="w-full border border-slate-100 p-2 text-[11px] rounded-md bg-slate-50/50 italic focus:bg-white focus:border-indigo-300 transition-all resize-none"
                                                     rows={1}
                                                 />
-
-                                                {/* PO TAG */}
-                                                {isPoItem && (
-                                                    <span className="text-[10px] text-indigo-600 font-bold">
-                                                        From PO
-                                                    </span>
-                                                )}
                                             </td>
 
-                                            {/* QUANTITY */}
-                                            <td className="p-3">
-                                                <div className="flex flex-col gap-1">
-
-                                                    {/* QTY */}
-                                                    <input
-                                                        placeholder="Received"
-                                                        value={item?.received_quantity || ""}
-                                                        onChange={(e) =>
-                                                            handleItemChange(i, "received_quantity", e.target.value)
-                                                        }
-                                                        className="w-24 border p-1.5 rounded text-center text-xs"
-                                                    />
-
-                                                    {/* 🔥 SCROLLABLE SERIAL NUMBERS */}
-                                                    {item.serial_numbers && item.serial_numbers.length > 0 && (
-                                                        <div className="mt-2 w-52 max-h-40 overflow-y-auto space-y-1 border rounded p-2 bg-gray-50">
-                                                            {item.serial_numbers.map((sn: any, snIndex: number) => (
-                                                                <input
-                                                                    key={snIndex}
-                                                                    placeholder={`Serial ${snIndex + 1}`}
-                                                                    value={sn || ""}
-                                                                    onChange={(e) =>
-                                                                        handleSerialChange(i, snIndex, e.target.value)
+                                            {/* QUANTITY & SERIALS */}
+                                            <td className="p-4 align-top">
+                                                <div className="flex flex-col gap-2 items-center">
+                                                    <div className="flex items-center gap-2 w-full">
+                                                        <div className="flex-1">
+                                                            <label className="text-[10px] text-slate-400 font-bold block mb-1">RECEIVED</label>
+                                                            <input
+                                                                type="number"
+                                                                value={item?.received_quantity || ""}
+                                                                onChange={(e) => handleItemChange(i, "received_quantity", e.target.value)}
+                                                                className="w-full border border-slate-200 p-2 rounded-md text-center font-bold text-indigo-600 focus:border-indigo-500 outline-none"
+                                                            />
+                                                        </div>
+                                                        <div className="flex-[2]">
+                                                            <label className="text-[10px] text-slate-400 font-bold block mb-1">SCAN SERIAL</label>
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Enter/Scan..."
+                                                                className="w-full border border-slate-200 p-2 rounded-md bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none transition-all"
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === "Enter") {
+                                                                        handleSerialScan(e.currentTarget.value, i);
+                                                                        e.currentTarget.value = "";
                                                                     }
-                                                                    className="w-full border p-1.5 rounded text-xs"
-                                                                />
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {item.serial_numbers?.length > 0 && (
+                                                        <div className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1 max-h-32 overflow-y-auto grid grid-cols-1 gap-1 shadow-inner">
+                                                            {item.serial_numbers?.slice(0)?.map((sn: any, snIndex: number) => (
+                                                                <div key={snIndex} className="flex items-center bg-white border border-slate-100 rounded px-2 py-1">
+                                                                    <span className="text-[9px] text-slate-400 mr-2">{snIndex + 1}</span>
+                                                                    <input
+                                                                        value={sn || ""}
+                                                                        onChange={(e) => handleSerialChange(i, snIndex, e.target.value)}
+                                                                        className="w-full text-xs focus:outline-none font-mono text-slate-600"
+                                                                    />
+                                                                </div>
                                                             ))}
                                                         </div>
                                                     )}
-
                                                 </div>
                                             </td>
 
-                                            {/* RATE + TAX */}
-                                            <td className="p-3">
-                                                <div className="flex flex-col gap-1">
-                                                    <input
-                                                        value={item.rate || ""}
-                                                        onChange={(e) =>
-                                                            handleItemChange(i, "rate", e.target.value)
-                                                        }
-                                                        placeholder="Rate"
-                                                        className="w-20 border p-1 rounded text-xs"
-                                                    />
-
+                                            {/* PRICING */}
+                                            <td className="p-4 align-top space-y-3">
+                                                <div>
+                                                    <label className="text-[10px] text-slate-400 font-bold block mb-1 uppercase">Rate</label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-2 top-2 text-slate-400 text-xs">₹</span>
+                                                        <input
+                                                            value={item.rate || ""}
+                                                            onChange={(e) => handleItemChange(i, "rate", e.target.value)}
+                                                            className="w-full border border-slate-200 pl-5 p-2 rounded-md text-sm outline-none focus:border-indigo-500"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] text-slate-400 font-bold block mb-1 uppercase">Tax %</label>
                                                     <input
                                                         value={item.tax_percentage || ""}
-                                                        onChange={(e) =>
-                                                            handleItemChange(i, "tax_percentage", e.target.value)
-                                                        }
-                                                        placeholder="Tax %"
-                                                        className="w-20 border p-1 rounded text-xs"
+                                                        onChange={(e) => handleItemChange(i, "tax_percentage", e.target.value)}
+                                                        className="w-full border border-slate-200 p-2 rounded-md text-sm outline-none focus:border-indigo-500"
                                                     />
                                                 </div>
                                             </td>
 
                                             {/* DISCOUNT */}
-                                            <td className="p-3">
-                                                <div className="flex flex-col gap-1">
+                                            <td className="p-4 align-top space-y-3">
+                                                <div>
+                                                    <label className="text-[10px] text-slate-400 font-bold block mb-1 uppercase">Type</label>
                                                     <select
                                                         value={item.discount_type}
-                                                        onChange={(e) =>
-                                                            handleItemChange(i, "discount_type", e.target.value)
-                                                        }
-                                                        className="w-20 border p-1 rounded text-[10px]"
+                                                        onChange={(e) => handleItemChange(i, "discount_type", e.target.value)}
+                                                        className="w-full border border-slate-200 p-2 rounded-md text-xs bg-white outline-none"
                                                     >
-                                                        <option value="FIXED">FIXED</option>
-                                                        <option value="PERCENT">PERCENT</option>
+                                                        <option value="FIXED">Flat (₹)</option>
+                                                        <option value="PERCENT">Percent (%)</option>
                                                     </select>
-
-                                                    <input
-                                                        value={item.discount_value || ""}
-                                                        onChange={(e) =>
-                                                            handleItemChange(i, "discount_value", e.target.value)
-                                                        }
-                                                        placeholder="Value"
-                                                        className="w-20 border p-1 rounded text-xs"
-                                                    />
                                                 </div>
+                                                <input
+                                                    placeholder="Value"
+                                                    value={item.discount_value || ""}
+                                                    onChange={(e) => handleItemChange(i, "discount_value", e.target.value)}
+                                                    className="w-full border border-slate-200 p-2 rounded-md text-sm outline-none focus:border-indigo-500"
+                                                />
                                             </td>
 
-                                            {/* BATCH + EXPIRY */}
-                                            <td className="p-3">
-                                                <div className="flex flex-col gap-1">
-                                                    <input
-                                                        placeholder="Batch No"
-                                                        value={item.batch_number || ""}
-                                                        onChange={(e) =>
-                                                            handleItemChange(i, "batch_number", e.target.value)
-                                                        }
-                                                        className="w-24 border p-1 rounded text-xs"
-                                                    />
-
-                                                    <input
-                                                        type="date"
-                                                        value={item.expiry_date || ""}
-                                                        onChange={(e) =>
-                                                            handleItemChange(i, "expiry_date", e.target.value)
-                                                        }
-                                                        className="w-24 border p-1 rounded text-[10px]"
-                                                    />
-
-                                                </div>
+                                            {/* EXPIRY */}
+                                            <td className="p-4 align-top">
+                                                <label className="text-[10px] text-slate-400 font-bold block mb-1 uppercase">Expiry Date</label>
+                                                <input
+                                                    type="date"
+                                                    value={item.expiry_date || ""}
+                                                    onChange={(e) => handleItemChange(i, "expiry_date", e.target.value)}
+                                                    className="w-full border border-slate-200 p-2 rounded-md text-xs bg-white outline-none focus:border-indigo-500"
+                                                />
                                             </td>
 
-                                            {/* TYPE */}
-                                            <td className="p-3">
-                                                <select
-                                                    value={item.grn_type}
-                                                    onChange={(e) =>
-                                                        handleItemChange(i, "grn_type", e.target.value)
-                                                    }
-                                                    className="w-24 border p-1 rounded text-[10px]"
-                                                >
-                                                    <option value="PURCHASE">PURCHASE</option>
-                                                    {/* <option value="RETURN">RETURN</option> */}
-                                                </select>
-                                            </td>
-
-                                            {/* DELETE */}
-                                            <td className="p-3 text-center">
+                                            {/* ACTIONS */}
+                                            <td className="p-4 text-center align-middle">
                                                 <button
                                                     onClick={() => handleRemoveItem(i)}
-                                                    className="p-2 text-slate-300 hover:text-red-500"
+                                                    className="group p-2.5 rounded-full hover:bg-red-50 transition-colors"
                                                 >
-                                                    <Trash2 size={16} />
+                                                    <Trash2 size={18} className="text-slate-300 group-hover:text-red-500 transition-colors" />
                                                 </button>
                                             </td>
-
                                         </tr>
                                     );
                                 })}
                             </tbody>
                         </table>
 
-                        <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                        {/* FOOTER ACTIONS */}
+                        <div className="p-5 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
                             <button
                                 onClick={handleAddItem}
-                                className="flex items-center gap-2 text-indigo-600 font-bold text-xs hover:text-indigo-800 transition-colors"
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-indigo-200 text-indigo-600 rounded-lg font-bold text-xs hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
                             >
-                                <Plus size={16} className="bg-indigo-100 rounded-full p-0.5" /> Add Another Row
+                                <Plus size={18} /> Add New Row
                             </button>
 
-                            <div className="flex items-center gap-3">
-                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Attach Files</span>
+                            <div className="flex items-center gap-4 bg-white p-2 px-4 rounded-xl border border-slate-200 shadow-sm">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Attachments</span>
                                 <input
                                     type="file"
                                     multiple
                                     onChange={(e) => setFiles(Array.from(e.target.files || []))}
-                                    className="text-xs file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 cursor-pointer"
+                                    className="text-[11px] file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-[10px] file:font-bold file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 cursor-pointer"
                                 />
                             </div>
                         </div>

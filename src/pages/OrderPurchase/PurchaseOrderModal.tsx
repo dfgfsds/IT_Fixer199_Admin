@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import { Loader2, X, Plus, Trash2, IndianRupee } from "lucide-react";
 import Api from "../../api-endpoints/ApiUrls";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 import { removeEmptyFields } from "../../utils/removeEmptyFields ";
+import toast from "react-hot-toast";
+import * as XLSX from "xlsx";
 
 const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
     // ... (States and Logic remain exactly same)
@@ -11,26 +13,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
     const [hubs, setHubs] = useState([]);
     const [products, setProducts] = useState([]);
     const [apiErrors, setApiErrors] = useState<string>("");
-    const [categories, setCategories] = useState([]);
-    // const [selectedCategory, setSelectedCategory] = useState("");
-    // console.log(categories)
-    // const initialState = {
-    //     vendor: "",
-    //     hub: "",
-    //     po_number: "",
-    //     order_date: "",
-    //     due_date: "",
-    //     bill_to: "",
-    //     ship_to: "",
-    //     payment_terms: "",
-    //     shipping_charges: 0,
-    //     other_charges: 0,
-    //     currency: "INR",
-    //     notes: "",
-    //     internal_notes: "",
-    //     items: [{ category: "", product: "", item_name: "", description: "", quantity: 1, rate: 0, discount_type: "PERCENT", discount_value: 0, tax_percentage: 0, amount: 0 }],
-    //     initial_payment: { payment_date: "", payment_method: "CASH", payment_reference: "", amount_paid: 0, notes: "" },
-    // };
+    const [search, setSearch] = useState("");
 
     const initialState = {
         vendor: "",
@@ -46,7 +29,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
         currency: "INR",
         notes: "",
         internal_notes: "",
-        invoice_number:"",
+        invoice_number: "",
         items: [
             {
                 category: "",
@@ -73,75 +56,149 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
             const v = await axiosInstance.get(Api.vendor);
             const h = await axiosInstance.get(Api.allHubs);
             // const p = await axiosInstance.get(`${Api.products}?size=10000`);
-            const c = await axiosInstance.get(Api.categories);
             setVendors(v?.data?.vendors || []);
             setHubs(h?.data?.hubs || []);
             // setProducts(p?.data?.products || []);
-            setCategories(c?.data?.data || []);
         };
         fetchData();
     }, []);
 
     // useEffect(() => {
-    //     if (!selectedCategory) return;
-
-    //     const fetchProducts = async () => {
-    //         try {
-    //             const res = await axiosInstance.get(
-    //                 `${Api.products}?category_id=${selectedCategory}&size=100`
-    //             );
-
-    //             setProducts(res?.data?.products || []);
-    //         } catch (err) {
-    //             console.log(err);
-    //         }
-    //     };
-
-    //     fetchProducts();
-    // }, [selectedCategory]);
-
-    // const handleCategoryChange = async (i: number, categoryId: string) => {
-    //     const updated = [...form.items];
-
-    //     updated[i].category = categoryId;
-    //     updated[i].product = ""; // reset product only for that row
-
-    //     setForm({ ...form, items: updated });
-
-    //     try {
-    //         const res = await axiosInstance.get(
-    //             `${Api.products}?category_id=${categoryId}&size=100`
-    //         );
-
-    //         // 🔥 store products per row
-    //         updated[i].products = res?.data?.products || [];
-
-    //         setForm({ ...form, items: updated });
-    //     } catch (err) {
-    //         console.log(err);
+    //     if (search) {
+    //         fetchProducts();
     //     }
-    // };
+    // }, [search]);
 
-    const handleCategoryChange = async (i: number, categoryId: string) => {
-        const updated = [...form.items];
-
-        updated[i].category = categoryId;
-        updated[i].product = "";
-        updated[i].products = [];
-
-        setForm({ ...form, items: updated });
+    const handleBarcodeScan = async (barcode: string) => {
+        if (!barcode) return;
 
         try {
             const res = await axiosInstance.get(
-                `${Api.products}?category_id=${categoryId}&size=100`
+                `${Api.products}?barcode=${barcode}`
             );
 
-            updated[i].products = res?.data?.products || [];
+            const product = res?.data?.products?.[0];
 
-            setForm({ ...form, items: updated });
+            if (!product) {
+                toast.error("Product not found ❌");
+                return;
+            }
+
+            let updatedItems = [...form.items];
+
+            // 🔥 CHECK FIRST ROW EMPTY
+            const isFirstRowEmpty =
+                updatedItems.length === 1 &&
+                !updatedItems[0].product;
+
+            if (isFirstRowEmpty) {
+                // ✅ REPLACE FIRST ROW
+                updatedItems[0] = {
+                    product: product.id,
+                    products: [product],
+                    item_name: product.name,
+                    quantity: 1,
+                    rate: Number(product.price || 0),
+                    discount_type: "PERCENT",
+                    discount_value: 0,
+                    tax_percentage: Number(product.tax || 0),
+                    serial_numbers: [],
+                    amount: 0,
+                };
+            } else {
+                // 🔍 CHECK EXISTING
+                const existingIndex = updatedItems.findIndex(
+                    (i: any) => i.product === product.id
+                );
+
+                if (existingIndex !== -1) {
+                    // ✅ INCREASE QTY
+                    updatedItems[existingIndex].quantity += 1;
+                } else {
+                    // ✅ ADD NEW ROW
+                    updatedItems.push({
+                        product: product.id,
+                        products: [product],
+                        item_name: product.name,
+                        quantity: 1,
+                        rate: Number(product.price || 0),
+                        discount_type: "PERCENT",
+                        discount_value: 0,
+                        tax_percentage: Number(product.tax || 0),
+                        serial_numbers: [],
+                        amount: 0,
+                    });
+                }
+            }
+
+            // 🔥 RECALCULATE
+            updatedItems = updatedItems.map((item) => {
+                const qty = Number(item.quantity || 0);
+                const rate = Number(item.rate || 0);
+                const discount = Number(item.discount_value || 0);
+                const tax = Number(item.tax_percentage || 0);
+
+                let amount = qty * rate;
+
+                if (item.discount_type === "PERCENT")
+                    amount -= (amount * discount) / 100;
+                else amount -= discount;
+
+                amount += (amount * tax) / 100;
+
+                return { ...item, amount };
+            });
+
+            setForm({ ...form, items: updatedItems });
+
         } catch (err) {
-            console.log(err);
+            toast.error("Something went wrong 🚨");
         }
+    };
+
+    const handleExcelUpload = async (e: any) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data);
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData: any[] = XLSX.utils.sheet_to_json(sheet);
+
+        // 🔥 LOOP EACH ROW
+        const items = await Promise.all(
+            jsonData.map(async (row) => {
+                try {
+                    const res = await axiosInstance.get(
+                        `${Api.products}?barcode=${row?.barcode}`
+                    );
+
+                    const product = res?.data?.products?.[0];
+
+                    return {
+                        product: product?.id || "",
+                        products: [product], // 🔥 important
+                        item_name: product?.name || "",
+                        quantity: Number(row.qty || 1),
+                        rate: Number(product?.price || 0),
+                        discount_type: row.discount_type || "PERCENT",
+                        discount_value: Number(row.discount_value || 0),
+                        tax_percentage: Number(row.tax || 0),
+                        serial_numbers: [],
+                        amount: 0,
+                    };
+                } catch {
+                    return null;
+                }
+            })
+        );
+
+        const filtered = items.filter(Boolean);
+
+        setForm({
+            ...form,
+            items: filtered,
+        });
     };
 
     useEffect(() => {
@@ -152,24 +209,6 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
         }
     }, [editData]);
 
-    // const handleItemChange = (i: number, field: string, value: any) => {
-    //     const updated = [...form.items];
-    //     updated[i][field] = value;
-    //     if (field === "product") {
-    //         const product: any = products.find((p: any) => p.id === value);
-    //         updated[i].item_name = product?.name || "";
-    //     }
-    //     const qty = Number(updated[i].quantity || 0);
-    //     const rate = Number(updated[i].rate || 0);
-    //     const discount = Number(updated[i].discount_value || 0);
-    //     const tax = Number(updated[i].tax_percentage || 0);
-    //     let amount = qty * rate;
-    //     if (updated[i].discount_type === "PERCENT") amount -= (amount * discount) / 100;
-    //     else amount -= discount;
-    //     amount += (amount * tax) / 100;
-    //     updated[i].amount = amount;
-    //     setForm({ ...form, items: updated });
-    // };
 
     const handleItemChange = (i: number, field: string, value: any) => {
         const updated = [...form.items];
@@ -217,15 +256,14 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
         setForm({ ...form, items: updated });
     };
 
-    const handleSerialChange = (i: number, index: number, value: string) => {
-        const updated = [...form.items];
+    // const handleSerialChange = (i: number, index: number, value: string) => {
+    //     const updated = [...form.items];
 
-        updated[i].serial_numbers[index] = value;
+    //     updated[i].serial_numbers[index] = value;
 
-        setForm({ ...form, items: updated });
-    };
+    //     setForm({ ...form, items: updated });
+    // };
 
-    // const addItem = () => setForm({ ...form, items: [...form.items, { product: "", quantity: 1, rate: 0 }] });
     const addItem = () => {
         setForm({
             ...form,
@@ -245,9 +283,9 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                     amount: 0,
                 },
             ],
-            // initial_payment: { payment_date: "", payment_method: "CASH", payment_reference: "", amount_paid: 0, notes: "" },
         });
     };
+
     const removeItem = (index: number) => {
         const updated = [...form.items];
         updated.splice(index, 1);
@@ -255,64 +293,6 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
     };
 
     const total = form.items.reduce((sum: number, i: any) => sum + Number(i.amount || 0), 0);
-
-    // const handleSubmit = async () => {
-    //     try {
-    //         setLoading(true);
-    //         const formatDateTime = (date: string) => {
-    //             if (!date) return null;
-    //             return new Date(date).toISOString(); // 🔥 correct format
-    //         };
-
-    //         const payload = {
-    //             ...form,
-    //             items: form.items.map((i: any) => ({
-    //                 // ...i,
-    //                 // quantity: Number(i.quantity),
-    //                 // rate: Number(i.rate),
-    //                 product: i.product,
-    //                 item_name: i.item_name,
-    //                 quantity: Number(i.quantity),
-    //                 rate: Number(i.rate),
-    //                 unit: "Units",
-    //                 description: i.description || "",
-    //                 discount_type: i.discount_type,
-    //                 discount_value: Number(i.discount_value),
-    //                 tax_percentage: Number(i.tax_percentage),
-    //                 serial_numbers: (i.serial_numbers || []).filter((sn: string) => sn),
-    //             })),
-    //             initial_payments: [
-    //                 {
-    //                     ...form.initial_payment,
-    //                     payment_date: formatDateTime(form.initial_payment.payment_date), // 🔥 FIX
-    //                     amount_paid: Number(form.initial_payment.amount_paid),
-    //                 },
-    //             ],
-    //         };
-    //         delete payload.initial_payment;
-
-    //         const cleanedUser = removeEmptyFields(payload);
-    //         if (editData) {
-    //             const updatedApi = await axiosInstance.put(`${Api.orderPurchase}/${editData.id}/`, cleanedUser);
-    //             if (updatedApi) {
-    //                 onSuccess();
-    //                 onClose();
-    //             }
-    //         }
-    //         else {
-    //             const updatedApi = await axiosInstance.post(`${Api.orderPurchase}`, cleanedUser);
-    //             if (updatedApi) {
-    //                 onSuccess();
-    //                 onClose();
-    //             }
-    //         }
-
-    //     } catch (err) {
-    //         setApiErrors(extractErrorMessage(err));
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
 
     const handleSubmit = async () => {
         try {
@@ -383,9 +363,9 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
     };
 
     const handleClose = () => {
-        setForm(initialState);   // 🔥 full reset
-        setApiErrors("");        // 🔥 clear errors
-        onClose();               // 🔥 close modal
+        setForm(initialState);
+        setApiErrors("");
+        onClose();
     };
 
     if (!show) return null;
@@ -463,113 +443,41 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
 
                     {/* ITEMS TABLE */}
                     <div>
-                        <div className="flex justify-between items-center mb-3">
-                            <h3 className="font-bold text-gray-700 flex items-center gap-2">Order Items</h3>
-                            <button onClick={addItem} className="text-orange-600 hover:text-orange-700 text-sm font-bold flex items-center gap-1">
+                        <div className="flex gap-5 justify-between items-center mb-3">
+                            <div className="flex gap-5 items-center mb-3">
+                                <h3 className="font-bold text-gray-700 flex items-center gap-2">Order Items</h3>
+                                <input
+                                    type="text"
+                                    placeholder="Scan barcode..."
+                                    className="border px-3 py-2 rounded-lg w-80"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            handleBarcodeScan(search);
+                                            setSearch(""); // 🔥 clear after scan
+                                        }
+                                    }}
+                                />
+                                {/* <button onClick={addItem} className="text-orange-600 hover:text-orange-700 text-sm font-bold flex items-center gap-1">
                                 <Plus size={16} /> Add Item
+                            </button> */}
+                            </div>
+                            <input
+                                type="file"
+                                accept=".xlsx, .xls"
+                                id="excelUpload"
+                                className="hidden"
+                                onChange={handleExcelUpload}
+                            />
+
+                            <button
+                                onClick={() => document.getElementById("excelUpload")?.click()}
+                                className="px-8 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg shadow-orange-200 flex items-center gap-2 transition-all disabled:opacity-50"
+                            >
+                                {loading ? <Loader2 className="animate-spin" size={18} /> : "Upload Excel"}
                             </button>
                         </div>
-                        {/* <div className="border rounded-xl overflow-hidden border-gray-200">
-                            <table className="w-full text-left border-collapse">
-                                <thead className="bg-gray-800 text-white text-[11px] uppercase tracking-wider">
-                                    <tr>
-                                        <th className="px-3 py-3 font-medium">Categorie</th>
-                                        <th className="px-3 py-3 font-medium">Product</th>
-                                        <th className="px-3 py-3 font-medium w-20">Qty</th>
-                                        <th className="px-3 py-3 font-medium w-32">Rate</th>
-                                        <th className="px-3 py-3 font-medium w-20">Disc Type</th>
-                                        <th className="px-3 py-3 font-medium w-24">Disc</th>
-                                        <th className="px-3 py-3 font-medium w-20">Tax %</th>
-                                        <th className="px-3 py-3 font-medium text-right">Amount</th>
-                                        <th className="px-3 py-3 font-medium text-center"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 bg-white">
-                                    {form.items.map((it: any, i: number) => (
-                                        <tr key={i} className="hover:bg-gray-50 transition-colors">
-                                            <td className="p-2">
-                                                <div>
-                                                   
-                                                    <select
-                                                        className={inputClass}
-                                                        value={it?.category || ""}
-                                                        onChange={(e) => handleCategoryChange(i, e.target.value)}
-                                                    >
-                                                        <option value="">Select Category</option>
-                                                        {categories?.map((c: any) => (
-                                                            <option key={c?.id} value={c?.id}>
-                                                                {c?.name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            </td>
-                                            <td className="p-2">
-                                             
-                                                <select
-                                                    className={inputClass}
-                                                    value={it.product}
-                                                    disabled={!it.category}
-                                                    onChange={(e) => handleItemChange(i, "product", e.target.value)}
-                                                >
-                                                    <option value="">Select Product</option>
-
-                                                    {(it?.products || [])?.map((p: any) => (
-                                                        <option key={p?.id} value={p?.id}>
-                                                            {p?.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </td>
-                                            <td className="p-2">
-                                                <td className="p-2">
-                                                    <input
-                                                        type="number"
-                                                        className={inputClass}
-                                                        value={it.quantity}
-                                                        onChange={(e) =>
-                                                            handleItemChange(i, "quantity", e.target.value)
-                                                        }
-                                                    />
-
-                                                   
-                                                    <div className="mt-2 space-y-1">
-                                                        {(it?.serial_numbers || [])?.map((sn: string, idx: number) => (
-                                                            <input
-                                                                key={idx}
-                                                                type="text"
-                                                                placeholder={`Serial ${idx + 1}`}
-                                                                className="w-full border px-2 py-1 text-xs rounded"
-                                                                value={sn}
-                                                                onChange={(e) =>
-                                                                    handleSerialChange(i, idx, e.target.value)
-                                                                }
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </td>
-
-                                            </td>
-                                            <td className="p-2"><input type="number" className={inputClass} value={it.rate} onChange={(e) => handleItemChange(i, "rate", e.target.value)} /></td>
-                                            <td className="p-2">
-                                                <select className={inputClass} value={it.discount_type} onChange={(e) => handleItemChange(i, "discount_type", e.target.value)}>
-                                                    <option value="PERCENT">PERCENT</option>
-                                                    <option value="FIXED">FIXED</option>
-                                                </select>
-                                            </td>
-                                            <td className="p-2"><input type="number" className={inputClass} value={it.discount_value} onChange={(e) => handleItemChange(i, "discount_value", e.target.value)} /></td>
-                                            <td className="p-2"><input type="number" className={inputClass} value={it.tax_percentage} onChange={(e) => handleItemChange(i, "tax_percentage", e.target.value)} /></td>
-                                            <td className="p-2 text-right font-bold text-gray-800">₹{it?.amount?.toFixed(2)}</td>
-                                            <td className="p-2 text-center">
-                                                <button onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600 transition-colors p-1">
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div> */}
                         {/* TABLE WRAPPER - Idhu dhaan cut aaguradha prevent pannum */}
                         <div className="w-full overflow-x-auto border border-gray-200 rounded-2xl bg-white shadow-sm custom-scrollbar">
                             <table className="w-full text-left border-collapse min-w-[1100px]">
@@ -590,22 +498,11 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                             {/* 1. PRODUCT INFO */}
                                             <td className="px-4 py-5 align-top space-y-2">
                                                 <div className="group/select relative">
-                                                    <p className="text-[9px] font-black text-gray-400 uppercase mb-1 ml-1">Category</p>
-                                                    <select
-                                                        className="w-full bg-white border-2 border-gray-100 focus:border-orange-500 focus:ring-0 text-xs font-bold rounded-xl p-2.5 transition-all outline-none"
-                                                        value={it?.category || ""}
-                                                        onChange={(e) => handleCategoryChange(i, e.target.value)}
-                                                    >
-                                                        <option value="">Select Category</option>
-                                                        {categories?.map((c: any) => <option key={c?.id} value={c?.id}>{c?.name}</option>)}
-                                                    </select>
-                                                </div>
-                                                <div className="group/select relative">
                                                     <p className="text-[9px] font-black text-gray-400 uppercase mb-1 ml-1">Product</p>
                                                     <select
                                                         className="w-full bg-white border-2 border-gray-100 focus:border-orange-500 focus:ring-0 text-xs font-bold rounded-xl p-2.5 transition-all outline-none disabled:bg-gray-50"
                                                         value={it.product}
-                                                        disabled={!it.category}
+                                                        disabled
                                                         onChange={(e) => handleItemChange(i, "product", e.target.value)}
                                                     >
                                                         <option value="">Select Product</option>
@@ -626,22 +523,6 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                                             onChange={(e) => handleItemChange(i, "quantity", e.target.value)}
                                                         />
                                                     </div>
-
-                                                    {it?.serial_numbers?.length > 0 && (
-                                                        <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
-                                                            <p className="text-[9px] font-black text-orange-500 uppercase tracking-tighter mb-1 ml-1">Serial Numbers</p>
-                                                            {it.serial_numbers.map((sn: string, idx: number) => (
-                                                                <input
-                                                                    key={idx}
-                                                                    type="text"
-                                                                    placeholder={`Enter S/N ${idx + 1}`}
-                                                                    className="w-full border-2 border-gray-100 bg-white px-3 py-2 text-[10px] font-bold rounded-lg focus:border-orange-400 outline-none transition-all"
-                                                                    value={sn}
-                                                                    onChange={(e) => handleSerialChange(i, idx, e.target.value)}
-                                                                />
-                                                            ))}
-                                                        </div>
-                                                    )}
                                                 </div>
                                             </td>
 

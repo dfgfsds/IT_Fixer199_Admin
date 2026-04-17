@@ -2,20 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { Edit3, Eye, Loader2, Plus, Printer, Search, Undo2 } from "lucide-react";
 import axiosInstance from "../../configs/axios-middleware";
 import Pagination from "../../components/Pagination";
-import PurchaseOrderModal from "./PurchaseOrderModal";
 // import PurchaseOrderModal from "./PurchaseOrderModal";
 import Api from "../../api-endpoints/ApiUrls";
-import PurchaseInvoicePrint from "./PurchaseInvoicePrint";
 import { useReactToPrint } from "react-to-print";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
-import GRNModal from "./GRNModal";
-import GRNInvoiceModal from "./GRNInvoiceModal";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import SerialNumberModal from "./SerialNumberModal";
-import ReturnModal from "./ReturnModal";
 
-const OrderPurchase: React.FC = () => {
+
+const Grn: React.FC = () => {
 
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -23,48 +18,21 @@ const OrderPurchase: React.FC = () => {
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const [pagination, setPagination] = useState<any>(null);
-
-    const [showModal, setShowModal] = useState(false);
-    const [editData, setEditData] = useState<any>(null);
-
     const [showPayModal, setShowPayModal] = useState(false);
     const [selectedPO, setSelectedPO] = useState<any>(null);
     const [apiErrors, setApiErrors] = useState<string>("");
-
     const [showViewModal, setShowViewModal] = useState(false);
     const [viewData, setViewData] = useState<any>(null);
     const [search, setSearch] = useState("");
-    const [showGRNModal, setShowGRNModal] = useState(false);
-    const [selectedPOForGRN, setSelectedPOForGRN] = useState<any>(null);
 
-    const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-    const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
-    const [grnInvoiceData, setGrnInvoiceData] = useState<any>(null);
-    const [showSerialModal, setShowSerialModal] = useState(false);
     const [selectedGRNData, setSelectedGRNData] = useState<any[]>([]);
-    const [serialData, setSerialData] = useState<any>({});
 
     const [dateFilter, setDateFilter] = useState({
         start_date: "",
         end_date: "",
     });
 
-    useEffect(() => {
-        if (selectedGRNData?.length) {
-            const init: any = {};
 
-            selectedGRNData.forEach((grn: any) => {
-                grn.items.forEach((item: any) => {
-                    const qty = Math.floor(Number(item.received_quantity || 0));
-
-                    init[item.id] = Array(qty).fill(""); // 🔥 use GRN item id
-                });
-            });
-
-            setSerialData(init);
-        }
-
-    }, [selectedGRNData]);
     const handleView = (item: any) => {
         setViewData(item);
         setShowViewModal(true);
@@ -167,13 +135,8 @@ const OrderPurchase: React.FC = () => {
                 end_date: dateFilter.end_date,
             }).toString();
 
-            const res = await axiosInstance.get(`${Api.orderPurchase}?${query}`);
-            // const res = await axiosInstance.get(
-            //     `${Api.orderPurchase}?page=${p}&size=${size}`
-            // );
+            const res = await axiosInstance.get(`${Api.purchaseGRN}?${query}`);
             const response = res.data;
-            // handle both formats
-            // const list = response?.data?.items || [];
             if (res) {
                 setData(res?.data?.items);
 
@@ -308,75 +271,24 @@ const OrderPurchase: React.FC = () => {
         }
     };
 
-    const handleExportFromAPI = async () => {
-        try {
-            if (!dateFilter.start_date || !dateFilter.end_date) {
-                return alert("Select start and end date");
-            }
-
-            const res = await axiosInstance.get(
-                `/api/purchase/order/export/`,
-                {
-                    params: {
-                        start_date: dateFilter.start_date,
-                        end_date: dateFilter.end_date,
-                        ...(filters.vendor_id && { vendor_id: filters.vendor_id }),
-                        ...(filters.hub_id && { hub_id: filters.hub_id }),
-                    },
-                    responseType: "blob",
-                }
-            );
-
-            // ✅ CORRECT TYPE (CSV)
-            const blob = new Blob([res.data], {
-                type: "text/csv;charset=utf-8;",
-            });
-
-            // ✅ correct extension
-            saveAs(blob, "Purchase_Order_Report.csv");
-
-        } catch (err) {
-            console.log(err);
-            alert("Export failed");
-        }
-    };
-
-    const [showRefundModal, setShowRefundModal] = useState(false);
-    const [selectedGRNsForRefund, setSelectedGRNsForRefund] = useState<any[]>([]);
-
-    const handleRefundClick = async (item: any) => {
-        try {
-            // Unga existing handleGrnInvoice logic mariye 
-            // GRN list fetch panni state-la veikanum
-            const res: any = await axiosInstance.get(`${Api.purchaseGRNList}/${item.id}/grns/`);
-            if (res) {
-                setSelectedGRNsForRefund(res?.data?.data);
-                setShowRefundModal(true);
-            }
-        } catch (error) {
-            alert("Failed to fetch GRN data");
-        }
-    };
-
-
     return (
         <div className="space-y-6">
 
             {/* HEADER */}
             <div className="flex justify-between items-end mb-6">
                 <div>
-                    <h1 className="text-xl font-bold">Purchase Orders</h1>
+                    <h1 className="text-xl font-bold">GRN List</h1>
                     {/* <p className="text-sm text-gray-500 font-medium">Manage and track your inventory procurements</p> */}
                 </div>
 
                 <button
-                    onClick={() => {
-                        setEditData(null);
-                        setShowModal(true);
-                    }}
+                    // onClick={() => {
+                    //     setEditData(null);
+                    //     setShowModal(true);
+                    // }}
                     className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-gray-200 active:scale-95"
                 >
-                    <Plus size={18} strokeWidth={3} /> Purchase Order
+                    <Plus size={18} strokeWidth={3} />  GRN
                 </button>
             </div>
 
@@ -445,27 +357,6 @@ const OrderPurchase: React.FC = () => {
                     Download Excel
                 </button>
 
-                <div className="flex gap-3">
-                    {/* EXPORT BUTTON 🔥 */}
-                    <button
-                        onClick={handleExportFromAPI}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm shadow-lg"
-                    >
-                        ⬇ PurchaseOrder Export Excel
-                    </button>
-
-                    {/* EXISTING BUTTON */}
-                    {/* <button
-                        onClick={() => {
-                            setEditData(null);
-                            setShowModal(true);
-                        }}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm shadow-lg"
-                    >
-                        <Plus size={18} strokeWidth={3} /> Purchase Order
-                    </button> */}
-                </div>
-
                 <button
                     onClick={() => {
                         setFilters({
@@ -496,16 +387,9 @@ const OrderPurchase: React.FC = () => {
                                 <th className="px-6 py-4 text-left">S.No</th>
                                 <th className="px-6 py-4 text-left">Order Details</th>
                                 <th className="px-6 py-4 text-left">Hub / Location</th>
-                                {/* <th className="px-6 py-4 text-right">Total Quantity</th>
-                                <th className="px-6 py-4 text-right">Received Quantity</th>
-                                <th className="px-6 py-4 text-right">Pending Quantity</th> */}
-                                <th className="px-6 py-4 text-right">Quantity Info</th>
-                                <th className="px-6 py-4 text-right">Payment Info</th>
-                                {/* <th className="px-6 py-4 text-right">Grand Total</th>
-                                <th className="px-6 py-4 text-right">Paid</th>
-                                <th className="px-6 py-4 text-right">Balance</th> */}
-                                <th className="px-6 py-4 text-center">GRN</th>
-                                <th className="px-6 py-4 text-center">Serial</th>
+                                <th className="px-6 py-4 text-left">Quantity</th>
+                                <th className="px-6 py-4 text-center">Amount</th>
+                                {/* <th className="px-6 py-4 text-center">Serial</th> */}
                                 <th className="px-6 py-4 text-center">Actions</th>
                             </tr>
                         </thead>
@@ -522,10 +406,6 @@ const OrderPurchase: React.FC = () => {
                                     const balance = Number(item.grand_total) - Number(item?.grn_actual_pending_amount);
                                     const isFullyPaid = balance <= 0;
 
-                                    const totalQty = item.items?.reduce((a: number, b: any) => a + Number(b.quantity), 0) || 0;
-                                    const receivedQty = item.items?.reduce((a: number, b: any) => a + Number(b.received_quantity), 0) || 0;
-                                    const pendingQty = item.items?.reduce((a: number, b: any) => a + Number(b.pending_delivery_quantity), 0) || 0;
-
                                     return (
                                         <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
                                             <td className="px-6 py-4 font-bold text-gray-400">
@@ -533,8 +413,8 @@ const OrderPurchase: React.FC = () => {
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                <p className="font-bold text-gray-900">{item.po_number}</p>
-                                                <p className="text-[11px] text-gray-500 font-bold uppercase">{item.vendor_name}</p>
+                                                <p className="font-bold text-gray-900">{item?.grn_number}</p>
+                                                <p className="text-[11px] text-gray-500 font-bold uppercase">{item?.vendor_name}</p>
                                             </td>
 
                                             <td className="px-6 py-4">
@@ -542,60 +422,65 @@ const OrderPurchase: React.FC = () => {
                                                     {item.hub_name}
                                                 </span>
                                             </td>
-                                            {/* 
-                                            <td className="px-6 py-4 text-right  text-gray-900">
-                                                {Number(item.items?.map((i: any) => Number(i?.quantity)).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
+                                            <td className="px-4 py-5 align-top">
+                                                {/* <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 space-y-2"> */}
+
+                                                {/* <div className="flex justify-between text-xs font-bold">
+                                                        <span className="text-gray-500">Total Qty</span> */}
+                                                <span className="text-gray-800">
+                                                    {Number(item.items?.map((i: any) => Number(i?.ordered_quantity)).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
+                                                </span>
+                                                {/* </div> */}
+
+                                                {/* <div className="flex justify-between text-xs font-bold">
+                                                        <span className="text-green-600">Received</span>
+                                                        <span>
+                                                            {Number(item.items?.map((i: any) => i.received_quantity).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
+                                                        </span>
+                                                    </div> */}
+
+                                                {/* <div className="flex justify-between text-xs font-bold">
+                                                        <span className="text-red-500">Pending</span>
+                                                        <span>
+                                                            {Number(item.items?.map((i: any) => i.pending_quantity).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
+                                                        </span>
+                                                    </div> */}
+
+                                                {/* </div> */}
                                             </td>
 
-                                            <td className="px-6 py-4 text-right  text-gray-900">
-                                                {Number(item.items?.map((i: any) => i.received_quantity).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
-                                            </td>
-
-                                            <td className="px-6 py-4 text-right  text-gray-900">
-                                                {Number(item.items?.map((i: any) => i.pending_delivery_quantity).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
-                                            </td> */}
-
-                                            {/* --- Quantity Column with Labels --- */}
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex flex-col gap-1">
-                                                    <div className="flex justify-between items-center gap-4">
-                                                        <span className="text-[9px] font-bold text-gray-400 uppercase">Total:</span>
-                                                        <span className="text-gray-900 font-bold">{totalQty.toLocaleString('en-IN')}</span>
-                                                    </div>
-                                                    <div className="flex justify-between items-center gap-4">
-                                                        <span className="text-[9px] font-bold text-blue-400 uppercase">Rec:</span>
-                                                        <span className="text-blue-600 font-medium">{receivedQty.toLocaleString('en-IN')}</span>
-                                                    </div>
-                                                    <div className="flex justify-between items-center gap-4">
-                                                        <span className="text-[9px] font-bold text-orange-400 uppercase">Pen:</span>
-                                                        <span className="text-orange-600 font-medium">{pendingQty.toLocaleString('en-IN')}</span>
-                                                    </div>
+                                            <td className="px-4 py-5 align-top">
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="font-bold">
+                                                        ₹{Number(item?.grand_total_amount)?.toLocaleString('en-IN')}
+                                                    </span>
                                                 </div>
-                                            </td>
 
-                                            {/* --- Amount Column with Labels --- */}
-                                            <td className="px-6 py-4 text-right bg-gray-50/30">
-                                                <div className="flex flex-col gap-1">
-                                                    <div className="flex justify-between items-center gap-4">
-                                                        <span className="text-[9px] font-bold text-gray-400 uppercase">Grand:</span>
-                                                        <span className="text-gray-900 font-black">₹{Number(item.grand_total).toLocaleString('en-IN')}</span>
-                                                    </div>
-                                                    <div className="flex justify-between items-center gap-4">
-                                                        <span className="text-[9px] font-bold text-green-400 uppercase">Paid:</span>
-                                                        <span className="text-green-700 font-bold">₹{Number(item.total_paid).toLocaleString('en-IN')}</span>
-                                                    </div>
-                                                    <div className="flex justify-between items-center gap-4">
-                                                        <span className="text-[9px] font-bold text-red-400 uppercase">Bal:</span>
-                                                        <span className={`font-black ${item?.po_pending_amount > 0 ? 'text-red-600' : 'text-gray-300'}`}>
-                                                            ₹{item?.po_pending_amount?.toLocaleString('en-IN')}
+                                                {/* <div className="bg-black text-white rounded-xl p-3 space-y-2">
+
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-gray-400">Grand Total</span>
+                                                        <span className="font-bold">
+                                                            ₹{Number(item?.grand_total_amount)?.toLocaleString('en-IN')}
                                                         </span>
                                                     </div>
-                                                </div>
-                                            </td>
 
-                                            {/* <td className="px-6 py-4 text-right  text-gray-900">
-                                                ₹{Number(item.item?.map((i: any) => i.pending_delivery_quantity).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
-                                            </td> */}
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-green-400">Paid</span>
+                                                        <span>
+
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-red-400">Balance</span>
+                                                        <span>
+
+                                                        </span>
+                                                    </div>
+
+                                                </div> */}
+                                            </td>
 
                                             {/* <td className="px-6 py-4 text-right  text-gray-900">
                                                 ₹{Number(item.grand_total).toLocaleString('en-IN')}
@@ -603,61 +488,13 @@ const OrderPurchase: React.FC = () => {
 
                                             <td className="px-6 py-4 text-right  text-green-600">
                                                 ₹{Number(item.total_paid).toLocaleString('en-IN')}
-                                            </td> */}
+                                            </td>
 
-                                            {/* <td className="px-6 py-4 text-right">
+                                            <td className="px-6 py-4 text-right">
                                                 <span className={`font-semibold ${item?.po_pending_amount > 0 ? 'text-red-500 ' : 'text-gray-300'}`}>
                                                     ₹{item?.po_pending_amount?.toLocaleString('en-IN')}
                                                 </span>
-                                                {!isFullyPaid && (
-                                                    <div className="w-1 h-1 bg-red-500 rounded-full inline-block ml-1 animate-pulse" />
-                                                )}
                                             </td> */}
-
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center justify-center gap-2">
-
-                                                    <button
-                                                        onClick={() => {
-                                                            setSelectedPOForGRN(item);
-                                                            setShowGRNModal(true);
-                                                        }}
-                                                        className="px-3 py-1.5 text-[10px] font-bold bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200"
-                                                    >
-                                                        Create GRN
-                                                    </button>
-
-                                                    <button
-                                                        onClick={() => {
-                                                            handleGrnInvoice(item);
-                                                            // setSelectedInvoice(item);
-                                                            // setShowInvoiceModal(true);
-                                                        }}
-                                                        className="px-3 py-1.5 text-[10px] font-bold bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
-                                                    >
-                                                        GRN View
-                                                    </button>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <button
-                                                    onClick={async () => {
-                                                        try {
-                                                            const res = await axiosInstance.get(
-                                                                `${Api.purchaseGRNList}/${item.id}/grns/`
-                                                            );
-
-                                                            setSelectedGRNData(res?.data?.data); // 🔥 store full GRN list
-                                                            setShowSerialModal(true);
-                                                        } catch (err) {
-                                                            console.log(err);
-                                                        }
-                                                    }}
-                                                    className="px-3 py-1.5 text-[10px] font-bold bg-orange-100 text-red-700 rounded-lg"
-                                                >
-                                                    Add
-                                                </button>
-                                            </td>
 
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-2">
@@ -680,30 +517,12 @@ const OrderPurchase: React.FC = () => {
                                                         <Printer size={16} />
                                                     </button>
 
-                                                    {/* <button
-                                            onClick={() => {
-                                                setEditData(item);
-                                                setShowModal(true);
-                                            }}
-                                            className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-                                            title="Edit Order"
-                                        >
-                                            <Edit3 size={16} />
-                                        </button> */}
-
                                                     <button
                                                         onClick={() => handleView(item)}
                                                         className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                                                         title="View Details"
                                                     >
                                                         <Eye size={16} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleRefundClick(item)}
-                                                        className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all"
-                                                        title="Return"
-                                                    >
-                                                        <Undo2 size={16} />
                                                     </button>
 
                                                 </div>
@@ -735,14 +554,6 @@ const OrderPurchase: React.FC = () => {
                     )}
                 </div>
             </div>
-
-            {/* MODAL */}
-            <PurchaseOrderModal
-                show={showModal}
-                onClose={() => setShowModal(false)}
-                onSuccess={() => fetchData(page, pageSize)}
-                editData={editData}
-            />
 
             {showViewModal && viewData && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex justify-center items-center z-[100] p-4">
@@ -1002,42 +813,11 @@ const OrderPurchase: React.FC = () => {
                 </div>
             )}
 
-            <GRNModal
-                show={showGRNModal}
-                onClose={() => setShowGRNModal(false)}
-                onSuccess={() => fetchData(page, pageSize)}
-                poData={selectedPOForGRN}
-            />
-
-            <GRNInvoiceModal
-                show={showInvoiceModal}
-                onClose={() => setShowInvoiceModal(false)}
-                data={grnInvoiceData}
-                selectedInvoice={selectedInvoice}
-            />
-
-            <SerialNumberModal
-                show={showSerialModal}
-                onClose={() => setShowSerialModal(false)}
-                grnData={selectedGRNData}
-                serialData={serialData}
-                setSerialData={setSerialData}
-            />
-
-            <div style={{ display: "none" }}>
-                <PurchaseInvoicePrint ref={componentRef} data={selectedOrder} />
-            </div>
-
-            <ReturnModal
-                show={showRefundModal}
-                onClose={() => setShowRefundModal(false)}
-                grnData={selectedGRNsForRefund}
-            />
         </div>
     );
 };
 
-export default OrderPurchase;
+export default Grn;
 
 {/* --- HELPER COMPONENTS FOR CLEANER CODE --- */ }
 const DetailItem = ({ label, value, isCode = false, isStatus = false, statusType = "" }: any) => (

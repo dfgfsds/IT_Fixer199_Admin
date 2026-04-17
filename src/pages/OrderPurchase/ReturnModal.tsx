@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
-import { X, Package, Undo2, Hash, DollarSign, ClipboardEdit, Percent, Layers, Info, AlertCircle, ChevronDown } from "lucide-react";
+import { X, Package, Undo2, Hash, DollarSign, ClipboardEdit, Percent, Layers, Info, AlertCircle, ChevronDown, Loader2 } from "lucide-react";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 import Api from "../../api-endpoints/ApiUrls";
+import toast from "react-hot-toast";
 
 const ReturnModal = ({ show, onClose, grnData }: any) => {
   const [selectedGrn, setSelectedGrn] = useState<any>(null);
@@ -10,11 +11,13 @@ const ReturnModal = ({ show, onClose, grnData }: any) => {
   console.log(selectedGrn, "selectedGrn in return modal")
   const [showActionModal, setShowActionModal] = useState(false);
   const [activeItem, setActiveItem] = useState<any>(null);
-  // Form State Initial Object
+  const [loading, setLoading] = useState(false);
+
   const initialFormState = {
     reason: "",
     notes: "",
     quantity: 1,
+    verified_by: '',
     serial_numbers: [] as string[]
   };
 
@@ -26,11 +29,15 @@ const ReturnModal = ({ show, onClose, grnData }: any) => {
       reason: "",
       notes: "",
       quantity: 1,
+      verified_by: '',
       // Default-ah 1 entry select panna ready-ah vechurkom
       serial_numbers: Array(1).fill("")
     });
     setShowActionModal(true);
   };
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [deletedAttachmentIds, setDeletedAttachmentIds] = useState<string[]>([]);
+
 
   const handleQtyChange = (val: number | string) => {
     const maxAvailable = Math.floor(activeItem?.received_quantity || 0);
@@ -61,22 +68,62 @@ const ReturnModal = ({ show, onClose, grnData }: any) => {
     setRefundForm({ ...refundForm, serial_numbers: updatedSerials });
   };
 
-  const handleFinalSubmit = async () => {
+  // const handleFinalSubmit = async () => {
+  //   try {
+  //     setApiErrors("");
+
+  //     // Validation: Ellaa serial numbers-um select panni iruntha thaan submit panna viduvom
+  //     const filledSerials = refundForm.serial_numbers.filter(s => s.trim() !== "");
+  //     if (filledSerials.length !== refundForm.quantity) {
+  //       setApiErrors(`Please select all ${refundForm.quantity} serial numbers.`);
+  //       return;
+  //     }
+
+  //     const payload = {
+  //       purchase_order_id: selectedGrn.purchase_order,
+  //       grn_id: selectedGrn.id,
+  //       return_date: new Date().toISOString(),
+  //       reason: refundForm.reason,
+  //       // verified_by:,
+  //       items: [
+  //         {
+  //           product: activeItem?.product_id,
+  //           quantity: Number(refundForm.quantity),
+  //           rate: activeItem.rate || 0,
+  //           // batch_number: activeItem.batch_number,
+  //           serial_numbers: filledSerials,
+  //           notes: refundForm.notes
+  //         }
+  //       ]
+  //     };
+
+  //     await axiosInstance.post(Api.purchaseReturn, payload);
+  //     alert("Refund processed successfully");
+  //     setShowActionModal(false);
+  //     onClose();
+  //   } catch (error) {
+  //     setApiErrors(extractErrorMessage(error));
+  //   }
+  // };
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    // Validation: Ellaa serial numbers-um select panni iruntha thaan submit panna viduvom
+    const filledSerials = refundForm.serial_numbers.filter(s => s.trim() !== "");
+    if (filledSerials.length !== refundForm.quantity) {
+      setApiErrors(`Please select all ${refundForm.quantity} serial numbers.`);
+      return;
+    }
     try {
-      setApiErrors("");
-
-      // Validation: Ellaa serial numbers-um select panni iruntha thaan submit panna viduvom
-      const filledSerials = refundForm.serial_numbers.filter(s => s.trim() !== "");
-      if (filledSerials.length !== refundForm.quantity) {
-        setApiErrors(`Please select all ${refundForm.quantity} serial numbers.`);
-        return;
-      }
-
+      const formData = new FormData();
+      // 🔥 MAIN DATA OBJECT
       const payload = {
         purchase_order_id: selectedGrn.purchase_order,
-        grn_id: selectedGrn.id,
+        grn_id: selectedGrn.grn_id,
+        vendor_id: selectedGrn.vendor,
+        hub_id: selectedGrn.hub,
         return_date: new Date().toISOString(),
-        reason: refundForm.reason,
+        verified_by: refundForm?.verified_by,
         items: [
           {
             product: activeItem?.product_id,
@@ -89,13 +136,46 @@ const ReturnModal = ({ show, onClose, grnData }: any) => {
         ]
       };
 
-      await axiosInstance.post(Api.purchaseReturn, payload);
-      alert("Refund processed successfully");
-      setShowActionModal(false);
-      onClose();
-    } catch (error) {
-      setApiErrors(extractErrorMessage(error));
+      // ✅ append JSON as string
+      formData.append("data", JSON.stringify(payload));
+
+      // ✅ append files
+      attachments.forEach((file) => {
+        formData.append("attachments", file);
+      });
+
+      // ✅ append deleted IDs
+      deletedAttachmentIds.forEach((id) => {
+        formData.append("deleted_attachment_ids", id);
+      });
+
+      const res = await axiosInstance.post(
+        Api.purchaseReturn, // your endpoint
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (res) {
+        setLoading(false);
+        toast.success("Return created successfully ✅");
+        onClose();
+      }
+
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const removeFile = (index: number) => {
+    const updated = [...attachments];
+    updated.splice(index, 1);
+    setAttachments(updated);
   };
 
   // Modal-a close pannum pothu ellathaum clear panna indha function
@@ -106,6 +186,8 @@ const ReturnModal = ({ show, onClose, grnData }: any) => {
     setActiveItem(null);
     setRefundForm(initialFormState);
     onClose(); // Parent function-a call panrom
+    setAttachments([]);
+    setDeletedAttachmentIds([]);
   };
 
 
@@ -248,6 +330,16 @@ const ReturnModal = ({ show, onClose, grnData }: any) => {
                 </div>
 
                 <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1">Verified by</label>
+                  <input
+                    type="text"
+                    className="w-full border-slate-200 border p-3 rounded-xl text-sm outline-none"
+                    value={refundForm.verified_by}
+                    onChange={(e) => setRefundForm({ ...refundForm, verified_by: e.target.value })}
+                  />
+                </div>
+
+                <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1">Notes</label>
                   <textarea
                     rows={2}
@@ -255,6 +347,22 @@ const ReturnModal = ({ show, onClose, grnData }: any) => {
                     onChange={(e) => setRefundForm({ ...refundForm, notes: e.target.value })}
                   />
                 </div>
+
+                <input
+                  type="file"
+                  multiple
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    setAttachments((prev) => [...prev, ...files]);
+                  }}
+                />
+                {attachments.map((file, i) => (
+                  <div key={i} className="flex justify-between">
+                    <span>{file.name}</span>
+                    <button onClick={() => removeFile(i)}>❌</button>
+                  </div>
+                ))}
+
               </div>
 
               {apiErrors && (
@@ -265,12 +373,30 @@ const ReturnModal = ({ show, onClose, grnData }: any) => {
 
               <div className="p-6 bg-slate-50 flex gap-3">
                 <button onClick={() => setShowActionModal(false)} className="flex-1 px-4 py-3 text-slate-400 font-bold text-sm">Cancel</button>
-                <button
-                  onClick={handleFinalSubmit}
+                {/* <button
+                  onClick={handleSubmit}
                   disabled={!refundForm.reason || refundForm.quantity < 1}
                   className="flex-[2] bg-red-600 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-red-700 disabled:bg-slate-300"
                 >
                   Submit Refund
+                </button> */}
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className={`px-8 py-2 rounded-lg font-bold flex items-center gap-2 transition-all
+    ${loading
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-orange-600 hover:bg-orange-700 text-white shadow-lg shadow-orange-200"
+                    }`}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={18} />
+                      Processing...
+                    </>
+                  ) : (
+                    "Submit"
+                  )}
                 </button>
               </div>
             </div>
