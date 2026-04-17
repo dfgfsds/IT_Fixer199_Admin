@@ -98,7 +98,7 @@
 
 // export default Sidebar;
 
-import  { useState } from 'react';
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -193,7 +193,7 @@ const Sidebar: React.FC = () => {
           name: 'Order Purchase', path: '/orderPurchase'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
-          {
+        {
           name: 'GRN', path: '/grn'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
@@ -211,10 +211,6 @@ const Sidebar: React.FC = () => {
         },
         {
           name: 'Stocks ', path: '/stocks'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
-        },
-        {
-          name: 'Sales Return', path: '/salesReturn'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
         // {
@@ -284,11 +280,10 @@ const Sidebar: React.FC = () => {
           name: 'Order modify', path: '/OrderModify'
           , roles: ["SUPER_ADMIN"]
         },
-        // { name: 'Refund Orders', path: '/refunds' },
-        // { name: 'Tickets & Escalations', path: '/tickets' },
-        // { name: 'Coupons & Promotions', path: '/coupons' },
-        // { name: 'Payments & Settlements', path: '/payments' },
-
+        {
+          name: 'Sales Return', path: '/salesReturn'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
       ],
     },
     {
