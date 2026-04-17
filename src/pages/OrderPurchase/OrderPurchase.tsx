@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Edit3, Eye, Loader2, Plus, Printer, Search, Undo2 } from "lucide-react";
+import { CreditCard, Edit3, Eye, Loader2, Plus, Printer, Search, Undo2 } from "lucide-react";
 import axiosInstance from "../../configs/axios-middleware";
 import Pagination from "../../components/Pagination";
 import PurchaseOrderModal from "./PurchaseOrderModal";
@@ -90,6 +90,7 @@ const OrderPurchase: React.FC = () => {
         payment_method: "",
         amount_paid: "",
         payment_reference: "",
+        notes: "",
     });
 
     const submitPayment = async () => {
@@ -107,14 +108,22 @@ const OrderPurchase: React.FC = () => {
             }
 
             const payload = {
+                links: [
+                    {
+                        purchase_order: selectedPO.id,
+                        amount: Number(selectedPO.po_pending_amount || 0)
+                    }
+                ],
+                previous_po_id: selectedPO.id,
                 payment_date: new Date(form.payment_date).toISOString(),
                 payment_method: form.payment_method,
                 amount_paid: Number(form.amount_paid),
                 payment_reference: form.payment_reference || "",
+                notes: form.notes || "",
             };
 
             const updatedApi = await axiosInstance.post(
-                `${Api.orderPurchase}${selectedPO.id}/payment/`,
+                Api.purchasePayment,
                 payload
             );
 
@@ -135,8 +144,9 @@ const OrderPurchase: React.FC = () => {
             setForm({
                 payment_date: new Date().toISOString().slice(0, 16),
                 payment_method: "",
-                amount_paid: "",
+                amount_paid: (selectedPO?.po_pending_amount || 0).toString(),
                 payment_reference: "",
+                notes: "",
             });
         }
     }, [showPayModal]);
@@ -903,7 +913,7 @@ const OrderPurchase: React.FC = () => {
 
             {showPayModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[100] p-4">
-                    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
+                    <div className="bg-white w-full max-w-md max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-gray-100 animate-in fade-in zoom-in duration-200">
 
                         {/* Header */}
                         <div className="bg-gray-900 p-5 flex items-center gap-3">
@@ -916,7 +926,19 @@ const OrderPurchase: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="p-6 space-y-5">
+                        <div className="p-6 space-y-5 overflow-y-auto flex-1 custom-scrollbar">
+                            {/* BALANCE SUMMARY */}
+                            <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex justify-between items-center group transition-all hover:bg-indigo-100/50">
+                                <div>
+                                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest leading-none mb-1.5">Total Balance Due</p>
+                                    <h4 className="text-2xl font-black text-indigo-700 tracking-tighter">
+                                        ₹{selectedPO?.po_pending_amount?.toLocaleString('en-IN')}
+                                    </h4>
+                                </div>
+                                <div className="bg-white p-2 rounded-xl shadow-sm text-indigo-600">
+                                    <CreditCard size={20} />
+                                </div>
+                            </div>
                             {/* DATE FIELD */}
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider ml-1">Payment Date & Time</label>
@@ -969,6 +991,18 @@ const OrderPurchase: React.FC = () => {
                                         onChange={(e) => setForm({ ...form, payment_reference: e.target.value })}
                                     />
                                 </div>
+                            </div>
+
+                            {/* NOTES */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider ml-1">Notes</label>
+                                <textarea
+                                    placeholder="Enter additional payment details..."
+                                    rows={2}
+                                    className="w-full border-2 border-gray-100 bg-gray-50 p-2.5 rounded-xl text-sm font-medium focus:border-orange-500 focus:bg-white outline-none transition-all resize-none"
+                                    value={form.notes}
+                                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                                />
                             </div>
 
                             {/* API Error Message */}
