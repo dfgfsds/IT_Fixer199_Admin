@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Edit3, Eye, Loader2, Plus, Printer, Search, Undo2 } from "lucide-react";
+import { CreditCard, Edit3, Eye, Loader2, Plus, Printer, Search, Undo2 } from "lucide-react";
 import axiosInstance from "../../configs/axios-middleware";
 import Pagination from "../../components/Pagination";
 // import PurchaseOrderModal from "./PurchaseOrderModal";
@@ -9,6 +9,7 @@ import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import GrnOrderModal from "./GrnOrderModal";
+import GrnInvoicePrint from "./GrnInvoicePrint";
 
 
 const Grn: React.FC = () => {
@@ -59,6 +60,7 @@ const Grn: React.FC = () => {
         payment_method: "",
         amount_paid: "",
         payment_reference: "",
+        notes: "",
     });
 
     const submitPayment = async () => {
@@ -76,14 +78,22 @@ const Grn: React.FC = () => {
             }
 
             const payload = {
+                links: [
+                    {
+                        grn: selectedPO.id,
+                        amount: Number(selectedPO.grand_total_amount || 0) - Number(selectedPO.total_paid || 0)
+                    }
+                ],
+                previous_grn_id: selectedPO.id,
                 payment_date: new Date(form.payment_date).toISOString(),
                 payment_method: form.payment_method,
                 amount_paid: Number(form.amount_paid),
                 payment_reference: form.payment_reference || "",
+                notes: form.notes || "",
             };
 
             const updatedApi = await axiosInstance.post(
-                `${Api.orderPurchase}${selectedPO.id}/payment/`,
+                Api.purchasePayment,
                 payload
             );
 
@@ -104,8 +114,9 @@ const Grn: React.FC = () => {
             setForm({
                 payment_date: new Date().toISOString().slice(0, 16),
                 payment_method: "",
-                amount_paid: "",
+                amount_paid: (Number(selectedPO?.grand_total_amount || 0) - Number(selectedPO?.total_paid || 0)).toString(),
                 payment_reference: "",
+                notes: "",
             });
         }
     }, [showPayModal]);
@@ -175,13 +186,6 @@ const Grn: React.FC = () => {
         contentRef: componentRef,
     });
 
-    const triggerPrint = (order: any) => {
-        setSelectedOrder(order);
-
-        setTimeout(() => {
-            handlePrint();
-        }, 200);
-    };
 
     // const handleGrnInvoice = async (item: any) => {
     //     try {
@@ -272,98 +276,13 @@ const Grn: React.FC = () => {
         }
     };
 
-    const handlePrintGRN = (data: any) => {
-        const printWindow = window.open("", "_blank");
-
-        if (!printWindow) return;
-
-        const html = `
-  <html>
-    <head>
-      <title>GRN Print</title>
-      <style>
-        body {
-          font-family: Arial;
-          padding: 20px;
-        }
-        h2 {
-          margin-bottom: 5px;
-        }
-        .header, .footer {
-          margin-bottom: 20px;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-top: 10px;
-        }
-        th, td {
-          border: 1px solid #ddd;
-          padding: 8px;
-          text-align: left;
-          font-size: 12px;
-        }
-        th {
-          background: #f5f5f5;
-        }
-        .right {
-          text-align: right;
-        }
-      </style>
-    </head>
-
-    <body onload="window.print(); window.close();">
-
-      <div class="header">
-        <h2>GRN</h2>
-        <p><b>GRN No:</b> ${data.grn_number}</p>
-        <p><b>Invoice No:</b> ${data.invoice_number}</p>
-        <p><b>Vendor:</b> ${data.vendor_name}</p>
-        <p><b>Date:</b> ${data.invoice_date}</p>
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Qty</th>
-            <th>Rate</th>
-            <th>Tax %</th>
-            <th>Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${data.items
-                .map(
-                    (item: any) => `
-              <tr>
-                <td>${item.product_name}</td>
-                <td>${item.received_quantity}</td>
-                <td>₹${item.rate}</td>
-                <td>${item.tax_percentage}%</td>
-                <td>₹${item.net_amount}</td>
-              </tr>
-            `
-                )
-                .join("")}
-        </tbody>
-      </table>
-
-      <div class="footer">
-        <p class="right"><b>Subtotal:</b> ₹${data.subtotal_amount}</p>
-        <p class="right"><b>Tax:</b> ₹${data.total_tax_amount}</p>
-        <p class="right"><b>Discount:</b> ₹${data.total_discount_amount}</p>
-        <h3 class="right">Grand Total: ₹${data.grand_total_amount}</h3>
-      </div>
-
-    </body>
-  </html>
-  `;
-
-        printWindow.document.write(html);
-        printWindow.document.close();
-
+    const handlePrintGRN = (item: any) => {
+        setSelectedOrder(item);
+        setTimeout(() => {
+            handlePrint();
+        }, 300);
     };
+
     return (
         <div className="space-y-6">
 
@@ -648,6 +567,10 @@ const Grn: React.FC = () => {
                 </div>
             </div>
 
+            <div style={{ display: "none" }}>
+                <GrnInvoicePrint ref={componentRef} data={selectedOrder} />
+            </div>
+
             {showViewModal && viewData && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex justify-center items-center z-[100] p-4">
                     <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-300">
@@ -807,7 +730,7 @@ const Grn: React.FC = () => {
 
             {showPayModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[100] p-4">
-                    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
+                    <div className="bg-white w-full max-w-md max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-gray-100 animate-in fade-in zoom-in duration-200">
 
                         {/* Header */}
                         <div className="bg-gray-900 p-5 flex items-center gap-3">
@@ -820,7 +743,20 @@ const Grn: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="p-6 space-y-5">
+                        <div className="p-6 space-y-5 overflow-y-auto flex-1 custom-scrollbar">
+                            {/* BALANCE SUMMARY */}
+                            <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex justify-between items-center group transition-all hover:bg-indigo-100/50">
+                                <div>
+                                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest leading-none mb-1.5">Total Balance Due</p>
+                                    <h4 className="text-2xl font-black text-indigo-700 tracking-tighter">
+                                        ₹{(Number(selectedPO?.grand_total_amount || 0) - Number(selectedPO?.total_paid || 0)).toLocaleString('en-IN')}
+                                    </h4>
+                                </div>
+                                <div className="bg-white p-2 rounded-xl shadow-sm text-indigo-600">
+                                    <CreditCard size={20} />
+                                </div>
+                            </div>
+
                             {/* DATE FIELD */}
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider ml-1">Payment Date & Time</label>
@@ -873,6 +809,18 @@ const Grn: React.FC = () => {
                                         onChange={(e) => setForm({ ...form, payment_reference: e.target.value })}
                                     />
                                 </div>
+                            </div>
+
+                            {/* NOTES */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider ml-1">Notes</label>
+                                <textarea
+                                    placeholder="Enter additional payment details..."
+                                    rows={2}
+                                    className="w-full border-2 border-gray-100 bg-gray-50 p-2.5 rounded-xl text-sm font-medium focus:border-orange-500 focus:bg-white outline-none transition-all resize-none"
+                                    value={form.notes}
+                                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                                />
                             </div>
 
                             {/* API Error Message */}
