@@ -193,6 +193,10 @@ const Sidebar: React.FC = () => {
           name: 'Order Purchase', path: '/orderPurchase'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
+          {
+          name: 'GRN', path: '/grn'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
         {
           name: 'Payment mode wise', path: '/paymentModeWise'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
