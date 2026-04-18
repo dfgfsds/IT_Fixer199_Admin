@@ -9,6 +9,10 @@ import Pagination from "../../components/Pagination";
 import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 import toast from "react-hot-toast";
 
+
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
 const Products: React.FC = () => {
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -80,8 +84,11 @@ const Products: React.FC = () => {
 
     const filteredProducts = products?.filter((product) => {
         const matchesSearch =
-            product.name?.toLowerCase().includes(search.toLowerCase()) ||
-            product.sku?.toLowerCase().includes(search.toLowerCase());
+            String(product?.barcode || "")
+                .toLowerCase()
+                .includes(search.toLowerCase())
+        // ||
+        // product.sku?.toLowerCase().includes(search.toLowerCase());
 
         const matchesBrand =
             selectedBrand === "" || product?.brand_details?.id === selectedBrand;
@@ -155,7 +162,7 @@ const Products: React.FC = () => {
             const params = new URLSearchParams();
 
             params.append("page", String(pageNumber));
-            params.append("size", String(10000));
+            params.append("size", String(pageSize));
 
             params.append("include_attribute", "true");
             params.append("include_category", "true");
@@ -163,7 +170,7 @@ const Products: React.FC = () => {
             params.append("include_brand", "true");
             params.append("include_pricing", "true");
 
-            if (search) params.append("search", search);
+            if (search) params.append("barcode", search);
             if (selectedBrand) params.append("brand_id", selectedBrand);
             if (selectedCategory) params.append("category_id", selectedCategory);
 
@@ -220,47 +227,49 @@ const Products: React.FC = () => {
         setOpenDropdown(null);
     }
 
-    const selectedProducts = filteredProducts?.slice(0, 11); // 0 to 10 index
+    const selectedProducts = filteredProducts?.slice(65, 75); // 0 to 10 index
 
-selectedProducts.forEach((product: any) => {
-            let labelsHtml = "";
-    for (let i = 0; i < 3; i++) {
-        labelsHtml += `
+    selectedProducts.forEach((product: any) => {
+        let labelsHtml = "";
+        for (let i = 0; i < 3; i++) {
+            labelsHtml += `
             <div class="label">
                 <svg class="barcode"></svg>
                 <h3>${product.name}</h3>
             </div>
         `;
-    }
-});
+        }
+    });
 
-const handlePrint = () => {
-    const iframe = document.getElementById("ifmcontentstoprint") as HTMLIFrameElement;
-    const pri = iframe?.contentWindow;
-    if (!pri) {
-        alert("Iframe not found");
-        return;
-    }
+    const handlePrint = () => {
+        const iframe = document.getElementById("ifmcontentstoprint") as HTMLIFrameElement;
+        const pri = iframe?.contentWindow;
+        if (!pri) {
+            alert("Iframe not found");
+            return;
+        }
 
-    let labelsHtml = "";
+        let labelsHtml = "";
 
-    // ✅ 0 to 10 index
-    const selectedProducts = filteredProducts.slice(17, 22);
+        // ✅ 0 to 10 index
+        // const selectedProducts = filteredProducts.slice(65, 75);
+        const selectedProducts = filteredProducts.slice(93, 96);
 
-    selectedProducts.forEach((product: any) => {
-        for (let i = 0; i < 2; i++) {
-            labelsHtml += `
+        //   <h3>${product.name}</h3>
+        selectedProducts.forEach((product: any) => {
+            for (let i = 0; i < 4; i++) {
+                labelsHtml += `
                 <div class="label">
                     <svg class="barcode" data-value="${product.barcode}"></svg>
                     <h2>${product.barcode}\n</h3>
                     
-                    <h3>${product.name}</h3>
+                   
                 </div>
             `;
-        }
-    });
+            }
+        });
 
-    const htmlContent = `
+        const htmlContent = `
         <html>
             <head>
                 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -282,7 +291,7 @@ const handlePrint = () => {
                         grid-template-columns: repeat(3, 35mm);
                         width: 105mm;
                         row-gap: 5mm;
-                        margin-bottom: 14.5mm;
+                        margin-bottom: 14.7mm;
                     }
 
                     .label {
@@ -308,7 +317,7 @@ const handlePrint = () => {
                         left: 50%;
                         transform: translateX(-50%);
                         width: 33mm;
-                        font-size: 8px;
+                        font-size: 10px;
                         text-align: center;
                         margin: 0;
                         line-height: 1.1;
@@ -363,15 +372,50 @@ const handlePrint = () => {
         </html>
     `;
 
-    // ✅ SAME METHOD (your working style)
-    pri.document.open();
-    pri.document.write(htmlContent);
-    pri.document.close();
-};
+        // ✅ SAME METHOD (your working style)
+        pri.document.open();
+        pri.document.write(htmlContent);
+        pri.document.close();
+    };
+
+
+
+    const handleDownloadExcel = () => {
+        if (!filteredProducts || filteredProducts.length === 0) {
+            alert("No data to export");
+            return;
+        }
+
+        // ✅ only name + barcode
+        const data = filteredProducts.map((product: any) => ({
+            Name: product.name,
+            Barcode: product.barcode || product.sku
+        }));
+
+        // create worksheet
+        const worksheet = XLSX.utils.json_to_sheet(data);
+
+        // create workbook
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+
+        // generate buffer
+        const excelBuffer = XLSX.write(workbook, {
+            bookType: "xlsx",
+            type: "array"
+        });
+
+        // save file
+        const file = new Blob([excelBuffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        });
+
+        saveAs(file, "products_barcode.xlsx");
+    };
 
     return (
         <div className="space-y-6">
-<iframe id="ifmcontentstoprint" style={{ display: "none" }} />
+            <iframe id="ifmcontentstoprint" style={{ display: "none" }} />
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -395,9 +439,16 @@ const handlePrint = () => {
                         Add Product
                     </button>
 
-   <button onClick={handlePrint}>
-    Print Barcode
-</button>
+                    <button
+                        onClick={handleDownloadExcel}
+                        className="px-4 py-2 bg-green-600 text-white rounded-md"
+                    >
+                        Download Excel
+                    </button>
+
+                    <button onClick={handlePrint}>
+                        Print Barcode
+                    </button>
 
                 </div>
             </div>
@@ -423,14 +474,23 @@ const handlePrint = () => {
             {/* Filters */}
             <div className="bg-white p-4 rounded-lg border border-gray-200 flex flex-col md:flex-row gap-4">
 
-                {/* Search */}
                 <input
+                    type="text"
+                    placeholder="Search by name or Barcode..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full md:w-1/3 border rounded-lg px-3 py-2 text-sm"
+                />
+
+
+                {/* Search */}
+                {/* <input
                     type="text"
                     placeholder="Search by name or SKU..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full md:w-1/3 border rounded-lg px-3 py-2 text-sm"
-                />
+                /> */}
 
                 {/* Brand Filter */}
                 <select
@@ -530,17 +590,17 @@ const handlePrint = () => {
                                                 <td className="px-6 py-4 text-sm text-gray-900">
                                                     {product.barcode}
 
- <button
-                                                            onClick={() => {
-                                                                setViewProduct(product);
-                                                                setShowViewModal(true);
-                                                            }}
-                                                            className="text-gray-600 hover:text-black transition-colors"
-                                                            title="View"
-                                                        >
-                                                            <Eye className="w-4 h-4" />
-                                                        </button>
-                                                        
+                                                    {/* <button
+                                                        onClick={() => {
+                                                            setViewProduct(product);
+                                                            setShowViewModal(true);
+                                                        }}
+                                                        className="text-gray-600 hover:text-black transition-colors"
+                                                        title="View"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button> */}
+
                                                 </td>
                                                 {/* Product */}
                                                 <td className="px-6 py-4 whitespace-nowrap">
@@ -552,7 +612,7 @@ const handlePrint = () => {
                                                         </div>
                                                         <div className="ml-4">
                                                             <div className="text-sm font-medium text-gray-900">
-                                                                {product.name}
+                                                                {product?.name?.slice(0, 20)}
                                                             </div>
                                                             <div className="text-sm text-gray-500">
                                                                 {product.model_name}

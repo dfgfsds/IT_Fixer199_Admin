@@ -21,6 +21,12 @@ interface OrderItem {
     issue_description_text: string;
     attributes: Record<string, string>;
     serial_numbers: string[];
+    discount: string;
+    device_id: string;
+    media: any[];
+    brand: string;
+    hsn_code: string;
+    description: string;
 }
 
 const MAPS_API_KEY = "AIzaSyAflftNedMvJ812sMI1l0h7kqj1-HBYDE8";
@@ -88,16 +94,16 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
     const markerRef = useRef<any>(null);
     const [paymentType, setPaymentType] = useState("");
 
-
-
     const [form, setForm] = useState({
         customer_name: "",
         customer_number: "",
         customer_email: "",
+        customer_gst: "",
         address: "",
+        google_address: "",
         latitude: "" as any,
         longitude: "" as any,
-        user_id: null,
+        user_id: null as string | null,
         hub_id: "",
         zone_id: "",
         payment_method: "",
@@ -106,6 +112,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         no_razorpay: true,
         no_assignment: true,
         order_platform: "SHOP",
+        order_type: "",
+        partial_payment_amount: "",
+        is_otp_required: false,
         slot_id: "",
         is_instant_slot: false,
         items: [
@@ -118,7 +127,13 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                 amount: 0,
                 issue_description_text: "",
                 attributes: {} as Record<string, string>,
-                serial_numbers: [] as string[]
+                serial_numbers: [] as string[],
+                discount: "",
+                device_id: "",
+                media: [],
+                brand: "",
+                hsn_code: "",
+                description: ""
             } as OrderItem
         ]
     });
@@ -169,6 +184,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                 mapTypeControl: false,
                 streetViewControl: false,
                 fullscreenControl: false,
+                clickableIcons: false, // Prevent POI popups
                 styles: [
                     { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }
                 ]
@@ -193,7 +209,8 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                     ...prev,
                     latitude: lat.toFixed(7),
                     longitude: lng.toFixed(7),
-                    address: addr
+                    address: addr,
+                    google_address: addr
                 }));
             });
 
@@ -208,7 +225,8 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                     ...prev,
                     latitude: lat.toFixed(7),
                     longitude: lng.toFixed(7),
-                    address: addr
+                    address: addr,
+                    google_address: addr
                 }));
             });
 
@@ -225,14 +243,27 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                     setForm(prev => ({
                         ...prev,
                         latitude: coords.lat.toFixed(7),
-                        longitude: coords.lng.toFixed(7)
+                        longitude: coords.lng.toFixed(7),
+                        google_address: prev.address
                     }));
                 }
             } else if (form.latitude && form.longitude) {
-                const pos = { lat: Number(form.latitude), lng: Number(form.longitude) };
-                map.setCenter(pos);
-                map.setZoom(16);
-                marker.setPosition(pos);
+                const lat = Number(form.latitude);
+                const lng = Number(form.longitude);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const pos = { lat, lng };
+                    map.setCenter(pos);
+                    map.setZoom(16);
+                    marker.setPosition(pos);
+
+                    // Automatically reverse geocode to fill the address
+                    const addr = await reverseGeocode(lat, lng);
+                    setForm(prev => ({
+                        ...prev,
+                        address: addr || prev.address,
+                        google_address: addr || prev.google_address
+                    }));
+                }
             }
         } catch (err) {
             console.error("Map init error:", err);
@@ -247,8 +278,36 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
             setMapOpen(true);
             return;
         }
+
+        const addressModified = form.address.trim() !== "" && form.address !== form.google_address;
+
+        if (!addressModified && form.latitude && form.longitude && !isNaN(Number(form.latitude)) && !isNaN(Number(form.longitude))) {
+            const lat = Number(form.latitude);
+            const lng = Number(form.longitude);
+            const pos = { lat, lng };
+
+            if (googleMapRef.current && markerRef.current) {
+                googleMapRef.current.setCenter(pos);
+                googleMapRef.current.setZoom(17);
+                markerRef.current.setPosition(pos);
+                markerRef.current.setAnimation((window as any).google.maps.Animation.DROP);
+
+                setMapLoading(true);
+                const addr = await reverseGeocode(lat, lng);
+                setMapLoading(false);
+
+                setForm(prev => ({
+                    ...prev,
+                    address: addr || prev.address,
+                    google_address: addr || prev.google_address
+                }));
+                toast.success("Location updated from coordinates!");
+                return;
+            }
+        }
+
         if (!form.address.trim()) {
-            toast.error("Please enter an address first");
+            toast.error("Please enter an address or coordinates first");
             return;
         }
         if (!googleMapRef.current || !markerRef.current) return;
@@ -270,10 +329,11 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         setForm(prev => ({
             ...prev,
             latitude: coords.lat.toFixed(7),
-            longitude: coords.lng.toFixed(7)
+            longitude: coords.lng.toFixed(7),
+            google_address: prev.address
         }));
 
-        toast.success("Location found! Drag the pin to fine-tune.");
+        toast.success("Location found!");
     };
 
     const fetchZoneAndSlots = async (lat: string, lon: string) => {
@@ -307,6 +367,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
             setLocationData(null);
         }
     }, [form.latitude, form.longitude, form.no_assignment]);
+
     // }, [form.latitude, form.longitude, form.no_assignment, scenario]);
 
     const fetchInitialData = async () => {
@@ -386,7 +447,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                 type: "", category_id: "", product_id: "", service_id: "",
                 quantity: 1, amount: 0, issue_description_text: "",
                 attributes: {} as Record<string, string>,
-                serial_numbers: [] as string[]
+                serial_numbers: [] as string[],
+                discount: "", device_id: "", media: [], brand: "", hsn_code: "",
+                description: ""
             } as OrderItem]
         });
     };
@@ -503,9 +566,15 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
     const handleSubmit = async () => {
         setApiErrors('')
         // if (!scenario) { toast.error("Please select a business scenario preset first"); return; }
-        if (!form.customer_name || !form.customer_number || !form.address || !form.hub_id || !form.zone_id || !form.order_platform) {
-            toast.error("Please fill all required fields (Name, Number, Address, Hub, Zone, and Platform)"); return;
+        if (!form.customer_name || !form.customer_number || !form.address || !form.hub_id || !form.zone_id || !form.order_platform || !form.order_type || !form.payment_method) {
+            toast.error("Please fill all required fields"); return;
         }
+
+        if (!form.latitude || !form.longitude || isNaN(Number(form.latitude)) || isNaN(Number(form.longitude))) {
+            toast.error("Location coordinates are mandatory");
+            return;
+        }
+
         if (form.no_razorpay && !form.payment_method) {
             toast.error("Please select a payment method"); return;
         }
@@ -526,6 +595,39 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
         // if (["1", "2", "3"].includes(scenario)) {
         for (let i = 0; i < form.items.length; i++) {
             const item = form.items[i];
+            const itemLabel = `Item ${i + 1}`;
+
+            if (!item.type) {
+                toast.error(`Please select a Type for ${itemLabel}`);
+                return;
+            }
+
+            if (!item.category_id) {
+                toast.error(`Please select a Category for ${itemLabel}`);
+                return;
+            }
+
+            // Product vs Service specific ID check
+            if (item.type === "PRODUCT" && !item.product_id) {
+                toast.error(`Please select a Product for ${itemLabel}`);
+                return;
+            }
+            if (item.type === "SERVICE" && !item.service_id) {
+                toast.error(`Please select a Service for ${itemLabel}`);
+                return;
+            }
+
+            if (!item.quantity || item.quantity <= 0) {
+                toast.error(`Please enter a valid Quantity for ${itemLabel}`);
+                return;
+            }
+
+            // Check for undefined, null, empty string, or negative amount
+            if (item.amount === undefined || item.amount === null || item.amount === "" || Number(item.amount) < 0) {
+                toast.error(`Please enter a valid Amount for ${itemLabel}`);
+                return;
+            }
+
             if (item.type === "PRODUCT" && item.product_id) {
                 const sns = item.serial_numbers || [];
                 const productName = (rowItems[i] || []).find((p: any) => p.id === item.product_id)?.name || `Item ${i + 1}`;
@@ -542,23 +644,45 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
             setLoading(true);
 
             const payload = {
-                ...form,
-                user_id: null,
-                latitude: form.latitude ? Number(form.latitude) : null,
-                longitude: form.longitude ? Number(form.longitude) : null,
+                customer_name: form.customer_name,
+                customer_number: form.customer_number,
+                customer_email: form.customer_email || "",
+                customer_gst: form.customer_gst || "",
+                address: form.address,
+                google_address: form.google_address || form.address,
+                latitude: form.latitude ? Number(form.latitude) : 0,
+                longitude: form.longitude ? Number(form.longitude) : 0,
+                user_id: form.user_id,
+                hub_id: form.hub_id,
+                zone_id: form.zone_id,
+                payment_method: form.payment_method,
+                transaction_id: form.transaction_id || "",
+                is_paid: !!form.is_paid,
+                no_razorpay: !!form.no_razorpay,
+                no_assignment: !!form.no_assignment,
+                order_platform: form.order_platform,
+                order_type: form.order_type || "B2C",
+                partial_payment_amount: form.partial_payment_amount || "0",
+                is_otp_required: !!form.is_otp_required,
                 slot_id: (form.is_instant_slot || !form.slot_id) ? null : form.slot_id,
                 is_instant_slot: !!form.is_instant_slot,
                 items: form.items?.map((item: any) => {
-                    const priceVal = Number(item.amount);
+                    const priceVal = String(item.amount || "0");
                     const cleanAttributes = Object.fromEntries(
                         Object.entries(item.attributes || {}).filter(([_, v]) => v !== "" && v !== null)
                     );
                     const baseItem: any = {
                         type: item.type,
                         quantity: Number(item.quantity),
-                        issue_description_text: item.issue_description_text,
-                        attributes: cleanAttributes,
-                        serial_numbers: item.serial_numbers?.filter((sn: string) => sn.trim() !== "") || []
+                        issue_description_text: item.issue_description_text || "",
+                        description: item.description || "",
+                        attributes: JSON.stringify(cleanAttributes),
+                        serial_numbers: item.serial_numbers?.filter((sn: string) => sn.trim() !== "") || [],
+                        discount: item.discount || "0",
+                        device_id: item.device_id || "",
+                        media: item.media || [],
+                        brand: item.brand || "",
+                        hsn_code: item.hsn_code || "",
                     };
                     if (item.type === "PRODUCT") {
                         baseItem.product_id = item.product_id;
@@ -692,7 +816,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 placeholder="Enter 10-digit mobile number"
                             />
                         </div>
-                        <div className="space-y-1 md:col-span-2">
+                        <div className="space-y-1">
                             <label className="text-sm font-medium text-gray-700">Email Address</label>
                             <input
                                 type="email"
@@ -701,6 +825,30 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
                                 placeholder="Enter customer email address"
                             />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-gray-700">Customer GST</label>
+                            <input
+                                type="text"
+                                value={form.customer_gst}
+                                onChange={(e) => setForm({ ...form, customer_gst: e.target.value })}
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                placeholder="Enter GST number"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <label className="text-sm font-semibold text-gray-700">
+                                Order Type *
+                            </label>
+                            <select
+                                value={form.order_type}
+                                className="border rounded-lg px-3 py-2 outline-none focus:border-orange-500"
+                                onChange={(e) => setForm({ ...form, order_type: e.target.value })}
+                            >
+                                <option value="">Select Order Type</option>
+                                <option value="B2C">B2C (Business to Consumer)</option>
+                                <option value="B2B">B2B (Business to Business)</option>
+                            </select>
                         </div>
 
                         {/* Full Address + Map*/}
@@ -734,23 +882,27 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                             {/* Coordinates */}
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1">
-                                    <label className="text-sm font-medium text-gray-700">Latitude</label>
+                                    <label className="text-sm font-semibold text-gray-700">
+                                        Latitude *
+                                    </label>
                                     <input
                                         type="text"
-                                        readOnly
                                         value={form.latitude}
-                                        className="w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-600 outline-none cursor-default"
-                                        placeholder="Auto-filled from map"
+                                        onChange={(e) => setForm({ ...form, latitude: e.target.value })}
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                        placeholder="Enter latitude"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-medium text-gray-700">Longitude</label>
+                                    <label className="text-sm font-medium text-gray-700">
+                                        Longitude *
+                                    </label>
                                     <input
                                         type="text"
-                                        readOnly
                                         value={form.longitude}
-                                        className="w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-600 outline-none cursor-default"
-                                        placeholder="Auto-filled from map"
+                                        onChange={(e) => setForm({ ...form, longitude: e.target.value })}
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                        placeholder="Enter longitude"
                                     />
                                 </div>
                             </div>
@@ -826,7 +978,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                             </select>
                         </div>
                         <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">Platform</label>
+                            <label className="text-sm font-semibold text-gray-700">
+                                Order Platform *
+                            </label>
                             <select
                                 value={form.order_platform}
                                 onChange={(e) => setForm({ ...form, order_platform: e.target.value })}
@@ -838,19 +992,33 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                 <option value="CALL">Call</option>
                             </select>
                         </div>
-                        <div className="flex items-center gap-6 pt-6">
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-gray-700">Partial Payment Amount</label>
+                            <input
+                                type="number"
+                                min="0"
+                                value={form.partial_payment_amount}
+                                disabled={form.is_paid}
+                                onChange={(e) => {
+                                    const val = Math.max(0, parseFloat(e.target.value) || 0);
+                                    setForm({ 
+                                        ...form, 
+                                        partial_payment_amount: val.toString(),
+                                        is_paid: val > 0 ? false : form.is_paid 
+                                    });
+                                }}
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition ${form.is_paid ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'bg-white'}`}
+                                placeholder="0.00"
+                            />
+                        </div>
+                        <div className="flex items-center gap-6 pt-6 md:col-span-2">
                             <label
-                                // onClick={(e) => { if (scenario) e.preventDefault(); }}
-                                className="flex items-center gap-2 group transition-all"
-                                // style={{ cursor: scenario ? "not-allowed" : "pointer", opacity: scenario ? 0.9 : 1 }}
-                                onClick={(e) => e.preventDefault()}
-                                style={{ cursor: "pointer" }}
+                                className="flex items-center gap-2 group transition-all cursor-pointer"
+                                onClick={(e) => e.stopPropagation()}
                             >
                                 <input
                                     type="checkbox"
                                     checked={!form.no_assignment}
-                                    // style={{ pointerEvents: scenario ? "none" : "auto" }}
-                                    style={{ pointerEvents: "auto" }}
                                     onChange={(e) => {
                                         const needsAssign = e.target.checked;
                                         setForm({ ...form, no_assignment: !needsAssign });
@@ -862,6 +1030,16 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                     className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                                 />
                                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition font-medium">Auto Assign Agent</span>
+                            </label>
+
+                            <label className="flex items-center gap-2 group transition-all cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={form.is_otp_required}
+                                    onChange={(e) => setForm({ ...form, is_otp_required: e.target.checked })}
+                                    className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                                />
+                                <span className="text-sm text-gray-700 group-hover:text-gray-900 transition font-medium">OTP Required</span>
                             </label>
                         </div>
 
@@ -954,11 +1132,11 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                             {form.items.map((item, index) => (
                                 <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 border rounded-xl bg-gray-50 relative group">
                                     <div className="md:col-span-2">
-                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Type</label>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Type *</label>
                                         <select
                                             value={item.type}
                                             onChange={(e) => handleItemChange(index, "type", e.target.value)}
-                                            className="w-full px-3 py-1.5 border rounded-lg bg-white text-sm"
+                                            className="w-full px-4 py-2 border rounded-lg bg-white text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
                                         >
                                             <option value="">Choose Type</option>
                                             <option value="PRODUCT">Product</option>
@@ -967,13 +1145,13 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                     </div>
 
                                     <div className="md:col-span-3">
-                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Category</label>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Category *</label>
                                         <select
                                             value={item.category_id}
                                             disabled={!item.type}
                                             style={{ cursor: !item.type ? "not-allowed" : "pointer" }}
                                             onChange={(e) => handleItemChange(index, "category_id", e.target.value)}
-                                            className="w-full px-3 py-1.5 border rounded-lg bg-white text-sm"
+                                            className="w-full px-4 py-2 border rounded-lg bg-white text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
                                         >
                                             {!item.type ? (
                                                 <option value="">Select Type First</option>
@@ -992,15 +1170,15 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                     </div>
 
                                     <div className="md:col-span-3">
-                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
-                                            {item.type === "PRODUCT" ? "Select Product" : "Select Service"}
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">
+                                            {item.type === "PRODUCT" ? "Select Product" : "Select Service"} *
                                         </label>
                                         <select
                                             value={item.type === "PRODUCT" ? item.product_id : item.service_id}
                                             disabled={!item.category_id || loadingRows[index]}
                                             style={{ cursor: (!item.category_id || loadingRows[index]) ? "not-allowed" : "pointer" }}
                                             onChange={(e) => handleItemChange(index, item.type === "PRODUCT" ? "product_id" : "service_id", e.target.value)}
-                                            className="w-full px-3 py-1.5 border rounded-lg bg-white text-sm"
+                                            className="w-full px-4 py-2 border rounded-lg bg-white text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
                                         >
                                             {loadingRows[index] ? (
                                                 <option>Loading Items...</option>
@@ -1018,20 +1196,20 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                     </div>
 
                                     <div className="md:col-span-2">
-                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Qty</label>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Qty *</label>
                                         <input
                                             type="number"
                                             value={item.quantity}
                                             disabled={!item.type}
                                             style={{ cursor: !item.type ? "not-allowed" : "text" }}
                                             onChange={(e) => handleItemChange(index, "quantity", e.target.value)}
-                                            className="w-full px-3 py-1.5 border rounded-lg bg-white text-sm"
+                                            className="w-full px-4 py-2 border rounded-lg bg-white text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
                                             min="1"
                                         />
                                     </div>
 
                                     <div className="md:col-span-2 relative group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Amount</label>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Amount *</label>
                                         <input
                                             type="number"
                                             min="0"
@@ -1039,7 +1217,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                             disabled={!item.type}
                                             style={{ cursor: !item.type ? "not-allowed" : "text" }}
                                             onChange={(e) => handleItemChange(index, "amount", e.target.value)}
-                                            className="w-full px-3 py-1.5 border rounded-lg bg-white text-sm"
+                                            className="w-full px-4 py-2 border rounded-lg bg-white text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
                                             placeholder="0.00"
                                         />
                                         {form.items.length > 1 && (
@@ -1069,11 +1247,11 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                             <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
                                                 {Object.values(grouped).map(group => (
                                                     <div key={group.name}>
-                                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">{group.name}</label>
+                                                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">{group.name}</label>
                                                         <select
                                                             value={item.attributes[group.id] || ""}
                                                             onChange={(e) => handleAttributeChange(index, group.id, e.target.value)}
-                                                            className="w-full px-3 py-1.5 border rounded-lg bg-white text-sm focus:ring-1 focus:ring-orange-500 outline-none"
+                                                            className="w-full px-4 py-2 border rounded-lg bg-white text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
                                                         >
                                                             <option value="">Select {group.name}</option>
                                                             {group.options.map((opt: any) => (
@@ -1088,9 +1266,67 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                         );
                                     })()}
 
-                                    {/* Description */}
+                                    {/* Additional Item Fields */}
+                                    <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Brand</label>
+                                            <input
+                                                type="text"
+                                                value={item.brand}
+                                                onChange={(e) => handleItemChange(index, "brand", e.target.value)}
+                                                className="w-full px-4 py-2 border rounded-lg bg-white text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                                placeholder="Brand name"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">HSN Code</label>
+                                            <input
+                                                type="text"
+                                                value={item.hsn_code}
+                                                onChange={(e) => handleItemChange(index, "hsn_code", e.target.value)}
+                                                className="w-full px-4 py-2 border rounded-lg bg-white text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                                placeholder="HSN Code"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Device ID</label>
+                                            <input
+                                                type="text"
+                                                value={item.device_id}
+                                                onChange={(e) => handleItemChange(index, "device_id", e.target.value)}
+                                                className="w-full px-4 py-2 border rounded-lg bg-white text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                                placeholder="Device ID"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Discount</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={item.discount}
+                                                onChange={(e) => {
+                                                    const val = Math.max(0, parseFloat(e.target.value) || 0);
+                                                    handleItemChange(index, "discount", val.toString());
+                                                }}
+                                                className="w-full px-4 py-2 border rounded-lg bg-white text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Item Description</label>
+                                            <input
+                                                type="text"
+                                                value={item.description}
+                                                onChange={(e) => handleItemChange(index, "description", e.target.value)}
+                                                className="w-full px-4 py-2 border rounded-lg bg-white text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                                placeholder="Item specific description"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Description/Instruction */}
                                     <div className="md:col-span-12 mt-2">
-                                        <label className="text-sm font-semibold text-gray-700 mb-1 block capitalize">Instruction</label>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Issue Description / Instruction</label>
                                         <input
                                             type="text"
                                             value={item.issue_description_text}
@@ -1108,7 +1344,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                                         (
                                             <div className="md:col-span-12 mt-2 bg-white/50 p-3 rounded-lg border border-orange-100">
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <label className="text-[10px] font-bold text-orange-600 uppercase tracking-wider block">Serial Numbers ({item.quantity})</label>
+                                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Serial Numbers ({item.quantity}) *</label>
                                                     {(!availableSerials[index] || availableSerials[index].length === 0) && item.product_id && (
                                                         <span className="text-[10px] font-medium text-red-500 italic">No stock found in this hub</span>
                                                     )}
@@ -1170,7 +1406,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-gray-700">Payment Method</label>
+                                <label className="text-sm font-medium text-gray-700">
+                                    Payment Method *
+                                </label>
                                 <select
                                     // value={!form.no_razorpay ? "RAZORPAY" : form.payment_method}
                                     value={form.payment_method}
@@ -1232,40 +1470,42 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                             <div className="flex items-center gap-10 pt-6 md:col-span-2">
 
                                 {/* Payment Received */}
-                                <label className="flex items-center gap-2 cursor-pointer">
+                                <label className={`flex items-center gap-2 ${Number(form.partial_payment_amount) > 0 ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                                     <input
                                         type="checkbox"
                                         checked={paymentType === "PAID"}
+                                        disabled={Number(form.partial_payment_amount) > 0}
                                         onChange={(e) => {
-                                            setPaymentType("PAID")
-                                            setForm({ ...form, is_paid: e.target.checked })
+                                            const isChecking = e.target.checked;
+                                            setPaymentType(isChecking ? "PAID" : "");
+                                            setForm({ 
+                                                ...form, 
+                                                is_paid: isChecking,
+                                                payment_method: isChecking ? "CASH" : "",
+                                                partial_payment_amount: isChecking ? "0" : form.partial_payment_amount
+                                            })
                                         }}
-                                        className="w-4 h-4 text-orange-600"
+                                        className="w-4 h-4 text-orange-600 cursor-pointer disabled:cursor-not-allowed"
                                     />
                                     <span className="text-sm">Payment Received</span>
                                 </label>
 
                                 {/* Razorpay */}
                                 <label className="flex items-center gap-2 cursor-pointer">
-                                    {/* <input
-                                        type="checkbox"
-                                        checked={paymentType === "RAZORPAY"}
-                                        onChange={() => setPaymentType("RAZORPAY")}
-                                        className="w-4 h-4 text-orange-600"
-                                    /> */}
                                     <input
                                         type="checkbox"
                                         checked={paymentType === "RAZORPAY"}
                                         onChange={(e) => {
-                                            const isRazorpay = e.target.checked;
-                                            setPaymentType("RAZORPAY")
+                                            const isChecking = e.target.checked;
+                                            setPaymentType(isChecking ? "RAZORPAY" : "");
                                             setForm(prev => ({
                                                 ...prev,
-                                                no_razorpay: !isRazorpay,
-                                                payment_method: isRazorpay ? "RAZORPAY" : ""
+                                                no_razorpay: !isChecking,
+                                                payment_method: isChecking ? "RAZORPAY" : "",
+                                                is_paid: isChecking ? false : prev.is_paid
                                             }));
                                         }}
-                                        className="w-4 h-4 text-orange-600"
+                                        className="w-4 h-4 text-orange-600 cursor-pointer"
                                     />
                                     <span className="text-sm">Enable Razorpay</span>
                                 </label>
@@ -1287,11 +1527,11 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ onClose, onSuccess 
                         </div>
                     </div>
                 </div>
-   {apiErrors && (
-                        <p className="text-red-500 mt-2 text-end px-6">
-                            {apiErrors}
-                        </p>
-                    )}
+                {apiErrors && (
+                    <p className="text-red-500 mt-2 text-end px-6">
+                        {apiErrors}
+                    </p>
+                )}
                 {/* Footer */}
                 <div className="p-6 border-t bg-gray-50 flex items-center justify-end gap-4">
                     <button

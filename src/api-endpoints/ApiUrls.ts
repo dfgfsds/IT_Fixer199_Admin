@@ -206,6 +206,9 @@ const purchaseGRNList = `${baseUrl}/api/purchase/order`;
 // purchaseOrderAddSerial
 const purchaseOrderAddSerial = `${baseUrl}/api/product-inventory/movement/purchase-order-add-serial/`;
 
+// purchasePayment
+const purchasePayment = `${baseUrl}/api/purchase/payment/`;
+
 // ACCOUNTS 
 const monthlyComparison = `${baseUrl}/api/stats/reports/finance/monthly-comparison`;
 
@@ -223,8 +226,14 @@ const purchaseReturn = `${baseUrl}/api/purchase/return/`;
 // consolidatedStock
 const consolidatedStock = `${baseUrl}/api/product-inventory/movements/consolidated-stock/`;
 
+// consolidatedInventoryLog
+const consolidatedInventoryLog = `${baseUrl}/api/product-inventory/inventory/consolidated-log/`;
+
 // salesReturns
 const salesReturns = `${baseUrl}/api/sales-returns/`;
+
+// createOrderPayment
+const createOrderPayment = `${baseUrl}/api/order/public/order/`;
 
 export default {
   login,
@@ -314,8 +323,11 @@ export default {
   paymentModeWise,
   productWise,
   purchaseReturn,
+  purchasePayment,
   consolidatedStock,
   salesReturns,
+  createOrderPayment,
+  consolidatedInventoryLog
 };
 
 

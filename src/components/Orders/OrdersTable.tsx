@@ -16,6 +16,7 @@ import AgentAssign from "../../pages/Requests/Requests.tsx/AgentAssign";
 import ShopStatusUpdateModal from "./ShopStatusUpdateModal";
 import InvoiceModal from "./InvoiceModal";
 import SalesReturnModal from "./SalesReturnModal";
+import AddPaymentModal from "./AddPaymentModal";
 
 interface OrdersTableProps {
   orders: Order[];
@@ -47,6 +48,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [invoiceOrder, setInvoiceOrder] = useState<any>(null);
   const [returnOrder, setReturnOrder] = useState<any>(null);
+  const [addPaymentOrder, setAddPaymentOrder] = useState<any>(null);
 
   const openSlotChange = (order: any) => {
     setSlotChangeOrder(order);
@@ -433,6 +435,19 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                             </button>
                           )}
 
+                          {order?.is_active !== false && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAddPaymentOrder(order);
+                                setOpenDropdown(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                            >
+                              Add Payment
+                            </button>
+                          )}
+
                           {order?.order_status !== "CANCELLED" && order?.order_status !== "COMPLETED" && order?.order_status !== "REFUNDED" && order?.order_status !== "IN_PROGRESS" && !order?.assigned_agent_id && order?.is_active !== false && (
                             <button
                               onClick={() => {
@@ -646,15 +661,26 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
       )}
 
       {returnOrder && (
-  <SalesReturnModal
-    order={returnOrder}
-    onClose={() => setReturnOrder(null)}
-    onSuccess={() => {
-      setReturnOrder(null);
-      fetchOrders();
-    }}
-  />
-)}
+        <SalesReturnModal
+          order={returnOrder}
+          onClose={() => setReturnOrder(null)}
+          onSuccess={() => {
+            setReturnOrder(null);
+            fetchOrders();
+          }}
+        />
+      )}
+
+      {addPaymentOrder && (
+        <AddPaymentModal
+          order={addPaymentOrder}
+          onClose={() => setAddPaymentOrder(null)}
+          onSuccess={() => {
+            setAddPaymentOrder(null);
+            fetchOrders();
+          }}
+        />
+      )}
 
     </div>
   );
