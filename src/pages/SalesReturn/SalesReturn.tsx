@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "../../configs/axios-middleware";
 import Pagination from "../../components/Pagination";
 import Api from "../../api-endpoints/ApiUrls";
 
@@ -12,12 +12,12 @@ interface SalesReturnItem {
 }
 
 interface SalesReturnType {
-    id: string;
-    return_date: string;
-    reason: string;
-    status: string;
-    sale_order: string;
-    items: SalesReturnItem[];
+  id: string;
+  return_date: string;
+  status: string;
+  sale_order: string;
+  items: SalesReturnItem[];
+  item_details: any[];
 }
 
 const SalesReturn: React.FC = () => {
@@ -35,6 +35,44 @@ const SalesReturn: React.FC = () => {
         sale_order_id: "",
         product_id: "",
     });
+    setPage(1);
+  };
+
+  const openModal = (row: SalesReturnType) => {
+    setSelectedRow(row);
+    setIsModalOpen(true);
+  };
+
+  return (
+    <div className="space-y-6 p-0">
+      {/* HEADER */}
+      <div className="flex justify-between items-end mb-6">
+        <div>
+          <h1 className="text-xl font-black text-gray-900 tracking-tight">Sales Returns</h1>
+          <p className="text-sm text-gray-400 font-bold uppercase tracking-widest text-[10px]">Manage customer product returns and refunds</p>
+        </div>
+        <button
+          onClick={() => fetchSalesReturns()}
+          className="p-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all shadow-sm"
+        >
+          <RotateCcw size={18} />
+        </button>
+      </div>
+
+      {/* FILTERS */}
+      <div className="bg-white p-5 rounded-3xl border border-gray-100 flex gap-4 mb-6 shadow-sm flex-wrap items-center">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-4 top-3 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search Sale Order ID..."
+            className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border-2 border-transparent focus:border-orange-500 focus:bg-white rounded-2xl text-sm font-bold transition-all outline-none"
+            name="sale_order_id"
+            value={filters.sale_order_id}
+            onChange={(e) => setFilters({ ...filters, sale_order_id: e.target.value })}
+            onKeyDown={(e) => e.key === 'Enter' && handleApplyFilters()}
+          />
+        </div>
 
     const [selectedRow, setSelectedRow] = useState<SalesReturnType | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -213,7 +251,9 @@ const SalesReturn: React.FC = () => {
                 </div>
             )}
         </div>
-    );
+      )}
+    </div>
+  );
 };
 
 export default SalesReturn;
