@@ -22,6 +22,7 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
         approved_by: "",
         is_quality_checked: true,
         is_invoice_matched: true,
+        quantity: "",
     });
 
     const [categories, setCategories] = useState<any[]>([]);
@@ -59,8 +60,17 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
     const [items, setItems] = useState<any[]>([]);
     const [files, setFiles] = useState<File[]>([]);
     const [apiErrors, setApiErrors] = useState<string>("");
-    console.log("Form State:", items);
-    // PREFILL FROM PO
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFiles = Array.from(e.target.files || []);
+        // Pazhaya files kooda pudhu files-ah merge panna:
+        setFiles((prev) => [...prev, ...selectedFiles]);
+    };
+
+    const removeFile = (index: number) => {
+        setFiles((prev) => prev.filter((_, i) => i !== index));
+    };
+
     useEffect(() => {
         if (show && poData) {
             setForm({
@@ -77,6 +87,7 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
                 approved_by: poData.created_by_details?.id || "",
                 is_quality_checked: true,
                 is_invoice_matched: true,
+                quantity: ""
             });
 
             // setItems([createItem()]);
@@ -98,6 +109,7 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
                     is_damaged: false,
                     grn_type: "PURCHASE",
                     remarks: "",
+                    quantity: p?.quantity,
                 }))
             );
         }
@@ -122,6 +134,7 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
         is_damaged: false,
         grn_type: "PURCHASE",
     });
+
 
     const fetchProducts = async (categoryId: string, index: number) => {
         const res = await axiosInstance.get(`${Api.products}?category_id=${categoryId}&size=10000`);
@@ -257,6 +270,20 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
             }
         }
 
+        // if (field === "received_quantity" || field === "accepted_quantity") {
+        //     const r = Number(newItems[i].received_quantity || 0);
+        //     const a = Number(newItems[i].accepted_quantity || 0);
+        //     const rej = r - a;
+        //     newItems[i].rejected_quantity = String(rej >= 0 ? rej : 0);
+        //     newItems[i].is_damaged = rej > 0;
+
+        //     // 🔥 Qty base panni serial numbers array create pandren
+        //     if (field === "received_quantity") {
+        //         const qty = Math.max(0, parseInt(value) || 0);
+        //         // Inga length set pandrom, so input boxes auto-ah generate agum
+        //         newItems[i].serial_numbers = Array(qty).fill("");
+        //     }
+        // }
         if (field === "received_quantity" || field === "accepted_quantity") {
             const r = Number(newItems[i].received_quantity || 0);
             const a = Number(newItems[i].accepted_quantity || 0);
@@ -264,23 +291,77 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
             newItems[i].rejected_quantity = String(rej >= 0 ? rej : 0);
             newItems[i].is_damaged = rej > 0;
 
-            // 🔥 Qty base panni serial numbers array create pandren
             if (field === "received_quantity") {
                 const qty = Math.max(0, parseInt(value) || 0);
-                // Inga length set pandrom, so input boxes auto-ah generate agum
-                newItems[i].serial_numbers = Array(qty).fill("");
+                const currentSerials = newItems[i].serial_numbers || [];
+
+                // Resize array without losing existing data
+                newItems[i].serial_numbers = Array.from({ length: qty }, (_, index) => {
+                    return currentSerials[index] !== undefined ? currentSerials[index] : "";
+                });
             }
         }
-
         setItems(newItems);
     };
 
     // Serial number input handle panna oru puthu function
-    const handleSerialChange = (itemIdx: number, serialIdx: number, val: string) => {
-        const newItems = [...items];
-        newItems[itemIdx].serial_numbers[serialIdx] = val;
-        setItems(newItems);
+    // const handleSerialChange = (itemIdx: number, serialIdx: number, val: string) => {
+    //     const newItems = [...items];
+    //     newItems[itemIdx].serial_numbers[serialIdx] = val;
+    //     setItems(newItems);
+    // };
+
+    const handleQtyChange = (index: number, qty: number) => {
+        setForm((prev: any) => {
+            const updatedItems = [...(prev.items || [])];
+
+            const currentItem = updatedItems[index] || {};
+
+            const oldSerials = currentItem.serial_numbers || [];
+
+            // 🔥 PRESERVE OLD VALUES
+            const newSerials = Array.from({ length: qty }, (_, i) => {
+                return oldSerials[i] || "";
+            });
+
+            updatedItems[index] = {
+                ...currentItem,
+                quantity: qty,
+                serial_numbers: newSerials,
+            };
+
+            return {
+                ...prev,
+                items: updatedItems,
+            };
+        });
     };
+
+
+    // const handleSerialChange = (
+    //     itemIndex: number,
+    //     serialIndex: number,
+    //     value: string
+    // ) => {
+    //     setForm((prev: any) => {
+    //         const updatedItems = [...(prev.items || [])];
+
+    //         const serials = [...(updatedItems[itemIndex].serial_numbers || [])];
+
+    //         serials[serialIndex] = value;
+
+    //         updatedItems[itemIndex] = {
+    //             ...updatedItems[itemIndex],
+    //             serial_numbers: serials,
+    //         };
+
+    //         return {
+    //             ...prev,
+    //             items: updatedItems,
+    //         };
+    //     });
+    // };
+
 
     const cleanObject = (obj: any) => {
         const newObj: any = {};
@@ -326,7 +407,22 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
 
         try {
             setLoading(true);
-            const cleanedItems = validItems?.map((i) => cleanObject(i));
+            // const cleanedItems = validItems?.map((i) => cleanObject(i));
+            const cleanedItems = validItems.map((i: any) => {
+                const cleanedSerials = (i.serial_numbers || []).filter((sn: string) => sn);
+
+                const item: any = {
+                    ...i,
+                    serial_numbers: cleanedSerials,
+                };
+
+                // 🔥 if empty remove field
+                if (!cleanedSerials.length) {
+                    delete item.serial_numbers;
+                }
+
+                return cleanObject(item);
+            });
             const payload = cleanObject({
                 ...form,
                 received_date: new Date(form.received_date).toISOString(),
@@ -386,29 +482,72 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
     // };
 
     // 1. Function-la index parameter add panniko machan
-    const handleSerialScan = (serial: string, rowIndex: number) => {
-        if (!serial) return;
+    // const handleSerialScan = (serial: string, rowIndex: number) => {
+    //     if (!serial) return;
 
-        let updatedItems = [...items];
-        const row = updatedItems[rowIndex];
+    //     let updatedItems = [...items];
+    //     const row = updatedItems[rowIndex];
 
-        if (!row || !row.product) {
-            toast.error("Invalid row ❌");
+    //     if (!row || !row.product) {
+    //         toast.error("Invalid row ❌");
+    //         return;
+    //     }
+
+    //     const existingSerials = row.serial_numbers || [];
+
+    //     if (existingSerials.includes(serial)) {
+    //         toast.error("Serial already added ⚠️");
+    //         return;
+    //     }
+
+    //     // Row index direct-a irukuradhala zero index issue varaadhu
+    //     updatedItems[rowIndex].serial_numbers = [...existingSerials, serial];
+    //     updatedItems[rowIndex].received_quantity = updatedItems[rowIndex].serial_numbers.length;
+
+    //     setItems(updatedItems);
+    // };
+
+    const handleSerialScan = (value: string, i: number) => {
+        const trimmedValue = value.trim();
+        if (!trimmedValue) return;
+
+        const newItems = [...items];
+        const item = newItems[i];
+        if (!item) return;
+
+        let serials = [...(item.serial_numbers || [])];
+
+        // 1. 🔥 Duplicate Check Logic
+        // Check if the serial number already exists in the current item's list
+        const isDuplicate = serials.some(sn => sn.toLowerCase() === trimmedValue.toLowerCase());
+
+        if (isDuplicate) {
+            toast.error(`Serial Number "${trimmedValue}" already added! ⚠️`);
+            return; // Function-ah stop pannidum, value add aagadhu
+        }
+
+        // 2. Normal Scanning Logic
+        const emptyIndex = serials.findIndex(sn => !sn || sn.trim() === "");
+
+        if (emptyIndex !== -1) {
+            serials[emptyIndex] = trimmedValue;
+        } else if (serials.length < Number(item.received_quantity)) {
+            serials.push(trimmedValue);
+        } else {
+            toast.error("Received quantity limit reached! 🛑");
             return;
         }
 
-        const existingSerials = row.serial_numbers || [];
+        newItems[i] = { ...item, serial_numbers: serials };
+        setItems(newItems);
+    };
 
-        if (existingSerials.includes(serial)) {
-            toast.error("Serial already added ⚠️");
-            return;
+    const handleSerialChange = (itemIndex: number, serialIndex: number, value: string) => {
+        const newItems = [...items];
+        if (newItems[itemIndex]?.serial_numbers) {
+            newItems[itemIndex].serial_numbers[serialIndex] = value;
+            setItems(newItems);
         }
-
-        // Row index direct-a irukuradhala zero index issue varaadhu
-        updatedItems[rowIndex].serial_numbers = [...existingSerials, serial];
-        updatedItems[rowIndex].received_quantity = updatedItems[rowIndex].serial_numbers.length;
-
-        setItems(updatedItems);
     };
 
 
@@ -525,7 +664,7 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
                             </thead>
 
                             <tbody className="divide-y divide-slate-100 text-sm">
-                                {items?.map((item, i) => {
+                                {items?.map((item: any, i: number) => {
                                     const isPoItem = item?.isFromPO;
                                     const isActive = activeRowIndex === i;
 
@@ -581,33 +720,48 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
                                                 <div className="flex flex-col gap-2 items-center">
                                                     <div className="flex items-center gap-2 w-full">
                                                         <div className="flex-1">
+                                                            <label className="text-[10px] text-slate-400 font-bold block mb-1">Quantity</label>
+                                                            <input
+                                                                type="number"
+                                                                value={Number(item?.quantity) || ""}
+                                                                disabled
+                                                                // onChange={(e) => }
+                                                                className="w-full border border-slate-200 p-2 rounded-md text-center font-bold text-indigo-600 focus:border-indigo-500 outline-none"
+                                                            />
+                                                            {/* <span>{Number(item?.quantity)}</span> */}
+                                                        </div>
+                                                        <div className="flex-1">
                                                             <label className="text-[10px] text-slate-400 font-bold block mb-1">RECEIVED</label>
                                                             <input
                                                                 type="number"
                                                                 value={item?.received_quantity || ""}
-                                                                onChange={(e) => handleItemChange(i, "received_quantity", e.target.value)}
+                                                                onChange={(e) => {
+                                                                    handleItemChange(i, "received_quantity", e.target.value)
+                                                                    // handleQtyChange(i, Number(e.target.value))
+                                                                }}
+                                                                // onChange={(e) => }
                                                                 className="w-full border border-slate-200 p-2 rounded-md text-center font-bold text-indigo-600 focus:border-indigo-500 outline-none"
                                                             />
                                                         </div>
-                                                        <div className="flex-[2]">
-                                                            <label className="text-[10px] text-slate-400 font-bold block mb-1">SCAN SERIAL</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Enter/Scan..."
-                                                                className="w-full border border-slate-200 p-2 rounded-md bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none transition-all"
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === "Enter") {
-                                                                        handleSerialScan(e.currentTarget.value, i);
-                                                                        e.currentTarget.value = "";
-                                                                    }
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    </div>
 
+                                                    </div>
+                                                    <div className="flex-[2]">
+                                                        <label className="text-[10px] text-slate-400 font-bold block mb-1">SCAN SERIAL</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Enter/Scan..."
+                                                            className="w-full border border-slate-200 p-2 rounded-md bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none transition-all"
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === "Enter") {
+                                                                    handleSerialScan(e.currentTarget.value, i);
+                                                                    e.currentTarget.value = "";
+                                                                }
+                                                            }}
+                                                        />
+                                                    </div>
                                                     {item.serial_numbers?.length > 0 && (
                                                         <div className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1 max-h-32 overflow-y-auto grid grid-cols-1 gap-1 shadow-inner">
-                                                            {item.serial_numbers?.slice(0)?.map((sn: any, snIndex: number) => (
+                                                            {/* {item.serial_numbers?.slice(0)?.map((sn: any, snIndex: number) => (
                                                                 <div key={snIndex} className="flex items-center bg-white border border-slate-100 rounded px-2 py-1">
                                                                     <span className="text-[9px] text-slate-400 mr-2">{snIndex + 1}</span>
                                                                     <input
@@ -616,6 +770,17 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
                                                                         className="w-full text-xs focus:outline-none font-mono text-slate-600"
                                                                     />
                                                                 </div>
+                                                            ))} */}
+                                                            {item.serial_numbers?.map((sn: string, sIndex: number) => (
+                                                                <input
+                                                                    key={sIndex}
+                                                                    value={sn}
+                                                                    onChange={(e) =>
+                                                                        handleSerialChange(i, sIndex, e.target.value)
+                                                                    }
+                                                                    className="border px-2 py-1"
+                                                                    placeholder={`Serial ${sIndex + 1}`}
+                                                                />
                                                             ))}
                                                         </div>
                                                     )}
@@ -692,16 +857,18 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
                             </tbody>
                         </table>
 
-                        {/* FOOTER ACTIONS */}
-                        <div className="p-5 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
-                            <button
-                                onClick={handleAddItem}
-                                className="flex items-center gap-2 px-4 py-2 bg-white border border-indigo-200 text-indigo-600 rounded-lg font-bold text-xs hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
-                            >
-                                <Plus size={18} /> Add New Row
-                            </button>
 
-                            <div className="flex items-center gap-4 bg-white p-2 px-4 rounded-xl border border-slate-200 shadow-sm">
+                        {/* FOOTER ACTIONS */}
+                        <div className="p-3 bg-slate-50 border-t border-slate-200">
+                            <div className="py-2">
+                                <button
+                                    onClick={handleAddItem}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white border border-indigo-200 text-indigo-600 rounded-lg font-bold text-xs hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                                >
+                                    <Plus size={18} /> Add New Row
+                                </button>
+                            </div>
+                            {/* <div className="flex items-center gap-4 bg-white p-2 px-4 rounded-xl border border-slate-200 shadow-sm">
                                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Attachments</span>
                                 <input
                                     type="file"
@@ -709,6 +876,46 @@ const GRNModal = ({ show, onClose, onSuccess, poData }: any) => {
                                     onChange={(e) => setFiles(Array.from(e.target.files || []))}
                                     className="text-[11px] file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-[10px] file:font-bold file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 cursor-pointer"
                                 />
+                            </div> */}
+                            <div className="space-y-3">
+                                {/* Upload Box */}
+                                <div className="flex items-center gap-4 bg-white p-2 px-4 rounded-xl border border-slate-200 shadow-sm">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Attachments</span>
+                                    <input
+                                        type="file"
+                                        multiple
+                                        accept="image/*" // Images mattum kaata
+                                        onChange={handleFileChange}
+                                        className="text-[11px] file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-[10px] file:font-bold file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 cursor-pointer"
+                                    />
+                                </div>
+
+                                {/* 🔥 Image Preview Grid */}
+                                {files.length > 0 && (
+                                    <div className="grid grid-cols-4 gap-2 mt-2 p-2 bg-slate-50 rounded-lg border border-dashed border-slate-300">
+                                        {files.map((file, index) => (
+                                            <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border border-white shadow-sm">
+                                                <img
+                                                    src={URL.createObjectURL(file)}
+                                                    alt="preview"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                {/* Delete Button */}
+                                                <button
+                                                    onClick={() => removeFile(index)}
+                                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                                <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-[8px] text-white px-1 truncate">
+                                                    {file.name}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

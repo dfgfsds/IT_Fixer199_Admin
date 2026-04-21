@@ -2,15 +2,13 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../../configs/axios-middleware";
 import Pagination from "../../components/Pagination";
 import Api from "../../api-endpoints/ApiUrls";
-import { Eye, RotateCcw, Search, Calendar, Package, ArrowLeft, Loader2, X } from "lucide-react";
 
 interface SalesReturnItem {
-  id: string;
-  product_name: string;
-  product_id: string;
-  quantity: string;
-  rate: string;
-  serial_numbers: string[];
+    id: string;
+    product_name: string;
+    quantity: string;
+    rate: string;
+    serial_numbers: string[]; // Updated to array based on your response
 }
 
 interface SalesReturnType {
@@ -23,63 +21,19 @@ interface SalesReturnType {
 }
 
 const SalesReturn: React.FC = () => {
-  const [data, setData] = useState<SalesReturnType[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [pagination, setPagination] = useState<any>(null);
+    const [data, setData] = useState<SalesReturnType[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [pagination, setPagination] = useState<any>(null);
 
-  const [filters, setFilters] = useState({
-    start_date: "",
-    end_date: "",
-    status: "",
-    sale_order_id: "",
-  });
-
-  const [selectedRow, setSelectedRow] = useState<SalesReturnType | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const fetchSalesReturns = async (p = page, size = pageSize) => {
-    try {
-      setLoading(true);
-      const query = new URLSearchParams({
-        page: p.toString(),
-        size: size.toString(),
-        ...(filters.start_date && { start_date: filters.start_date }),
-        ...(filters.end_date && { end_date: filters.end_date }),
-        ...(filters.status && { status: filters.status }),
-        ...(filters.sale_order_id && { sale_order_id: filters.sale_order_id }),
-      }).toString();
-
-      const res = await axiosInstance.get(`${Api?.salesReturns}?${query}`);
-      const result = res?.data?.data;
-      setData(result?.sales_returns || []);
-      setTotalPages(result?.pagination?.total_pages || 1);
-      setPagination(result?.pagination || null);
-    } catch (err) {
-      console.error("API Error:", err);
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSalesReturns();
-  }, [page, pageSize]);
-
-  const handleApplyFilters = () => {
-    setPage(1);
-    fetchSalesReturns(1, pageSize);
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      start_date: "",
-      end_date: "",
-      status: "",
-      sale_order_id: "",
+    const [filters, setFilters] = useState({
+        start_date: "",
+        end_date: "",
+        status: "",
+        sale_order_id: "",
+        product_id: "",
     });
     setPage(1);
   };
@@ -120,200 +74,182 @@ const SalesReturn: React.FC = () => {
           />
         </div>
 
-        <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-2xl border border-gray-100">
-          <Calendar size={14} className="ml-2 text-gray-400" />
-          <input
-            type="date"
-            className="bg-transparent border-none text-xs font-bold p-1 outline-none"
-            value={filters.start_date}
-            onChange={(e) => setFilters({ ...filters, start_date: e.target.value })}
-          />
-          <span className="text-gray-300">/</span>
-          <input
-            type="date"
-            className="bg-transparent border-none text-xs font-bold p-1 outline-none"
-            value={filters.end_date}
-            onChange={(e) => setFilters({ ...filters, end_date: e.target.value })}
-          />
+    const [selectedRow, setSelectedRow] = useState<SalesReturnType | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    // 🔥 Modal open-la irukkumpo background scroll lock panna
+    useEffect(() => {
+        if (isModalOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+    }, [isModalOpen]);
+
+    const fetchSalesReturns = async () => {
+        try {
+            setLoading(true);
+            const params: any = { page, size: pageSize, ...filters };
+            Object.keys(params).forEach((key) => { if (!params[key]) delete params[key]; });
+
+            const res = await axios.get(Api?.salesReturns, { params });
+            setData(res?.data?.data?.sales_returns || []);
+            setTotalPages(res.data?.data?.pagination?.total_pages || 1);
+            setPagination(res.data?.data?.pagination || null);
+        } catch (err) {
+            console.error("API Error:", err);
+            setData([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => { fetchSalesReturns(); }, [page, pageSize, filters]);
+
+    const handlePageChange = (p: number) => setPage(p);
+    const handlePageSizeChange = (size: number) => { setPageSize(size); setPage(1); };
+    const handleFilterChange = (e: any) => { setFilters({ ...filters, [e.target.name]: e.target.value }); setPage(1); };
+    const clearFilters = () => setFilters({ start_date: "", end_date: "", status: "", sale_order_id: "", product_id: "" });
+
+    const openModal = (row: SalesReturnType) => { setSelectedRow(row); setIsModalOpen(true); };
+    const closeModal = () => { setSelectedRow(null); setIsModalOpen(false); };
+
+    return (
+        <div className=" bg-gray-50 min-h-screen">
+            <div className="py-2">
+          <h1 className="text-2xl font-bold text-gray-900">Sales Return</h1>
+          {/* <p className="text-gray-500">Manage and track all service orders</p> */}
         </div>
-
-        <select
-          className="bg-gray-50 border-2 border-transparent focus:border-orange-500 focus:bg-white p-2.5 rounded-2xl text-xs font-bold outline-none transition-all cursor-pointer"
-          value={filters.status}
-          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-        >
-          <option value="">ALL STATUS</option>
-          <option value="DRAFT">DRAFT</option>
-          <option value="COMPLETED">COMPLETED</option>
-        </select>
-
-        <button
-          onClick={handleApplyFilters}
-          className="px-6 py-2.5 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-orange-600 transition-all shadow-lg active:scale-95"
-        >
-          Apply
-        </button>
-      </div>
-
-      {/* TABLE */}
-      <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50/50">
-                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">S.No</th>
-                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">Return Date</th>
-                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 font-black">Sale Order</th>
-                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 text-center">Status</th>
-                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {loading ? (
-                Array(5).fill(0).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td colSpan={5} className="px-6 py-4"><div className="h-10 bg-gray-100 rounded-xl w-full"></div></td>
-                  </tr>
-                ))
-              ) : data.length > 0 ? (
-                data.map((row, index) => (
-                  <tr key={row.id} className="hover:bg-gray-50/50 transition-colors group text-sm">
-                    <td className="px-6 py-4 font-bold text-gray-400 italic">
-                      {(page - 1) * pageSize + index + 1}
-                    </td>
-                    <td className="px-6 py-4 font-black text-gray-700">
-                      {new Date(row.return_date).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 font-bold text-orange-600">
-                      #{row.sale_order?.slice(0, 8)}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${row.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                        }`}>
-                        {row.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => openModal(row)}
-                        className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all"
-                      >
-                        <Eye size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="px-6 py-20 text-center text-gray-400 italic font-bold">
-                    No sales return records found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {!loading && (
-          <div className="border-t border-gray-50 bg-gray-50/30">
-            <Pagination
-              page={page}
-              totalPages={totalPages}
-              pageSize={pageSize}
-              totalItems={pagination?.total_elements || 0}
-              onPageChange={(p: number) => setPage(p)}
-              onPageSizeChange={(size: number) => { setPageSize(size); setPage(1); }}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* VIEW MODAL */}
-      {isModalOpen && selectedRow && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex justify-center items-center z-[100] p-4">
-          <div className="bg-white w-full max-w-3xl max-h-[90vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300 border border-gray-100">
-            {/* Modal Header */}
-            <div className="bg-gray-900 text-white p-7 flex justify-between items-start">
-              <div className="flex gap-4">
-                <div className="bg-orange-500 p-3 rounded-2xl shadow-lg shadow-orange-500/20 text-white">
-                  <Package size={24} />
+            {/* 🔍 HEADER FILTER SECTION */}
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <input type="date" name="start_date" value={filters.start_date} onChange={handleFilterChange} className="border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <input type="date" name="end_date" value={filters.end_date} onChange={handleFilterChange} className="border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    {/* <input type="text" name="sale_order_id" placeholder="Order ID" value={filters.sale_order_id} onChange={handleFilterChange} className="border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" /> */}
+                    {/* <input type="text" name="product_id" placeholder="Product ID" value={filters.product_id} onChange={handleFilterChange} className="border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" /> */}
+                    <select name="status" value={filters.status} onChange={handleFilterChange} className="border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="">All Status</option>
+                        <option value="DRAFT">DRAFT</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                    </select>
+                    <button onClick={clearFilters} className="bg-gray-900 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider hover:bg-black transition-all">Clear</button>
                 </div>
-                <div>
-                  <h2 className="font-black text-xl tracking-tight leading-none mb-1">Return Items</h2>
-                  <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Sale Order: #{selectedRow.sale_order?.slice(0, 8)}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-2 hover:bg-white/10 rounded-full transition-all text-white/50 hover:text-white"
-              >
-                <X size={20} />
-              </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-8 overflow-y-auto custom-scrollbar flex-1 space-y-6">
-              <div className="rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
-                    <tr>
-                      <th className="px-6 py-4 text-left">Product</th>
-                      <th className="px-6 py-4 text-center">Qty</th>
-                      <th className="px-6 py-4 text-right">Rate</th>
-                      <th className="px-6 py-4 text-right">Serial Numbers</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {selectedRow.items.map((item, i) => (
-                      <tr key={i} className="hover:bg-gray-50/30 transition-colors">
-                        <td className="px-6 py-4 font-black text-gray-800">{item.product_name}</td>
-                        <td className="px-6 py-4 text-center font-bold text-gray-600">{Number(item.quantity).toFixed(0)}</td>
-                        <td className="px-6 py-4 text-right font-medium">₹{Number(item.rate).toLocaleString()}</td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex flex-wrap justify-end gap-1">
-                            {item.serial_numbers?.map((sn, idx) => (
-                              <span key={idx} className="bg-gray-100 text-[9px] font-black px-1.5 py-0.5 rounded text-gray-500 border border-gray-200 uppercase tracking-tighter">
-                                {sn}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            {/* 📊 MAIN TABLE */}
+            <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-gray-50/50 border-b border-gray-100">
+                            <tr>
+                                <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">S.No</th>
+                                <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Return Date</th>
+                                <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Sale Order</th>
+                                <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
+                                <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Reason</th>
+                                <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {loading ? (
+                                <tr><td colSpan={6} className="text-center p-12 text-slate-400 font-medium">Loading records...</td></tr>
+                            ) : data.length === 0 ? (
+                                <tr><td colSpan={6} className="text-center p-12 text-slate-400 font-medium">No return records found.</td></tr>
+                            ) : (
+                                data.map((row, index) => (
+                                    <tr key={row.id} className="hover:bg-blue-50/30 transition-colors group">
+                                        <td className="p-4 text-sm font-bold text-gray-400">{(page - 1) * pageSize + index + 1}</td>
+                                        <td className="p-4 text-sm font-bold text-gray-700">{new Date(row.return_date).toLocaleDateString('en-GB')}</td>
+                                        <td className="p-4 text-sm font-medium text-gray-600 truncate max-w-[150px]">{row.sale_order}</td>
+                                        <td className="p-4 text-center">
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black ${row.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                {row.status}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-sm text-gray-500 italic">"{row.reason || 'No reason'}"</td>
+                                        <td className="p-4 text-right">
+                                            <button onClick={() => openModal(row)} className="bg-white border border-gray-200 text-gray-900 px-4 py-1.5 rounded-lg text-[11px] font-black hover:bg-gray-900 hover:text-white transition-all shadow-sm">VIEW</button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-              {/* Item Details Summary (Condition) */}
-              {selectedRow.item_details?.length > 0 && (
-                <div className="bg-indigo-50/50 p-5 rounded-3xl border border-indigo-100">
-                  <h4 className="text-[10px] font-black text-indigo-400 uppercase mb-3 flex items-center gap-2">
-                    <div className="w-3 h-[2px] bg-indigo-400"></div> Settlement Data
-                  </h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-bold text-gray-400 uppercase tracking-tight">Status:</span>
-                      <span className="font-black text-indigo-700">{selectedRow.item_details[0].condition_status}</span>
+            {/* 📄 PAGINATION */}
+            {!loading && (
+                <div className="mt-6">
+                    <Pagination page={page} totalPages={totalPages} pageSize={pageSize} totalItems={pagination?.total_elements || 0} onPageChange={handlePageChange} onPageSizeChange={handlePageSizeChange} />
+                </div>
+            )}
+
+            {/* 🔥 CUSTOM VIEW MODAL (URBAN COMPANY STYLE) */}
+            {isModalOpen && selectedRow && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-[100] p-4 animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-8 border-b border-slate-100 flex justify-between items-start bg-white">
+                            <div>
+                                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-[10px] font-black uppercase tracking-wider">{selectedRow.status}</span>
+                                <h2 className="font-black text-slate-800 text-2xl mt-2 tracking-tight">Return Details</h2>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Ref: {selectedRow.sale_order}</p>
+                            </div>
+                            <button onClick={closeModal} className="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-900 rounded-full transition-all text-2xl font-light">×</button>
+                        </div>
+
+                        <div className="p-8 overflow-y-auto space-y-8 bg-slate-50/30">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Return Date</p>
+                                    <p className="font-bold text-slate-700">{new Date(selectedRow.return_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                                </div>
+                                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Reason</p>
+                                    <p className="font-bold text-slate-700">{selectedRow.reason || 'Not specified'}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Items Summary</h3>
+                                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-slate-50/50 border-b border-slate-100">
+                                            <tr>
+                                                <th className="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Product</th>
+                                                <th className="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Qty</th>
+                                                <th className="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Rate</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {selectedRow.items?.map((item: any) => (
+                                                <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
+                                                    <td className="p-5">
+                                                        <p className="font-black text-slate-800 text-sm">{item.product_name}</p>
+                                                        {item.serial_numbers?.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                                {item.serial_numbers.map((sn: string, i: number) => (
+                                                                    <span key={i} className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-bold border border-slate-200 uppercase">SN: {sn}</span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-5 text-center font-bold text-slate-600 text-sm">{Number(item.quantity).toFixed(0)}</td>
+                                                    <td className="p-5 text-right font-black text-slate-900 text-sm">₹{Number(item.rate).toLocaleString()}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t border-slate-100 flex justify-end bg-white">
+                            <button onClick={closeModal} className="px-12 py-4 bg-slate-900 hover:bg-black text-white rounded-2xl font-black text-[11px] tracking-widest transition-all active:scale-95 shadow-lg shadow-slate-200">CLOSE WINDOW</button>
+                        </div>
                     </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-bold text-gray-400 uppercase tracking-tight">Settlement:</span>
-                      <span className="font-black text-indigo-700">{selectedRow.item_details[0].settlement_type}</span>
-                    </div>
-                  </div>
                 </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-8 py-3 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:shadow-lg active:scale-95 transition-all"
-              >
-                Close Return
-              </button>
-            </div>
-          </div>
+            )}
         </div>
       )}
     </div>
