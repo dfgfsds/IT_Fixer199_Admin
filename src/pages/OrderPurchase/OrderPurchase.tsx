@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Edit3, Eye, Loader2, Plus, Printer, Search, Undo2 } from "lucide-react";
+import { Edit3, Eye, Loader2, MoreVertical, Plus, Printer, Search, Undo2 } from "lucide-react";
 import axiosInstance from "../../configs/axios-middleware";
 import Pagination from "../../components/Pagination";
 import PurchaseOrderModal from "./PurchaseOrderModal";
@@ -43,7 +43,27 @@ const OrderPurchase: React.FC = () => {
     const [showSerialModal, setShowSerialModal] = useState(false);
     const [selectedGRNData, setSelectedGRNData] = useState<any[]>([]);
     const [serialData, setSerialData] = useState<any>({});
+    const maxPayable =
+        Number(selectedPO?.grand_total || 0) -
+        Number(selectedPO?.total_paid || 0);
+    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            // Find if the click was inside any of the open dropdowns
+            const isClickInside = Object.values(dropdownRefs.current).some(
+                (ref) => ref && ref.contains(event.target as Node)
+            );
+
+            if (!isClickInside) {
+                setOpenDropdown(null);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
     const [dateFilter, setDateFilter] = useState({
         start_date: "",
         end_date: "",
@@ -88,7 +108,7 @@ const OrderPurchase: React.FC = () => {
     const [form, setForm] = useState({
         payment_date: "",
         payment_method: "",
-        amount_paid: "",
+        amount_paid: 0,
         payment_reference: "",
     });
 
@@ -135,7 +155,7 @@ const OrderPurchase: React.FC = () => {
             setForm({
                 payment_date: new Date().toISOString().slice(0, 16),
                 payment_method: "",
-                amount_paid: "",
+                amount_paid: 0,
                 payment_reference: "",
             });
         }
@@ -505,7 +525,7 @@ const OrderPurchase: React.FC = () => {
                                 <th className="px-6 py-4 text-right">Paid</th>
                                 <th className="px-6 py-4 text-right">Balance</th> */}
                                 <th className="px-6 py-4 text-center">GRN</th>
-                                <th className="px-6 py-4 text-center">Serial</th>
+                                {/* <th className="px-6 py-4 text-center">Serial</th> */}
                                 <th className="px-6 py-4 text-center">Actions</th>
                             </tr>
                         </thead>
@@ -519,13 +539,15 @@ const OrderPurchase: React.FC = () => {
                                 </tr>
                             ) : (
                                 data?.map((item: any, index: number) => {
-                                    const balance = Number(item.grand_total) - Number(item?.grn_actual_pending_amount);
-                                    const isFullyPaid = balance <= 0;
+                                    // const balance = Number(item.grand_total) - Number(item?.total_paid);
+                                    // const isFullyPaid = balance <= 0;
 
                                     const totalQty = item.items?.reduce((a: number, b: any) => a + Number(b.quantity), 0) || 0;
                                     const receivedQty = item.items?.reduce((a: number, b: any) => a + Number(b.received_quantity), 0) || 0;
                                     const pendingQty = item.items?.reduce((a: number, b: any) => a + Number(b.pending_delivery_quantity), 0) || 0;
-
+                                    const grand = Number(item?.grand_total ?? 0);
+                                    const paid = Number(item?.total_paid ?? 0);
+                                    const balance = grand - paid;
                                     return (
                                         <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
                                             <td className="px-6 py-4 font-bold text-gray-400">
@@ -585,10 +607,28 @@ const OrderPurchase: React.FC = () => {
                                                         <span className="text-green-700 font-bold">₹{Number(item.total_paid).toLocaleString('en-IN')}</span>
                                                     </div>
                                                     <div className="flex justify-between items-center gap-4">
-                                                        <span className="text-[9px] font-bold text-red-400 uppercase">Bal:</span>
-                                                        <span className={`font-black ${item?.po_pending_amount > 0 ? 'text-red-600' : 'text-gray-300'}`}>
-                                                            ₹{item?.po_pending_amount?.toLocaleString('en-IN')}
+                                                        <span className="text-[9px] font-bold text-red-400 uppercase">
+                                                            Bal:
                                                         </span>
+
+                                                        {balance > 0 && (
+                                                            <span className="font-black text-red-600">
+                                                                ₹{balance.toLocaleString("en-IN")}
+                                                            </span>
+                                                        )}
+
+                                                        {balance === 0 && (
+                                                            <span className="font-black text-green-600">
+                                                                PAID
+                                                            </span>
+                                                        )}
+
+                                                        {balance < 0 && (
+                                                            <span className="font-black text-blue-600">
+                                                                ADV ₹{Math.abs(balance).toLocaleString("en-IN")}
+                                                            </span>
+                                                        )}
+
                                                     </div>
                                                 </div>
                                             </td>
@@ -622,6 +662,7 @@ const OrderPurchase: React.FC = () => {
                                                             setSelectedPOForGRN(item);
                                                             setShowGRNModal(true);
                                                         }}
+                                                        disabled={totalQty === receivedQty}
                                                         className="px-3 py-1.5 text-[10px] font-bold bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200"
                                                     >
                                                         Create GRN
@@ -639,7 +680,7 @@ const OrderPurchase: React.FC = () => {
                                                     </button>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
+                                            {/* <td className="px-6 py-4">
                                                 <button
                                                     onClick={async () => {
                                                         try {
@@ -657,14 +698,14 @@ const OrderPurchase: React.FC = () => {
                                                 >
                                                     Add
                                                 </button>
-                                            </td>
+                                            </td> */}
 
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
-                                                        disabled={item?.po_pending_amount === 0}
+                                                        disabled={balance === 0}
                                                         onClick={() => handlePay(item)}
-                                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all ${item?.po_pending_amount > 0
+                                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all ${balance > 0
                                                             ? "bg-green-100 text-green-700 hover:bg-green-600 hover:text-white"
                                                             : "bg-gray-100 text-gray-300 cursor-not-allowed"
                                                             }`}
@@ -705,7 +746,46 @@ const OrderPurchase: React.FC = () => {
                                                     >
                                                         <Undo2 size={16} />
                                                     </button>
+                                                    <div
+                                                        className="relative"
+                                                        // 🔥 Inga thaan ref assign pannanum
+                                                        ref={(el) => (dropdownRefs.current[item.id] = el)}
+                                                    >
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setOpenDropdown(openDropdown === item.id ? null : item.id);
+                                                            }}
+                                                            className="text-gray-600 hover:text-black"
+                                                        >
+                                                            <MoreVertical className="w-4 h-4" />
+                                                        </button>
 
+                                                        {openDropdown === item.id && (
+                                                            <div className="absolute right-0 top-8 bg-white border rounded-lg shadow-lg w-40 z-10 overflow-hidden">
+                                                                <button
+                                                                    onClick={async (e) => {
+                                                                        e.stopPropagation(); // Parent row click aagama irukka
+                                                                        try {
+                                                                            const res = await axiosInstance.get(
+                                                                                `${Api.purchaseGRNList}/${item.id}/grns/`
+                                                                            );
+                                                                            setSelectedGRNData(res?.data?.data);
+                                                                            setShowSerialModal(true);
+
+                                                                            // 🔥 Action success aanadhukku aprom dropdown-ah close panniru
+                                                                            setOpenDropdown(null);
+                                                                        } catch (err) {
+                                                                            console.log(err);
+                                                                        }
+                                                                    }}
+                                                                    className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                                                >
+                                                                    Add Serial number
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </td>
 
@@ -737,12 +817,15 @@ const OrderPurchase: React.FC = () => {
             </div>
 
             {/* MODAL */}
-            <PurchaseOrderModal
-                show={showModal}
-                onClose={() => setShowModal(false)}
-                onSuccess={() => fetchData(page, pageSize)}
-                editData={editData}
-            />
+            {showModal && (
+                <PurchaseOrderModal
+                    show={showModal}
+                    onClose={() => setShowModal(false)}
+                    onSuccess={() => fetchData(page, pageSize)}
+                    editData={editData}
+                />
+            )}
+
 
             {showViewModal && viewData && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex justify-center items-center z-[100] p-4">
@@ -916,6 +999,30 @@ const OrderPurchase: React.FC = () => {
                             </div>
                         </div>
 
+                        <div className="sticky top-0 z-10 bg-white border-b px-4 py-3 flex items-center justify-between">
+
+                            {/* LEFT */}
+                            <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                    Payable Amount
+                                </p>
+                                <p className="text-lg font-extrabold text-gray-900">
+                                    ₹{maxPayable}
+                                </p>
+                            </div>
+
+                            {/* RIGHT (OPTIONAL BADGE) */}
+                            {/* {enteredAmount > 0 && (
+    <div className="text-right">
+      <p className="text-[10px] text-gray-400">Paying Now</p>
+      <p className="text-sm font-bold text-green-600">
+        ₹ {enteredAmount}
+      </p>
+    </div>
+  )} */}
+
+                        </div>
+
                         <div className="p-6 space-y-5">
                             {/* DATE FIELD */}
                             <div className="space-y-1.5">
@@ -947,14 +1054,48 @@ const OrderPurchase: React.FC = () => {
 
                             <div className="grid grid-cols-2 gap-4">
                                 {/* AMOUNT */}
-                                <div className="space-y-1.5">
+                                {/* <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider ml-1">Amount (₹)</label>
+                                    Paid Amount {selectedPO?.grand_total - selectedPO?.total_paid}
                                     <input
                                         type="number"
                                         placeholder="0.00"
                                         className="w-full border-2 border-gray-100 bg-gray-50 p-2.5 rounded-xl text-sm font-black text-green-600 focus:border-orange-500 focus:bg-white outline-none transition-all"
                                         value={form.amount_paid}
                                         onChange={(e) => setForm({ ...form, amount_paid: e.target.value })}
+                                    />
+                                </div> */}
+
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider ml-1">
+                                        Amount (₹)
+                                    </label>
+
+                                    {/* <p className="text-xs text-gray-500">
+                                        Payable: ₹{maxPayable}
+                                    </p> */}
+
+                                    <input
+                                        type="number"
+                                        placeholder="0.00"
+                                        className="w-full border-2 border-gray-100 bg-gray-50 p-2.5 rounded-xl text-sm font-black text-green-600 focus:border-orange-500 focus:bg-white outline-none transition-all"
+                                        value={form.amount_paid || ""}
+                                        max={maxPayable}
+                                        min={0}
+                                        onChange={(e) => {
+                                            let val = Number(e.target.value);
+
+                                            // ❌ prevent negative
+                                            if (val < 0) val = 0;
+
+                                            // ❌ prevent exceeding payable
+                                            if (val > maxPayable) val = maxPayable;
+
+                                            setForm({
+                                                ...form,
+                                                amount_paid: val,
+                                            });
+                                        }}
                                     />
                                 </div>
 

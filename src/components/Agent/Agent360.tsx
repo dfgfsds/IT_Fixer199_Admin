@@ -274,10 +274,10 @@ const Agents360: React.FC = () => {
     // }, [id, activeTab === 'product'])
 
     useEffect(() => {
-        if (activeTab === "product") {
+        // if (activeTab === "product") {
             fetchAgentProduct();
-        }
-    }, [id, activeTab, page, pageSize]);
+        // }
+    }, [id, activeTab, page, pageSize,activeTab === "profile"]);
 
     const fetchAgentProduct = async () => {
         try {

@@ -98,7 +98,7 @@
 
 // export default Sidebar;
 
-import  { useState } from 'react';
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -193,28 +193,13 @@ const Sidebar: React.FC = () => {
           name: 'Order Purchase', path: '/orderPurchase'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
-          {
+        {
           name: 'GRN', path: '/grn'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
-        {
-          name: 'Payment mode wise', path: '/paymentModeWise'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
-        },
-        {
-          name: 'Product Wise', path: '/productWise'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
-        },
+
         {
           name: 'Purchase Return ', path: '/purchaseReturn'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
-        },
-        {
-          name: 'Stocks ', path: '/stocks'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
-        },
-        {
-          name: 'Sales Return', path: '/salesReturn'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
         // {
@@ -284,6 +269,10 @@ const Sidebar: React.FC = () => {
           name: 'Order modify', path: '/OrderModify'
           , roles: ["SUPER_ADMIN"]
         },
+        {
+          name: 'Sales Return', path: '/salesReturn'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
         // { name: 'Refund Orders', path: '/refunds' },
         // { name: 'Tickets & Escalations', path: '/tickets' },
         // { name: 'Coupons & Promotions', path: '/coupons' },
@@ -292,13 +281,25 @@ const Sidebar: React.FC = () => {
       ],
     },
     {
-      name: 'Accounts',
+      name: 'Reports',
       icon: Calculator,
       children: [
         //  {
         //   name: 'Order Purchase', path: '/orderPurchase'
         //   , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         // },
+        {
+          name: 'Stocks ', path: '/stocks'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Product Wise', path: '/productWise'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Payment mode wise', path: '/paymentModeWise'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
         {
           name: 'Monthly Comparison', path: '/monthlyComparison'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]

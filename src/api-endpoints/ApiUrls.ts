@@ -232,6 +232,11 @@ const salesReturns = `${baseUrl}/api/sales-returns/`;
 // createOrderPayment
 const createOrderPayment = `${baseUrl}/api/order/public/order/`;
 
+
+// purchaseExcessCreditEntities
+
+const purchaseExcessCreditEntities = `${baseUrl}/api/purchase/excess-credit-entities/`;
+
 export default {
   login,
   allUsers,
@@ -323,7 +328,8 @@ export default {
   consolidatedStock,
   salesReturns,
   createOrderPayment,
-  consolidatedInventoryLog
+  consolidatedInventoryLog,
+  purchaseExcessCreditEntities,
 };
 
 
