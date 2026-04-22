@@ -388,6 +388,8 @@ const Products: React.FC = () => {
 
         // ✅ only name + barcode
         const data = filteredProducts.map((product: any) => ({
+            categories: product?.categories?.[0]?.name,
+            brand: product?.brand_details?.name,
             Name: product.name,
             Barcode: product.barcode || product.sku
         }));
@@ -446,9 +448,9 @@ const Products: React.FC = () => {
                         Download Excel
                     </button>
 
-                    <button onClick={handlePrint}>
+                    {/* <button onClick={handlePrint}>
                         Print Barcode
-                    </button>
+                    </button> */}
 
                 </div>
             </div>

@@ -9,8 +9,8 @@ import { extractErrorMessage } from "../../utils/extractErrorMessage ";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import GrnOrderModal from "./GrnOrderModal";
+import Logo from "../../../public/images/logo.webp";
 import GrnInvoicePrint from "./GrnInvoicePrint";
-
 
 const Grn: React.FC = () => {
 
@@ -63,6 +63,8 @@ const Grn: React.FC = () => {
         notes: "",
     });
 
+    console.log(selectedPO?.id)
+
     const submitPayment = async () => {
         try {
             if (!form.payment_date) {
@@ -80,11 +82,10 @@ const Grn: React.FC = () => {
             const payload = {
                 links: [
                     {
-                        grn: selectedPO.id,
-                        amount: Number(selectedPO.grand_total_amount || 0) - Number(selectedPO.total_paid || 0)
+                        grn: selectedPO?.id,
+                        amount: Number(form.amount_paid),
                     }
                 ],
-                previous_grn_id: selectedPO.id,
                 payment_date: new Date(form.payment_date).toISOString(),
                 payment_method: form.payment_method,
                 amount_paid: Number(form.amount_paid),
@@ -93,7 +94,7 @@ const Grn: React.FC = () => {
             };
 
             const updatedApi = await axiosInstance.post(
-                Api.purchasePayment,
+                `${Api.purchasePayment}`,
                 payload
             );
 
@@ -276,12 +277,203 @@ const Grn: React.FC = () => {
         }
     };
 
-    const handlePrintGRN = (item: any) => {
-        setSelectedOrder(item);
-        setTimeout(() => {
-            handlePrint();
-        }, 300);
+    const handlePrintGRN = (data: any) => {
+        const printWindow = window.open("", "_blank");
+
+        if (!printWindow) {
+            alert("Popup blocked! Allow popups.");
+            return;
+        }
+
+        const html = `
+    <html>
+    <head>
+      <title>GRN Print</title>
+      <style>
+        body {
+          font-family: 'Segoe UI', Arial;
+          padding: 20px;
+          color: #333;
+        }
+
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 2px solid #eee;
+          padding-bottom: 15px;
+          margin-bottom: 20px;
+        }
+
+        .company {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .logo {
+          width: 60px;
+          height: 60px;
+          object-fit: contain;
+        }
+
+        .company-details h2 {
+          margin: 0;
+          font-size: 18px;
+        }
+
+        .company-details p {
+          margin: 2px 0;
+          font-size: 12px;
+          color: #666;
+        }
+
+        .invoice-title {
+          text-align: right;
+        }
+
+        .invoice-title h1 {
+          margin: 0;
+          font-size: 22px;
+        }
+
+        .info {
+          margin-bottom: 20px;
+          font-size: 13px;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 10px;
+        }
+
+        th {
+          background: #f4f6f8;
+          text-align: left;
+          font-size: 12px;
+        }
+
+        th, td {
+          border: 1px solid #ddd;
+          padding: 10px;
+          font-size: 12px;
+        }
+
+        .right {
+          text-align: right;
+        }
+
+        .totals {
+          margin-top: 20px;
+          width: 300px;
+          margin-left: auto;
+        }
+
+        .totals div {
+          display: flex;
+          justify-content: space-between;
+          margin: 5px 0;
+          font-size: 13px;
+        }
+
+        .grand {
+          font-weight: bold;
+          font-size: 16px;
+          border-top: 2px solid #000;
+          padding-top: 5px;
+        }
+
+      </style>
+    </head>
+
+    <body>
+
+      <!-- 🔥 HEADER -->
+      <div class="header">
+        
+        <div class="company">
+        <img src="${Logo}" class="logo"/>
+          
+          <div class="company-details">
+            <h2>ITFixer Pvt Ltd</h2>
+            <p>No.91, Ground Floor,</p>
+<p>Kothari Nagar 2nd Main Road</p>
+            <p>Ramapuram, Chennai - 600089</p>
+            <p>Phone: +91 9385939985</p>
+            <p>Email: info@itfixer199.com</p>
+          </div>
+        </div>
+
+        <div class="invoice-title">
+          <h1>GRN</h1>
+          <p><b>No:</b> ${data.grn_number}</p>
+        </div>
+
+      </div>
+
+      <!-- 🔥 INFO -->
+      <div class="info">
+        <p><b>Invoice No:</b> ${data.invoice_number}</p>
+        <p><b>Vendor:</b> ${data.vendor_name}</p>
+      </div>
+
+      <!-- 🔥 TABLE -->
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Rate</th>
+            <th>Tax %</th>
+            <th class="right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.items
+                ?.map(
+                    (item: any) => `
+            <tr>
+              <td>${item.product_name}</td>
+              <td>${item.received_quantity}</td>
+              <td>₹${item.rate}</td>
+              <td>${item.tax_percentage}%</td>
+              <td class="right">₹${item.net_amount}</td>
+            </tr>
+          `
+                )
+                .join("")}
+        </tbody>
+      </table>
+
+      <!-- 🔥 TOTALS -->
+      <div class="totals">
+        <div><span>Subtotal</span><span>₹${data.subtotal_amount}</span></div>
+        <div><span>Tax</span><span>₹${data.total_tax_amount}</span></div>
+        <div class="grand"><span>Grand Total</span><span>₹${data.grand_total_amount}</span></div>
+        <div class="grand"><span>Paid Amount</span><span>₹${Number(viewData?.total_paid).toLocaleString('en-IN')}</span></div>
+        <div class="grand"><span>Balance Amount</span><span>₹${(Number(viewData?.grand_total_amount) - Number(viewData.total_paid)).toLocaleString('en-IN')}</span></div>
+      </div>
+    </body>
+    </html>
+    `;
+
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+
+        printWindow.onload = () => {
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+        };
     };
+
+    const maxAmount =
+        Number(selectedPO?.grand_total_amount || 0) -
+        Number(selectedPO?.total_paid || 0);
+
 
     return (
         <div className="space-y-6">
@@ -400,7 +592,7 @@ const Grn: React.FC = () => {
                                 <th className="px-6 py-4 text-left">Order Details</th>
                                 <th className="px-6 py-4 text-left">Hub / Location</th>
                                 <th className="px-6 py-4 text-left">Quantity</th>
-                                <th className="px-6 py-4 text-center">Amount</th>
+                                <th className="px-6 py-4 text-right">Payment Info</th>
                                 {/* <th className="px-6 py-4 text-center">Serial</th> */}
                                 <th className="px-6 py-4 text-center">Actions</th>
                             </tr>
@@ -417,6 +609,10 @@ const Grn: React.FC = () => {
                                 data?.map((item: any, index: number) => {
                                     const balance = Number(item.grand_total) - Number(item?.grn_actual_pending_amount);
                                     const isFullyPaid = balance <= 0;
+                                    const pendingAmount =
+                                        Number(item.grand_total_amount) - Number(item.total_paid);
+                                    const receivedQuantity = item.items?.reduce((a: number, b: any) => a + Number(b.received_quantity), 0) || 0;
+
 
                                     return (
                                         <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
@@ -439,8 +635,8 @@ const Grn: React.FC = () => {
 
                                                 {/* <div className="flex justify-between text-xs font-bold">
                                                         <span className="text-gray-500">Total Qty</span> */}
-                                                <span className="text-gray-800">
-                                                    {Number(item.items?.map((i: any) => Number(i?.ordered_quantity)).reduce((a: number, b: number) => a + b, 0)).toLocaleString('en-IN')}
+                                                <span className="px-2 py-1 bg-gray-100 font-bold  rounded text-[10px] text-gray-600 uppercase">
+                                                    {receivedQuantity}
                                                 </span>
                                                 {/* </div> */}
 
@@ -461,14 +657,14 @@ const Grn: React.FC = () => {
                                                 {/* </div> */}
                                             </td>
 
-                                            <td className="px-4 py-5 align-top">
+                                            {/* <td className="px-4 py-5 align-top">
                                                 <div className="flex justify-between text-xs">
                                                     <span className="font-bold">
                                                         ₹{Number(item?.grand_total_amount)?.toLocaleString('en-IN')}
                                                     </span>
-                                                </div>
+                                                </div> */}
 
-                                                {/* <div className="bg-black text-white rounded-xl p-3 space-y-2">
+                                            {/* <div className="bg-black text-white rounded-xl p-3 space-y-2">
 
                                                     <div className="flex justify-between text-xs">
                                                         <span className="text-gray-400">Grand Total</span>
@@ -492,7 +688,45 @@ const Grn: React.FC = () => {
                                                     </div>
 
                                                 </div> */}
+                                            {/* </td> */}
+
+                                            <td className="px-6 py-4 text-right bg-gray-50/30">
+                                                <div className="flex flex-col gap-1">
+                                                    <div className="flex justify-between items-center gap-4">
+                                                        <span className="text-[9px] font-bold text-gray-400 uppercase">Grand:</span>
+                                                        <span className="text-gray-900 font-black">₹{Number(item.grand_total_amount).toLocaleString('en-IN')}</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center gap-4">
+                                                        <span className="text-[9px] font-bold text-green-400 uppercase">Paid:</span>
+                                                        <span className="text-green-700 font-bold">₹{Number(item.total_paid).toLocaleString('en-IN')}</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center gap-4">
+                                                        <span className="text-[9px] font-bold text-red-400 uppercase">
+                                                            Bal:
+                                                        </span>
+
+
+                                                        <span className="font-black text-red-600">
+                                                            ₹{Number(item.grand_total_amount) - Number(item.total_paid)}
+                                                        </span>
+
+
+                                                        {/* {balance === 0 && (
+                                                            <span className="font-black text-green-600">
+                                                                PAID
+                                                            </span>
+                                                        )} */}
+
+                                                        {/* {balance < 0 && (
+                                                            <span className="font-black text-blue-600">
+                                                                ADV ₹{Math.abs(balance).toLocaleString("en-IN")}
+                                                            </span>
+                                                        )} */}
+
+                                                    </div>
+                                                </div>
                                             </td>
+
 
                                             {/* <td className="px-6 py-4 text-right  text-gray-900">
                                                 ₹{Number(item.grand_total).toLocaleString('en-IN')}
@@ -511,9 +745,9 @@ const Grn: React.FC = () => {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
-                                                        disabled={item?.po_pending_amount === 0}
+                                                        disabled={pendingAmount <= 0}
                                                         onClick={() => handlePay(item)}
-                                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all ${item?.po_pending_amount > 0
+                                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all ${pendingAmount > 0
                                                             ? "bg-green-100 text-green-700 hover:bg-green-600 hover:text-white"
                                                             : "bg-gray-100 text-gray-300 cursor-not-allowed"
                                                             }`}
@@ -583,14 +817,14 @@ const Grn: React.FC = () => {
                                 </div>
                                 <div>
                                     <h2 className="font-black text-xl tracking-tight leading-none mb-1">
-                                        Purchase Order Details
+                                        GRN Details
                                     </h2>
                                     <div className="flex items-center gap-2">
                                         <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full font-black text-orange-400 uppercase tracking-widest">
-                                            {viewData.po_number}
+                                            {viewData?.grn_number}
                                         </span>
                                         <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
-                                            Created on: {new Date(viewData.created_at).toLocaleString()}
+                                            Created on: {new Date(viewData?.received_date).toLocaleString()}
                                         </span>
                                     </div>
                                 </div>
@@ -612,19 +846,19 @@ const Grn: React.FC = () => {
                                     <div className="w-4 h-[2px] bg-orange-500"></div> General Information
                                 </h3>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
-                                    <DetailItem label="Vendor Name" value={viewData.vendor_name} />
-                                    <DetailItem label="Vendor ID" value={`#${viewData.vendor_id}`} isCode />
-                                    <DetailItem label="Hub Name" value={viewData.hub_name} />
-                                    <DetailItem label="Hub ID" value={`#${viewData.hub_id}`} isCode />
-                                    <DetailItem label="Reference No" value={viewData.reference_number || "N/A"} />
-                                    <DetailItem label="Order Date" value={new Date(viewData.order_date).toLocaleDateString()} />
+                                    <DetailItem label="Vendor Name" value={viewData?.vendor_name} />
+                                    {/* <DetailItem label="Vendor ID" value={`#${viewData.vendor_id}`} isCode /> */}
+                                    <DetailItem label="Hub Name" value={viewData?.hub_name} />
+                                    {/* <DetailItem label="Hub ID" value={`#${viewData.hub_id}`} isCode /> */}
+                                    {/* <DetailItem label="Reference No" value={viewData.reference_number || "N/A"} /> */}
+                                    <DetailItem label="Order Date" value={new Date(viewData?.received_date).toLocaleDateString()} />
                                     <DetailItem
                                         label="Status"
                                         value={Number(viewData.grand_total) <= Number(viewData.total_paid) ? "Completed" : "Pending"}
                                         isStatus
                                         statusType={Number(viewData.grand_total) <= Number(viewData.total_paid) ? "success" : "warning"}
                                     />
-                                    <DetailItem label="Last Updated" value={new Date(viewData.updated_at).toLocaleDateString()} />
+                                    {/* <DetailItem label="Last Updated" value={new Date(viewData.updated_at).toLocaleDateString()} /> */}
                                 </div>
                             </section>
 
@@ -646,13 +880,13 @@ const Grn: React.FC = () => {
                                             {viewData.items?.map((item: any, i: number) => (
                                                 <tr key={i} className="hover:bg-gray-50/30 transition-colors">
                                                     <td className="px-6 py-4">
-                                                        <p className="font-black text-gray-900">{item.item_name}</p>
-                                                        <p className="text-[10px] text-gray-400 font-bold uppercase">SKU: {item.item_id || 'N/A'}</p>
+                                                        <p className="font-black text-gray-900">{item?.product_name}</p>
+                                                        {/* <p className="text-[10px] text-gray-400 font-bold uppercase">SKU: {item.item_id || 'N/A'}</p> */}
                                                     </td>
-                                                    <td className="px-6 py-4 text-center font-black text-gray-600">{item.quantity}</td>
-                                                    <td className="px-6 py-4 text-right font-medium">₹{Number(item.rate).toLocaleString('en-IN')}</td>
-                                                    <td className="px-6 py-4 text-right text-gray-400">{item.tax_percentage || '0'}%</td>
-                                                    <td className="px-6 py-4 text-right font-black text-gray-900">₹{(item.quantity * item.rate).toLocaleString('en-IN')}</td>
+                                                    <td className="px-6 py-4 text-center font-black text-gray-600">{Number(item?.received_quantity)}</td>
+                                                    <td className="px-6 py-4 text-right font-medium">₹{Number(item?.rate).toLocaleString('en-IN')}</td>
+                                                    <td className="px-6 py-4 text-right text-gray-400">{Number(item?.tax_percentage) || '0'}%</td>
+                                                    <td className="px-6 py-4 text-right font-black text-gray-900">₹{Number(item?.amount)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -663,7 +897,7 @@ const Grn: React.FC = () => {
                             {/* PAYMENT & FINANCIALS */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 {/* Transaction Log */}
-                                <div>
+                                {/* <div>
                                     <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Payment Log</h3>
                                     <div className="space-y-3">
                                         {viewData.payments?.length > 0 ? (
@@ -690,27 +924,31 @@ const Grn: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-                                </div>
+                                </div> */}
 
                                 {/* Financial Summary */}
                                 <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100">
                                     <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Calculation</h3>
                                     <div className="space-y-4">
-                                        <SummaryRow label="Sub Total" value={viewData.sub_total || viewData.grand_total} />
-                                        <SummaryRow label="Tax Amount" value={viewData.tax_amount || 0} />
-                                        <SummaryRow label="Discount" value={viewData.discount_amount || 0} isDiscount />
+                                        <SummaryRow label="Sub Total" value={viewData?.subtotal_amount || viewData?.grand_total_amount} />
+                                        <SummaryRow label="Tax Amount" value={viewData?.total_tax_amount || 0} />
+                                        {viewData?.total_discount_amount > 0 && (
+                                            <SummaryRow label="Discount" value={viewData?.total_discount_amount || 0} isDiscount />
+
+                                        )}
+
                                         <div className="h-[1px] bg-gray-200 my-2"></div>
                                         <div className="flex justify-between items-center">
                                             <span className="text-sm font-black text-gray-900 uppercase">Grand Total</span>
-                                            <span className="text-2xl font-black text-orange-600">₹{Number(viewData.grand_total).toLocaleString('en-IN')}</span>
+                                            <span className="text-2xl font-black text-orange-600">₹{Number(viewData?.grand_total_amount).toLocaleString('en-IN')}</span>
                                         </div>
                                         <div className="flex justify-between items-center text-green-600 pt-2">
                                             <span className="text-[10px] font-black uppercase">Total Paid</span>
-                                            <span className="text-sm font-black">₹{Number(viewData.total_paid).toLocaleString('en-IN')}</span>
+                                            <span className="text-sm font-black">₹{Number(viewData?.total_paid).toLocaleString('en-IN')}</span>
                                         </div>
                                         <div className="flex justify-between items-center text-red-500">
                                             <span className="text-[10px] font-black uppercase tracking-widest">Balance Due</span>
-                                            <span className="text-sm font-black underline underline-offset-4">₹{(Number(viewData.grand_total) - Number(viewData.total_paid)).toLocaleString('en-IN')}</span>
+                                            <span className="text-sm font-black underline underline-offset-4">₹{(Number(viewData?.grand_total_amount) - Number(viewData.total_paid)).toLocaleString('en-IN')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -743,20 +981,22 @@ const Grn: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="p-6 space-y-5 overflow-y-auto flex-1 custom-scrollbar">
-                            {/* BALANCE SUMMARY */}
-                            <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex justify-between items-center group transition-all hover:bg-indigo-100/50">
-                                <div>
-                                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest leading-none mb-1.5">Total Balance Due</p>
-                                    <h4 className="text-2xl font-black text-indigo-700 tracking-tighter">
-                                        ₹{(Number(selectedPO?.grand_total_amount || 0) - Number(selectedPO?.total_paid || 0)).toLocaleString('en-IN')}
-                                    </h4>
-                                </div>
-                                <div className="bg-white p-2 rounded-xl shadow-sm text-indigo-600">
-                                    <CreditCard size={20} />
-                                </div>
+
+                        <div className="sticky top-0 z-10 bg-white border-b px-4 py-3 flex items-center justify-between">
+
+                            {/* LEFT */}
+                            <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                    Payable Amount
+                                </p>
+                                <p className="text-lg font-extrabold text-gray-900">
+                                    ₹{Number(selectedPO.grand_total_amount) - Number(selectedPO.total_paid)}
+                                </p>
                             </div>
 
+                        </div>
+
+                        <div className="p-6 space-y-5">
                             {/* DATE FIELD */}
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider ml-1">Payment Date & Time</label>
@@ -792,9 +1032,36 @@ const Grn: React.FC = () => {
                                     <input
                                         type="number"
                                         placeholder="0.00"
+                                        value={form.amount_paid ?? ""} // ✅ controlled input
                                         className="w-full border-2 border-gray-100 bg-gray-50 p-2.5 rounded-xl text-sm font-black text-green-600 focus:border-orange-500 focus:bg-white outline-none transition-all"
-                                        value={form.amount_paid}
-                                        onChange={(e) => setForm({ ...form, amount_paid: e.target.value })}
+                                        onChange={(e) => {
+                                            let val = e.target.value;
+
+                                            // ✅ allow empty (user typing)
+                                            if (val === "") {
+                                                setForm({ ...form, amount_paid: "" });
+                                                return;
+                                            }
+
+                                            let num:any = Number(val);
+
+                                            // ❌ prevent invalid
+                                            if (isNaN(num)) return;
+
+                                            // ❌ prevent negative
+                                            if (num < 0) num = 0;
+
+                                            // ❌ prevent exceeding
+                                            if (num > maxAmount) num = maxAmount;
+
+                                            // ✅ fix decimal (2 or 4 based on backend)
+                                            num = Number(num.toFixed(2));
+
+                                            setForm({
+                                                ...form,
+                                                amount_paid: num,
+                                            });
+                                        }}
                                     />
                                 </div>
 
