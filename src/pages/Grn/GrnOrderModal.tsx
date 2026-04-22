@@ -273,17 +273,14 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
 
         if (field === "received_quantity") {
             const qty = Number(value);
-
             let serials = updated[i].serial_numbers || [];
 
             if (qty > serials.length) {
-                // add empty serials
                 serials = [...serials, ...Array(qty - serials.length).fill("")];
-            } else {
-                // trim serials
+            } else if (qty < serials.length && !updated[i].manuallyUpdatingSerials) {
+                // Only trim if NOT coming from a serial scan increase
                 serials = serials.slice(0, qty);
             }
-
             updated[i].serial_numbers = serials;
         }
 
@@ -314,11 +311,34 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
     };
 
     // const handleSerialChange = (i: number, index: number, value: string) => {
-    //     const updated = [...form.items];
+    //     const updatedItems = [...form.items];
+    //     updatedItems[i].serial_numbers[index] = value;
+    //     setForm({ ...form, items: updatedItems });
+    // };
 
-    //     updated[i].serial_numbers[index] = value;
+    // const handleSerialScan = (serial: string, rowIndex: number) => {
+    //     if (!serial) return;
 
-    //     setForm({ ...form, items: updated });
+    //     const updatedItems = [...form.items];
+    //     const row = updatedItems[rowIndex];
+
+    //     if (!row || !row.product) {
+    //         toast.error("Please select a product first ❌");
+    //         return;
+    //     }
+
+    //     const existingSerials = row.serial_numbers || [];
+    //     if (existingSerials.includes(serial)) {
+    //         toast.error("Serial already added ⚠️");
+    //         return;
+    //     }
+
+    //     // Add the new serial
+    //     const newSerials = [...existingSerials, serial];
+
+    //     // Update the item and trigger the amount calculation via handleItemChange
+    //     handleItemChange(rowIndex, "serial_numbers", newSerials);
+    //     handleItemChange(rowIndex, "quantity", newSerials.length);
     // };
 
     const addItem = () => {
@@ -617,7 +637,7 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                 <thead>
                                     <tr className="bg-gray-50/80 border-b border-gray-200">
                                         <th className="px-4 py-4 text-[11px] font-black text-gray-500 uppercase tracking-widest">Product Info</th>
-                                        <th className="px-4 py-4 text-[11px] font-black text-gray-500 uppercase tracking-widest w-64">Inventory & Serials</th>
+                                        <th className="px-4 py-4 text-[11px] font-black text-gray-500 uppercase tracking-widest w-80">Inventory & Serials</th>
                                         <th className="px-4 py-4 text-[11px] font-black text-gray-500 uppercase tracking-widest w-40">Pricing & Tax</th>
                                         <th className="px-4 py-4 text-[11px] font-black text-gray-500 uppercase tracking-widest w-48">Discounts</th>
                                         <th className="px-4 py-4 text-[11px] font-black text-gray-500 uppercase tracking-widest w-48">Expiry</th>
@@ -657,6 +677,21 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                                             onChange={(e) => handleItemChange(i, "received_quantity", e.target.value)}
                                                         />
                                                     </div>
+                                                    {/* Serial List Display */}
+                                                    {it.serial_numbers?.length > 0 && (
+                                                        <div className="bg-white border border-gray-100 rounded-xl p-2 max-h-32 overflow-y-auto space-y-1 shadow-inner">
+                                                            {it.serial_numbers.map((sn: string, snIdx: number) => (
+                                                                <div key={snIdx} className="flex items-center gap-2 bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100">
+                                                                    <span className="text-[9px] font-black text-gray-400 w-4">{snIdx + 1}</span>
+                                                                    <input
+                                                                        className="flex-1 bg-transparent border-none focus:ring-0 text-[10px] font-mono font-bold text-gray-600 p-0"
+                                                                        value={sn}
+                                                                        onChange={(e) => handleSerialChange(i, snIdx, e.target.value)}
+                                                                    />
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 <div className="flex-[2]">

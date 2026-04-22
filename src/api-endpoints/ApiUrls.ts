@@ -206,6 +206,9 @@ const purchaseGRNList = `${baseUrl}/api/purchase/order`;
 // purchaseOrderAddSerial
 const purchaseOrderAddSerial = `${baseUrl}/api/product-inventory/movement/purchase-order-add-serial/`;
 
+// purchasePayment
+const purchasePayment = `${baseUrl}/api/purchase/payment/`;
+
 // ACCOUNTS 
 const monthlyComparison = `${baseUrl}/api/stats/reports/finance/monthly-comparison`;
 
@@ -237,8 +240,6 @@ const createOrderPayment = `${baseUrl}/api/order/public/order/`;
 
 const purchaseExcessCreditEntities = `${baseUrl}/api/purchase/excess-credit-entities/`;
 
-// purchasePayment
-const purchasePayment=`${baseUrl}/api/purchase/payment/`;
 
 // vendorPurchaseSummary
 const vendorPurchaseSummary =`${baseUrl}/api/stats/reports/finance/vendor-purchase-summary`;
@@ -337,12 +338,12 @@ export default {
   paymentModeWise,
   productWise,
   purchaseReturn,
+  purchasePayment,
   consolidatedStock,
   salesReturns,
   createOrderPayment,
   consolidatedInventoryLog,
   purchaseExcessCreditEntities,
-  purchasePayment,
   vendorPurchaseSummary,
   salesPaymentModeWise,
   salesProductWise,

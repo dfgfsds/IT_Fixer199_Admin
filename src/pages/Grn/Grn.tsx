@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Edit3, Eye, Loader2, Plus, Printer, Search, Undo2 } from "lucide-react";
+import { CreditCard, Edit3, Eye, Loader2, Plus, Printer, Search, Undo2 } from "lucide-react";
 import axiosInstance from "../../configs/axios-middleware";
 import Pagination from "../../components/Pagination";
 // import PurchaseOrderModal from "./PurchaseOrderModal";
@@ -10,6 +10,7 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import GrnOrderModal from "./GrnOrderModal";
 import Logo from "../../../public/images/logo.webp";
+import GrnInvoicePrint from "./GrnInvoicePrint";
 
 const Grn: React.FC = () => {
 
@@ -59,6 +60,7 @@ const Grn: React.FC = () => {
         payment_method: "",
         amount_paid: "",
         payment_reference: "",
+        notes: "",
     });
 
     console.log(selectedPO?.id)
@@ -88,6 +90,7 @@ const Grn: React.FC = () => {
                 payment_method: form.payment_method,
                 amount_paid: Number(form.amount_paid),
                 payment_reference: form.payment_reference || "",
+                notes: form.notes || "",
             };
 
             const updatedApi = await axiosInstance.post(
@@ -112,8 +115,9 @@ const Grn: React.FC = () => {
             setForm({
                 payment_date: new Date().toISOString().slice(0, 16),
                 payment_method: "",
-                amount_paid: "",
+                amount_paid: (Number(selectedPO?.grand_total_amount || 0) - Number(selectedPO?.total_paid || 0)).toString(),
                 payment_reference: "",
+                notes: "",
             });
         }
     }, [showPayModal]);
@@ -183,13 +187,6 @@ const Grn: React.FC = () => {
         contentRef: componentRef,
     });
 
-    const triggerPrint = (order: any) => {
-        setSelectedOrder(order);
-
-        setTimeout(() => {
-            handlePrint();
-        }, 200);
-    };
 
     // const handleGrnInvoice = async (item: any) => {
     //     try {
@@ -804,6 +801,10 @@ const Grn: React.FC = () => {
                 </div>
             </div>
 
+            <div style={{ display: "none" }}>
+                <GrnInvoicePrint ref={componentRef} data={selectedOrder} />
+            </div>
+
             {showViewModal && viewData && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex justify-center items-center z-[100] p-4">
                     <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-300">
@@ -967,7 +968,7 @@ const Grn: React.FC = () => {
 
             {showPayModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[100] p-4">
-                    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
+                    <div className="bg-white w-full max-w-md max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-gray-100 animate-in fade-in zoom-in duration-200">
 
                         {/* Header */}
                         <div className="bg-gray-900 p-5 flex items-center gap-3">
@@ -1075,6 +1076,18 @@ const Grn: React.FC = () => {
                                         onChange={(e) => setForm({ ...form, payment_reference: e.target.value })}
                                     />
                                 </div>
+                            </div>
+
+                            {/* NOTES */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider ml-1">Notes</label>
+                                <textarea
+                                    placeholder="Enter additional payment details..."
+                                    rows={2}
+                                    className="w-full border-2 border-gray-100 bg-gray-50 p-2.5 rounded-xl text-sm font-medium focus:border-orange-500 focus:bg-white outline-none transition-all resize-none"
+                                    value={form.notes}
+                                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                                />
                             </div>
 
                             {/* API Error Message */}
