@@ -237,6 +237,18 @@ const createOrderPayment = `${baseUrl}/api/order/public/order/`;
 
 const purchaseExcessCreditEntities = `${baseUrl}/api/purchase/excess-credit-entities/`;
 
+// purchasePayment
+const purchasePayment=`${baseUrl}/api/purchase/payment/`;
+
+// vendorPurchaseSummary
+const vendorPurchaseSummary =`${baseUrl}/api/stats/reports/finance/vendor-purchase-summary`;
+
+// salesPaymentModeWise
+const salesPaymentModeWise =`${baseUrl}/api/stats/reports/sales/payment-mode-wise`;
+
+// salesProductWise
+const salesProductWise =`${baseUrl}/api/stats/reports/sales/product-wise`;
+
 export default {
   login,
   allUsers,
@@ -330,6 +342,10 @@ export default {
   createOrderPayment,
   consolidatedInventoryLog,
   purchaseExcessCreditEntities,
+  purchasePayment,
+  vendorPurchaseSummary,
+  salesPaymentModeWise,
+  salesProductWise,
 };
 
 

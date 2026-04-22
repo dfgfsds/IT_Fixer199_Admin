@@ -308,6 +308,18 @@ const Sidebar: React.FC = () => {
           name: 'Supplier Outstanding', path: '/supplierOutstanding'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
+        {
+          name: 'Vendor Purchase', path: '/vendorPurchase'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Sales Payment Mode Wise', path: '/salesPaymentModeWise'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Sales Product Wise', path: '/salesProductWise'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
         // {
         //   name: 'Payment mode wise', path: '/paymentModeWise'
         //   , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
