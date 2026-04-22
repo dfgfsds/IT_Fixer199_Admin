@@ -754,7 +754,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                                     <Trash2 size={20} strokeWidth={2.5} />
                                                 </button>
                                             </td>
-                                            
+
                                         </tr>
                                     ))}
                                 </tbody>
@@ -817,6 +817,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                                 type="radio"
                                                 name="amountType"
                                                 value="full"
+                                                disabled={!selectedGRN}
                                                 checked={amountType === "full"}
                                                 onChange={() => {
                                                     setAmountType("full");
@@ -838,6 +839,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                                 type="radio"
                                                 name="amountType"
                                                 value="custom"
+                                                disabled={!selectedGRN}
                                                 checked={amountType === "custom"}
                                                 onChange={() => {
                                                     setAmountType("custom");

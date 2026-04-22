@@ -14,16 +14,22 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
     const [products, setProducts] = useState([]);
     const [apiErrors, setApiErrors] = useState<string>("");
     const [search, setSearch] = useState("");
+    const [grnList, setGrnList] = useState<any[]>([]);
+    const [amountType, setAmountType] = useState<"full" | "custom">("custom");
+    const [selectedGRN, setSelectedGRN] = useState<any>("");
+    const [paymentAmount, setPaymentAmount] = useState(0); // Initial Payment
+    const walletUsed = Number(amountType === "full" ? selectedGRN?.excess_amount : selectedGRN?.used_amount);
+    const [grandTotal, setGrandTotal] = useState(0); // API இருந்து
 
     const initialState = {
         vendor: "",
         hub: "",
         // po_number: "",
-        order_date: "",
-        due_date: "",
+        invoice_date: "",
+        received_date: "",
         bill_to: "",
         ship_to: "",
-        payment_terms: "",
+        gate_pass_number: "",
         shipping_charges: 0,
         other_charges: 0,
         currency: "INR",
@@ -36,7 +42,7 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                 product: "",
                 products: [], // 🔥 IMPORTANT
                 item_name: "",
-                quantity: 1,
+                received_quantity: 1,
                 serial_numbers: [""],
                 rate: 0,
                 discount_type: "PERCENT",
@@ -52,6 +58,37 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
 
     const [form, setForm] = useState<any>(initialState);
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (form?.vendor) {
+            fetchPurchaseExcessCreditEntities();
+        }
+    }, [form?.vendor])
+
+    const fetchPurchaseExcessCreditEntities = async () => {
+        try {
+            const updatedAPi = await axiosInstance.get(`${Api?.purchaseExcessCreditEntities}?vendor_id=${form?.vendor}`)
+            if (updatedAPi) {
+                const list = updatedAPi?.data?.grns?.items || [];
+
+                const formatted = list.map((g: any) => ({
+                    id: g?.id,
+                    grn_number: g?.grn_number,
+                    excess_amount: Number(g?.excess_amount || 0),
+                    used_amount: 0
+                }));
+
+                setGrnList(formatted);
+                // setBalanceAmount(updatedAPi?.data?.grns?.items)
+            }
+        } catch (error) {
+
+        }
+    };
+
+    const total = form.items.reduce((sum: number, i: any) => sum + Number(i.amount || 0), 0);
+    const afterWalletTotal = Math.max(total - walletUsed, 0);
+    const balanceAmount = Math.max(afterWalletTotal - paymentAmount, 0);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -99,7 +136,7 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                     product: product.id,
                     products: [product],
                     item_name: product.name,
-                    quantity: 1,
+                    received_quantity: 1,
                     rate: Number(product.price || 0),
                     discount_type: "PERCENT",
                     discount_value: 0,
@@ -117,14 +154,14 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
 
                 if (existingIndex !== -1) {
                     // ✅ INCREASE QTY
-                    updatedItems[existingIndex].quantity += 1;
+                    updatedItems[existingIndex].received_quantity += 1;
                 } else {
                     // ✅ ADD NEW ROW
                     updatedItems.push({
                         product: product.id,
                         products: [product],
                         item_name: product.name,
-                        quantity: 1,
+                        received_quantity: 1,
                         rate: Number(product.price || 0),
                         discount_type: "PERCENT",
                         discount_value: 0,
@@ -139,7 +176,7 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
 
             // 🔥 RECALCULATE
             updatedItems = updatedItems.map((item) => {
-                const qty = Number(item.quantity || 0);
+                const qty = Number(item.received_quantity || 0);
                 const rate = Number(item.rate || 0);
                 const discount = Number(item.discount_value || 0);
                 const tax = Number(item.tax_percentage || 0);
@@ -171,29 +208,43 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData: any[] = XLSX.utils.sheet_to_json(sheet);
 
-        // 🔥 LOOP EACH ROW
         const items = await Promise.all(
             jsonData.map(async (row) => {
                 try {
+                    // ✅ normalize keys (important)
+                    const barcode = row.Barcode || row.barcode;
+                    const qty = Number(row.Qty || row.qty || 1);
+                    const price = Number(row.Price || row.price || 0);
+                    const tax = Number(row.Tax || row.tax || 0);
+
+                    if (!barcode) return null;
+
+                    // 🔥 fetch product using barcode
                     const res = await axiosInstance.get(
-                        `${Api.products}?barcode=${row?.barcode}`
+                        `${Api.products}?barcode=${barcode}`
                     );
 
                     const product = res?.data?.products?.[0];
+                    if (!product) return null;
 
                     return {
-                        product: product?.id || "",
-                        products: [product], // 🔥 important
-                        item_name: product?.name || "",
-                        quantity: Number(row.qty || 1),
-                        rate: Number(product?.price || 0),
-                        discount_type: row.discount_type || "PERCENT",
-                        discount_value: Number(row.discount_value || 0),
-                        tax_percentage: Number(row.tax || 0),
+                        product: product.id,
+                        products: [product],
+                        item_name: product.name,
+
+                        // ✅ FROM EXCEL (NOT API)
+                        received_quantity: qty,
+                        rate: price,
+                        tax_percentage: tax,
+
+                        discount_type: "PERCENT",
+                        discount_value: 0,
+
                         serial_numbers: [],
-                        amount: 0,
+                        amount: qty * price,
                     };
-                } catch {
+                } catch (err) {
+                    console.error("Row failed:", row);
                     return null;
                 }
             })
@@ -220,7 +271,7 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
         const updated = [...form.items];
         updated[i][field] = value;
 
-        if (field === "quantity") {
+        if (field === "received_quantity") {
             const qty = Number(value);
             let serials = updated[i].serial_numbers || [];
 
@@ -241,7 +292,7 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
             updated[i].item_name = product?.name || "";
         }
 
-        const qty = Number(updated[i].quantity || 0);
+        const qty = Number(updated[i].received_quantity || 0);
         const rate = Number(updated[i].rate || 0);
         const discount = Number(updated[i].discount_value || 0);
         const tax = Number(updated[i].tax_percentage || 0);
@@ -259,36 +310,36 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
         setForm({ ...form, items: updated });
     };
 
-    const handleSerialChange = (i: number, index: number, value: string) => {
-        const updatedItems = [...form.items];
-        updatedItems[i].serial_numbers[index] = value;
-        setForm({ ...form, items: updatedItems });
-    };
+    // const handleSerialChange = (i: number, index: number, value: string) => {
+    //     const updatedItems = [...form.items];
+    //     updatedItems[i].serial_numbers[index] = value;
+    //     setForm({ ...form, items: updatedItems });
+    // };
 
-    const handleSerialScan = (serial: string, rowIndex: number) => {
-        if (!serial) return;
+    // const handleSerialScan = (serial: string, rowIndex: number) => {
+    //     if (!serial) return;
 
-        const updatedItems = [...form.items];
-        const row = updatedItems[rowIndex];
+    //     const updatedItems = [...form.items];
+    //     const row = updatedItems[rowIndex];
 
-        if (!row || !row.product) {
-            toast.error("Please select a product first ❌");
-            return;
-        }
+    //     if (!row || !row.product) {
+    //         toast.error("Please select a product first ❌");
+    //         return;
+    //     }
 
-        const existingSerials = row.serial_numbers || [];
-        if (existingSerials.includes(serial)) {
-            toast.error("Serial already added ⚠️");
-            return;
-        }
+    //     const existingSerials = row.serial_numbers || [];
+    //     if (existingSerials.includes(serial)) {
+    //         toast.error("Serial already added ⚠️");
+    //         return;
+    //     }
 
-        // Add the new serial
-        const newSerials = [...existingSerials, serial];
+    //     // Add the new serial
+    //     const newSerials = [...existingSerials, serial];
 
-        // Update the item and trigger the amount calculation via handleItemChange
-        handleItemChange(rowIndex, "serial_numbers", newSerials);
-        handleItemChange(rowIndex, "quantity", newSerials.length);
-    };
+    //     // Update the item and trigger the amount calculation via handleItemChange
+    //     handleItemChange(rowIndex, "serial_numbers", newSerials);
+    //     handleItemChange(rowIndex, "quantity", newSerials.length);
+    // };
 
     const addItem = () => {
         setForm({
@@ -300,7 +351,7 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                     product: "",
                     products: [], // 🔥 MUST
                     item_name: "",
-                    quantity: 1,
+                    received_quantity: 1,
                     serial_numbers: [""],
                     rate: 0,
                     discount_type: "PERCENT",
@@ -320,7 +371,7 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
         setForm({ ...form, items: updated });
     };
 
-    const total = form.items.reduce((sum: number, i: any) => sum + Number(i.amount || 0), 0);
+    // const total = form.items.reduce((sum: number, i: any) => sum + Number(i.amount || 0), 0);
 
     const handleSubmit = async () => {
         try {
@@ -331,13 +382,24 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                 return new Date(date).toISOString();
             };
 
+            const amount =
+                amountType === "full"
+                    ? selectedGRN?.excess_amount
+                    : selectedGRN?.used_amount;
+
             // 1. Build initial payload
             const payload: any = {
                 ...form,
-                items: form.items.map((i: any) => ({
+                previous_grn_id: selectedGRN?.id,
+                ...(Number.isFinite(amount)
+                    ? {
+                        payment_amount: Number(amount.toFixed(4)),
+                    }
+                    : {}),
+                items: form?.items?.map((i: any) => ({
                     product: i.product,
                     item_name: i.item_name,
-                    quantity: Number(i.quantity),
+                    received_quantity: Number(i.received_quantity),
                     rate: Number(i.rate),
                     unit: "Units",
                     description: i.description || "",
@@ -392,10 +454,71 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
         }
     };
 
+    const handleSerialScan = (value: string, i: number) => {
+        const trimmedValue = value.trim();
+        if (!trimmedValue) return;
+
+        const newItems = [...form.items];
+        const item = newItems[i];
+        if (!item) return;
+
+        let serials = [...(item.serial_numbers || [])];
+
+        // ✅ Duplicate check
+        const isDuplicate = serials.some(
+            (sn) => sn.toLowerCase() === trimmedValue.toLowerCase()
+        );
+
+        if (isDuplicate) {
+            toast.error(`Serial Number "${trimmedValue}" already added! ⚠️`);
+            return;
+        }
+
+        // ✅ Add serial
+        const emptyIndex = serials.findIndex((sn) => !sn || sn.trim() === "");
+
+        if (emptyIndex !== -1) {
+            serials[emptyIndex] = trimmedValue;
+        } else if (serials.length < Number(item.received_quantity)) { // ✅ FIXED
+            serials.push(trimmedValue);
+        } else {
+            toast.error("Quantity limit reached! 🛑");
+            return;
+        }
+
+        newItems[i] = {
+            ...item,
+            serial_numbers: serials,
+        };
+
+        setForm((prev: any) => ({
+            ...prev,
+            items: newItems,
+        }));
+    };
+
+    const handleSerialChange = (
+        itemIndex: number,
+        serialIndex: number,
+        value: string
+    ) => {
+        const newItems = [...form.items];
+
+        if (newItems[itemIndex]?.serial_numbers) {
+            newItems[itemIndex].serial_numbers[serialIndex] = value;
+
+            setForm((prev: any) => ({
+                ...prev,
+                items: newItems,
+            }));
+        }
+    };
+
     const handleClose = () => {
         setForm(initialState);
         setApiErrors("");
         onClose();
+        setSelectedGRN("");
     };
 
     if (!show) return null;
@@ -447,9 +570,9 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                     {/* DATES & TERMS */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[
-                            ["Order Date", "order_date", "date"],
-                            ["Due Date", "due_date", "date"],
-                            ["Payment Terms", "payment_terms", "text"],
+                            ["Invoice Date", "invoice_date", "date"],
+                            ["Received Date", "received_date", "date"],
+                            ["Gate Pass Number", "gate_pass_number", "text"],
                             // ["Currency", "currency", "text"],
                         ].map(([label, key, type]: any) => (
                             <div key={key}>
@@ -460,7 +583,7 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                     </div>
 
                     {/* ADDRESSES */}
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className={labelClass}>Bill To</label>
                             <textarea rows={2} className={inputClass} placeholder="Billing Address..." value={form.bill_to} onChange={(e) => setForm({ ...form, bill_to: e.target.value })} />
@@ -469,7 +592,7 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                             <label className={labelClass}>Ship To</label>
                             <textarea rows={2} className={inputClass} placeholder="Shipping Address..." value={form.ship_to} onChange={(e) => setForm({ ...form, ship_to: e.target.value })} />
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* ITEMS TABLE */}
                     <div>
@@ -544,36 +667,15 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
 
                                             {/* 2. INVENTORY & SERIALS */}
                                             <td className="px-4 py-5 align-top">
-                                                <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100 flex flex-col gap-3">
-                                                    <div className="flex gap-2 items-start">
-                                                        <div className="w-16 space-y-1">
-                                                            <span className="text-[9px] font-black text-slate-400 uppercase ml-1">QTY</span>
-                                                            <div className="bg-white rounded-xl border border-gray-100 shadow-sm h-[42px] flex items-center">
-                                                                <input
-                                                                    type="number"
-                                                                    className="w-full bg-transparent border-none focus:ring-0 text-sm font-black text-center text-indigo-600 p-2"
-                                                                    value={it.quantity}
-                                                                    onChange={(e) => handleItemChange(i, "quantity", e.target.value)}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex-1 space-y-1">
-                                                            <span className="text-[9px] font-black text-slate-400 uppercase ml-1">SCAN SERIAL</span>
-                                                            <div className="bg-white rounded-xl border border-gray-100 shadow-sm h-[42px] flex items-center">
-                                                                <input
-                                                                    type="text"
-                                                                    placeholder="Enter/Scan..."
-                                                                    className="w-full bg-transparent border-none focus:ring-0 outline-none p-2 text-sm font-bold text-slate-600"
-                                                                    onKeyDown={(e: any) => {
-                                                                        if (e.key === "Enter") {
-                                                                            e.preventDefault();
-                                                                            handleSerialScan(e.target.value, i);
-                                                                            e.target.value = "";
-                                                                        }
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                        </div>
+                                                <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100">
+                                                    <div className="flex items-center justify-between mb-3 bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
+                                                        <span className="text-[10px] font-black text-gray-400 uppercase ml-1">Received Quantity</span>
+                                                        <input
+                                                            type="number"
+                                                            className="w-16 bg-transparent border-none focus:ring-0 text-sm font-black text-right"
+                                                            value={it.received_quantity}
+                                                            onChange={(e) => handleItemChange(i, "received_quantity", e.target.value)}
+                                                        />
                                                     </div>
                                                     {/* Serial List Display */}
                                                     {it.serial_numbers?.length > 0 && (
@@ -591,6 +693,37 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                                         </div>
                                                     )}
                                                 </div>
+
+                                                <div className="flex-[2]">
+                                                    <label className="text-[10px] text-slate-400 font-bold block mb-1">SCAN SERIAL</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Enter/Scan..."
+                                                        className="w-full border border-slate-200 p-2 rounded-md bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none transition-all"
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === "Enter") {
+                                                                handleSerialScan(e.currentTarget.value, i);
+                                                                e.currentTarget.value = "";
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+                                                {form.items[i]?.serial_numbers?.length > 0 && (
+                                                    <div className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1 max-h-32 overflow-y-auto grid grid-cols-1 gap-1 shadow-inner">
+                                                        {form.items[i]?.serial_numbers?.map((sn: string, sIndex: number) => (
+                                                            <input
+                                                                key={sIndex}
+                                                                value={sn}
+                                                                onChange={(e) =>
+                                                                    handleSerialChange(i, sIndex, e.target.value)
+                                                                }
+                                                                className="border px-2 py-1"
+                                                                placeholder={`Serial ${sIndex + 1}`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                )}
+
                                             </td>
 
                                             {/* 3. PRICING & TAX - Combined for better feel */}
@@ -677,6 +810,126 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                         </div>
 
                     </div>
+                    <div className="space-y-3">
+
+                        {/* WALLET SELECT */}
+                        {grnList?.length ? (
+                            <>
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-500">
+                                        Apply Wallet
+                                    </label>
+
+                                    <select
+                                        className="w-full border rounded px-3 py-2 mt-1 text-sm"
+                                        value={selectedGRN?.id || ""}
+                                        onChange={(e) => {
+                                            const grn = grnList.find(i => i.id === e.target.value);
+
+                                            setSelectedGRN({
+                                                ...grn,
+                                                used_amount: 0
+                                            });
+                                            setAmountType("custom");
+                                        }}
+                                    >
+                                        <option value="">Select Wallet</option>
+                                        {grnList.map(grn => (
+                                            <option key={grn.id} value={grn.id}>
+                                                {grn.grn_number} (₹{grn.excess_amount})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {selectedGRN && (
+                                    <>
+
+                                        {/* BALANCE */}
+                                        {selectedGRN && (
+                                            <div className="text-xs text-gray-500">
+                                                Wallet Balance:
+                                                <span className="ml-1 font-semibold text-gray-800">
+                                                    ₹{selectedGRN.excess_amount}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* RADIO OPTIONS */}
+                                        {selectedGRN && (
+                                            <div className="flex gap-4 text-sm">
+                                                <label className="flex items-center gap-1">
+                                                    <input
+                                                        type="radio"
+                                                        name="amountType"
+                                                        value="full"
+                                                        checked={amountType === "full"}
+                                                        onChange={() => {
+                                                            setAmountType("full");
+
+                                                            setSelectedGRN((prev: any) => ({
+                                                                ...prev,
+                                                                used_amount: Math.min(
+                                                                    prev.excess_amount,
+                                                                    grandTotal
+                                                                )
+                                                            }));
+                                                        }}
+                                                    />
+                                                    Full Amount
+                                                </label>
+
+                                                <label className="flex items-center gap-1">
+                                                    <input
+                                                        type="radio"
+                                                        name="amountType"
+                                                        value="custom"
+                                                        checked={amountType === "custom"}
+                                                        onChange={() => {
+                                                            setAmountType("custom");
+
+                                                            setSelectedGRN((prev: any) => ({
+                                                                ...prev,
+                                                                used_amount: 0
+                                                            }));
+                                                        }}
+                                                    />
+                                                    Custom
+                                                </label>
+                                            </div>
+                                        )}
+
+                                        {/* INPUT */}
+                                        {selectedGRN && (
+                                            <input
+                                                type="number"
+                                                disabled={amountType === "full"}
+                                                className="w-full border rounded px-3 py-2 text-sm"
+                                                placeholder="Enter amount"
+                                                value={selectedGRN.used_amount || ""}
+                                                max={selectedGRN.excess_amount}
+                                                onChange={(e) => {
+                                                    const val = Number(e.target.value);
+
+                                                    if (val > selectedGRN.excess_amount) return;
+
+                                                    setSelectedGRN((prev: any) => ({
+                                                        ...prev,
+                                                        used_amount: val
+                                                    }));
+                                                }}
+                                            />
+                                        )}
+                                    </>
+                                )}
+
+                            </>
+                        ) : ''}
+
+
+
+
+                    </div>
 
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t">
@@ -751,7 +1004,9 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
 
 
                                 <div className="col-span-2">
-                                    <label className={labelClass}>Amount</label>
+                                    <label className={labelClass}>
+                                        Amount (Max: ₹{afterWalletTotal ? afterWalletTotal : ""})
+                                    </label>
                                     <input
                                         type="number"
                                         className={inputClass}
@@ -777,12 +1032,45 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                 <textarea rows={3} className={inputClass} placeholder="Notes for internal use..." value={form.internal_notes} onChange={(e) => setForm({ ...form, internal_notes: e.target.value })} />
                             </div>
 
-                            <div className="bg-gray-900 text-white p-5 rounded-2xl mt-6 flex justify-between items-center shadow-lg">
+                            {/* <div className="bg-gray-900 text-white p-5 rounded-2xl mt-6 flex justify-between items-center shadow-lg">
                                 <span className="text-gray-400 font-medium">Grand Total</span>
                                 <div className="text-2xl font-bold flex items-center gap-1 text-orange-400">
                                     <IndianRupee size={24} /> {total.toLocaleString('en-IN')}
                                 </div>
+                            </div> */}
+
+                            <div className="bg-gray-900 text-white px-6 py-4 rounded-lg">
+
+                                {/* ORIGINAL */}
+                                <div className="flex justify-between text-xs text-gray-400">
+                                    <span>Grand Total</span>
+                                    <span>₹ {total.toLocaleString('en-IN')}</span>
+                                </div>
+
+                                {/* WALLET */}
+                                {walletUsed > 0 && (
+                                    <div className="flex justify-between text-xs text-green-400">
+                                        <span>Wallet Applied</span>
+                                        <span>- ₹ {walletUsed}</span>
+                                    </div>
+                                )}
+
+                                {/* PAYABLE */}
+                                <div className="flex justify-between text-sm font-bold mt-1">
+                                    <span>Payable</span>
+                                    <span>₹ {afterWalletTotal ? afterWalletTotal : total.toLocaleString('en-IN')}</span>
+                                </div>
+
+                                {/* BALANCE */}
+                                {paymentAmount > 0 && (
+                                    <div className="flex justify-between text-xs text-red-400 mt-1">
+                                        <span>Balance</span>
+                                        <span>₹ {balanceAmount}</span>
+                                    </div>
+                                )}
+
                             </div>
+
                         </div>
                     </div>
                 </div>
