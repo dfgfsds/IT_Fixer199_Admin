@@ -197,20 +197,9 @@ const Sidebar: React.FC = () => {
           name: 'GRN', path: '/grn'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
-        {
-          name: 'Payment mode wise', path: '/paymentModeWise'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
-        },
-        {
-          name: 'Product Wise', path: '/productWise'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
-        },
+
         {
           name: 'Purchase Return ', path: '/purchaseReturn'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
-        },
-        {
-          name: 'Stocks ', path: '/stocks'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
         // {
@@ -284,16 +273,33 @@ const Sidebar: React.FC = () => {
           name: 'Sales Return', path: '/salesReturn'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
+        // { name: 'Refund Orders', path: '/refunds' },
+        // { name: 'Tickets & Escalations', path: '/tickets' },
+        // { name: 'Coupons & Promotions', path: '/coupons' },
+        // { name: 'Payments & Settlements', path: '/payments' },
+
       ],
     },
     {
-      name: 'Accounts',
+      name: 'Reports',
       icon: Calculator,
       children: [
         //  {
         //   name: 'Order Purchase', path: '/orderPurchase'
         //   , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         // },
+        {
+          name: 'Stocks ', path: '/stocks'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Product Wise', path: '/productWise'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Payment mode wise', path: '/paymentModeWise'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
         {
           name: 'Monthly Comparison', path: '/monthlyComparison'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]

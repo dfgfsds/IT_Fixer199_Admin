@@ -254,14 +254,25 @@ const PurchaseReturn: React.FC = () => {
                         </div>
 
                         <div className="p-6 overflow-y-auto space-y-6 bg-gray-50/30">
+                            {/* Core Details Grid */}
                             <div className="grid grid-cols-2 gap-6 text-xs bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
                                 <div>
                                     <p className="text-gray-400 font-bold uppercase mb-1">Vendor</p>
                                     <p className="font-bold text-gray-800 text-sm">{selectedReturn.vendor_name}</p>
                                 </div>
                                 <div>
+                                    <p className="text-gray-400 font-bold uppercase mb-1">Verified By</p>
+                                    <p className="font-bold text-indigo-600 text-sm">{selectedReturn.verified_by || 'Not Verified'}</p>
+                                </div>
+                                <div>
                                     <p className="text-gray-400 font-bold uppercase mb-1">GRN Reference</p>
-                                    <p className="font-bold text-gray-800 text-sm">{selectedReturn.grn_number}</p>
+                                    <p className="font-bold text-gray-800 text-sm">{selectedReturn.grn_number || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-400 font-bold uppercase mb-1">Return Date</p>
+                                    <p className="font-bold text-gray-800 text-sm">
+                                        {new Date(selectedReturn.return_date).toLocaleDateString()}
+                                    </p>
                                 </div>
                                 <div className="col-span-2">
                                     <p className="text-gray-400 font-bold uppercase mb-1">Return Reason</p>
@@ -269,6 +280,7 @@ const PurchaseReturn: React.FC = () => {
                                 </div>
                             </div>
 
+                            {/* Products Table */}
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                                 <table className="w-full text-sm">
                                     <thead className="bg-gray-50">
@@ -289,12 +301,34 @@ const PurchaseReturn: React.FC = () => {
                                     </tbody>
                                     <tfoot className="bg-orange-600 text-white font-bold">
                                         <tr>
-                                            <td colSpan={2} className="p-4 text-right text-xs uppercase tracking-widest">Total Refund</td>
-                                            <td className="p-4 text-right text-base">₹{Number(selectedReturn.subtotal).toLocaleString()}</td>
+                                            <td colSpan={2} className="p-4 text-right text-xs uppercase tracking-widest">Grand Total</td>
+                                            <td className="p-4 text-right text-base">₹{Number(selectedReturn.grand_total).toLocaleString()}</td>
                                         </tr>
                                     </tfoot>
                                 </table>
                             </div>
+
+                            {/* 🔥 Image Mapping (Media Section) */}
+                            {selectedReturn.media && selectedReturn.media.length > 0 && (
+                                <div className="space-y-3">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Attachments</p>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {selectedReturn.media.map((img: any) => (
+                                            <div key={img.id} className="group relative bg-white p-2 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+                                                <div className="aspect-square rounded-xl overflow-hidden bg-gray-100">
+                                                    <img
+                                                        src={img.image_url}
+                                                        alt={img.title}
+                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                                        onClick={() => window.open(img.image_url, '_blank')}
+                                                    />
+                                                </div>
+                                                <p className="mt-2 text-[9px] text-gray-500 truncate font-medium">{img.title}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="p-5 border-t flex justify-end">
