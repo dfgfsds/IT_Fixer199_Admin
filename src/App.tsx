@@ -53,6 +53,7 @@ import Grn from './pages/Grn/Grn';
 import VendorPurchaseSummary from './pages/VendorPurchaseSummary/VendorPurchaseSummary';
 import SalesPaymentModeWise from './pages/SalesPaymentModeWise/SalesPaymentModeWise';
 import SalesProductWise from './pages/SalesProductWise/SalesProductWise';
+import CustomerOutstanding from './pages/Accounts/CustomerOutstanding';
 
 
 const queryClient = new QueryClient();
@@ -136,6 +137,7 @@ const AppRoutes: React.FC = () => {
         <Route path="vendorPurchase" element={<VendorPurchaseSummary />} />
         <Route path="salesPaymentModeWise" element={<SalesPaymentModeWise />} />
         <Route path="salesProductWise" element={<SalesProductWise />} />
+        <Route path="customerOutstanding" element={<CustomerOutstanding />} />
 
 
       </Route>
