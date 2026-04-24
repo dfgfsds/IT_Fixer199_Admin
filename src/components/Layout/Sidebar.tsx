@@ -320,6 +320,10 @@ const Sidebar: React.FC = () => {
           name: 'Sales Product Wise', path: '/salesProductWise'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
+         {
+          name: 'Customer Outstanding', path: '/customerOutstanding'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
         // {
         //   name: 'Payment mode wise', path: '/paymentModeWise'
         //   , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
