@@ -250,6 +250,9 @@ const salesPaymentModeWise =`${baseUrl}/api/stats/reports/sales/payment-mode-wis
 // salesProductWise
 const salesProductWise =`${baseUrl}/api/stats/reports/sales/product-wise`;
 
+// Customer Outstanding
+const customerOutstanding=`${baseUrl}/api/stats/reports/finance/order-amount-details`;
+
 export default {
   login,
   allUsers,
@@ -347,6 +350,10 @@ export default {
   vendorPurchaseSummary,
   salesPaymentModeWise,
   salesProductWise,
+  customerOutstanding
 };
+
+
+
 
 
