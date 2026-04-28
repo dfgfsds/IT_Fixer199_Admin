@@ -54,6 +54,7 @@ const Products: React.FC = () => {
 
 
     const [search, setSearch] = useState("");
+    const [barcodeSearch, setBarcodeSearch] = useState("");
     const [selectedBrand, setSelectedBrand] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
 
@@ -84,11 +85,11 @@ const Products: React.FC = () => {
 
     const filteredProducts = products?.filter((product) => {
         const matchesSearch =
-            String(product?.barcode || "")
+            String(product?.name || "")
                 .toLowerCase()
                 .includes(search.toLowerCase())
         // ||
-        // product.sku?.toLowerCase().includes(search.toLowerCase());
+        product.sku?.toLowerCase().includes(search.toLowerCase());
 
         const matchesBrand =
             selectedBrand === "" || product?.brand_details?.id === selectedBrand;
@@ -170,7 +171,8 @@ const Products: React.FC = () => {
             params.append("include_brand", "true");
             params.append("include_pricing", "true");
 
-            if (search) params.append("barcode", search);
+            if (search) params.append("barcode", barcodeSearch);
+            if (search) params.append("search", search);
             if (selectedBrand) params.append("brand_id", selectedBrand);
             if (selectedCategory) params.append("category_id", selectedCategory);
 
@@ -478,21 +480,21 @@ const Products: React.FC = () => {
 
                 <input
                     type="text"
-                    placeholder="Search by name or Barcode..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by Barcode..."
+                    value={barcodeSearch}
+                    onChange={(e) => setBarcodeSearch(e.target.value)}
                     className="w-full md:w-1/3 border rounded-lg px-3 py-2 text-sm"
                 />
 
 
                 {/* Search */}
-                {/* <input
+                <input
                     type="text"
-                    placeholder="Search by name or SKU..."
+                    placeholder="Search by Name..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full md:w-1/3 border rounded-lg px-3 py-2 text-sm"
-                /> */}
+                />
 
                 {/* Brand Filter */}
                 <select

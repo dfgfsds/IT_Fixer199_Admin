@@ -1,4 +1,4 @@
-import  { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Api from '../../api-endpoints/ApiUrls';
 import axiosInstance from '../../configs/axios-middleware';
@@ -8,6 +8,7 @@ import { extractErrorMessage } from '../../utils/extractErrorMessage ';
 import toast from 'react-hot-toast';
 import AgentLoginLogs from './AgentLoginLogs';
 import AgentActiveLogs from './AgentActiveLogs';
+import AgentOrderList from './AgentOrderList';
 
 const Agents360: React.FC = () => {
     const { id } = useParams()
@@ -268,16 +269,15 @@ const Agents360: React.FC = () => {
         }
     };
 
-
     // useEffect(() => {
     //     fetchAgentProduct()
     // }, [id, activeTab === 'product'])
 
     useEffect(() => {
         // if (activeTab === "product") {
-            fetchAgentProduct();
+        fetchAgentProduct();
         // }
-    }, [id, activeTab, page, pageSize,activeTab === "profile"]);
+    }, [id, activeTab, page, pageSize, activeTab === "profile"]);
 
     const fetchAgentProduct = async () => {
         try {
@@ -605,6 +605,16 @@ const Agents360: React.FC = () => {
                             }`}
                     >
                         Agent Active Log
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab('orderList')}
+                        className={`px-6 py-3 text-sm font-medium ${activeTab === 'orderList'
+                            ? 'border-b-2 border-orange-600 text-orange-600'
+                            : 'text-gray-600'
+                            }`}
+                    >
+                        Order list
                     </button>
 
                 </div>
@@ -1136,6 +1146,10 @@ const Agents360: React.FC = () => {
                     {/* AGENT ACTIVE LOGS */}
                     {activeTab === "activeLog" && (
                         <AgentActiveLogs userId={agent?.user_details?.id} />
+                    )}
+
+                     {activeTab === "orderList" && (
+                        <AgentOrderList userId={id} />
                     )}
                 </div>
             </div >

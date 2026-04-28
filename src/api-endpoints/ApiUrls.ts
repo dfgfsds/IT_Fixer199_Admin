@@ -10,6 +10,12 @@ const baseUrl =
 //   import.meta.env.VITE_API_BASE_URL ||
 //   "https://api-test.itfixer199.com";
 
+
+  // 🔥 WS URL
+const wsBaseUrl = baseUrl
+  .replace("https://", "wss://")
+  .replace("http://", "ws://");
+
 const login = `${baseUrl}/api/login`;
 const allUsers = `${baseUrl}/api/user/all`;
 const allStols = `${baseUrl}/api/slot/all`;
@@ -209,7 +215,7 @@ const purchaseOrderAddSerial = `${baseUrl}/api/product-inventory/movement/purcha
 // purchasePayment
 const purchasePayment = `${baseUrl}/api/purchase/payment/`;
 
-// ACCOUNTS 
+// ACCOUNTS   
 const monthlyComparison = `${baseUrl}/api/stats/reports/finance/monthly-comparison`;
 
 // supplierOutstanding
@@ -253,6 +259,11 @@ const salesProductWise =`${baseUrl}/api/stats/reports/sales/product-wise`;
 // Customer Outstanding
 const customerOutstanding=`${baseUrl}/api/stats/reports/finance/order-amount-details`;
 
+// purchasePendingPayment
+const purchasePendingPayment=`${baseUrl}/api/purchase/pending-payment-entities/`;
+
+// notifications/register-fcm
+const NotificationRegisterFcm = `${baseUrl}/api/notifications/register-fcm/`;
 export default {
   login,
   allUsers,
@@ -350,8 +361,15 @@ export default {
   vendorPurchaseSummary,
   salesPaymentModeWise,
   salesProductWise,
-  customerOutstanding
+  customerOutstanding,
+  purchasePendingPayment,
+  NotificationRegisterFcm,
+  wsBaseUrl,
 };
+
+
+
+
 
 
 
