@@ -3,12 +3,15 @@ import axiosInstance from "../../configs/axios-middleware";
 import Api from "../../api-endpoints/ApiUrls";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { useAuth } from "../../contexts/AuthContext";
 
 const CustomerOutstanding: React.FC = () => {
 
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-
+    const [hubs, setHubs] = useState<any[]>([]);
+    const { user } = useAuth();
+    console.log(hubs)
     const [filters, setFilters] = useState({
         customer_mobile: "",
         order_id: "",
@@ -31,6 +34,18 @@ const CustomerOutstanding: React.FC = () => {
                 if (value) params.append(key, value);
             });
 
+            // 🔥 ADMIN na hub_id remove pannunga
+            if (user?.role === "ADMIN") {
+                params.delete("hub_id");
+            }
+
+            // 🔥 other roles ku auto add
+            if (user?.role !== "ADMIN") {
+                if (user?.hub_id) {
+                    params.set("hub_id", user.hub_id); // set use pannunga (override)
+                }
+            }
+
             const res = await axiosInstance.get(
                 `${Api?.customerOutstanding}?${params.toString()}`
             );
@@ -46,6 +61,23 @@ const CustomerOutstanding: React.FC = () => {
     useEffect(() => {
         fetchData();
     }, [filters]);
+
+    const fetchHubs = async () => {
+        try {
+            const res = await axiosInstance.get(`${Api.allHubs}`);
+            const hubOptions = res.data?.hubs?.map((h: any) => ({ label: h.name, value: h.id })) || [];
+            setHubs(hubOptions);
+            if (hubOptions.length > 0 && !filters.hub_id) {
+                setFilters(prev => ({ ...prev, hub_id: hubOptions[0].value }));
+            }
+        } catch (err) {
+            console.error("Error fetching hubs:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchHubs();
+    }, []);
 
     const handleClear = () => {
         const reset = {
@@ -153,7 +185,7 @@ const CustomerOutstanding: React.FC = () => {
     </div> */}
 
                 {/* Hub ID */}
-                <div className="flex flex-col gap-1">
+                {/* <div className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-gray-500">Hub ID</label>
                     <input
                         type="text"
@@ -163,7 +195,25 @@ const CustomerOutstanding: React.FC = () => {
                             setFilters({ ...filters, hub_id: e.target.value })
                         }
                     />
-                </div>
+                </div> */}
+                {(user?.role !== "HUB_MANAGER" && user?.role !== "MANAGER") && (
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-gray-500">Hub</label>
+                        <select
+                            className="border p-2 rounded-xl bg-gray-50"
+                            value={filters.hub_id}
+                            onChange={(e) =>
+                                setFilters({ ...filters, hub_id: e.target.value })
+                            }
+                        >
+                            <option value="">All Hubs</option>
+                            {hubs?.map((h: any) => (
+                                <option key={h?.value} value={h?.value}>{h?.label}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
 
                 {/* Platform */}
                 <div className="flex flex-col gap-1">
@@ -248,10 +298,10 @@ const CustomerOutstanding: React.FC = () => {
                     <thead className="bg-gray-100">
                         <tr>
                             <th className="p-3">S.No</th>
-                            <th className="p-3">Date</th>
                             <th className="p-3">Order ID</th>
+                            <th className="p-3">Date</th>
                             <th className="p-3">Customer</th>
-                            <th className="p-3">Mobile</th>
+                            {/* <th className="p-3">Mobile</th> */}
                             <th className="p-3">Type</th>
                             <th className="p-3">Platform</th>
                             <th className="p-3">Total</th>
@@ -276,8 +326,15 @@ const CustomerOutstanding: React.FC = () => {
                                     <td className="p-3">
                                         {new Date(item.created_at).toLocaleDateString("en-IN")}
                                     </td>
-                                    <td className="p-3 font-semibold">{item.customer_name}</td>
-                                    <td className="p-3">{item.customer_mobile}</td>
+                                    <td className="p-3 font-semibold flex justify-center">
+                                        <div>
+                                            <p className="text-gray-900 capitalize">{item.customer_name}</p>
+                                            <p className="text-gray-400 text-xs">{item.customer_mobile}</p>
+                                        </div>
+                                    </td>
+                                    {/* <td className="p-3">
+                                        {item.customer_mobile}
+                                        </td> */}
                                     <td className="p-3">{item.order_type}</td>
                                     <td className="p-3">{item.order_platform}</td>
 

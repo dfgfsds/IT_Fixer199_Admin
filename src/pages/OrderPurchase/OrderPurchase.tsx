@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Edit3, Eye, Loader2, MoreVertical, Plus, Printer, Search, Undo2 } from "lucide-react";
+import { CreditCard, Edit3, Eye, Loader2, MoreVertical, Plus, Printer, Search, Undo2 } from "lucide-react";
 import axiosInstance from "../../configs/axios-middleware";
 import Pagination from "../../components/Pagination";
 import PurchaseOrderModal from "./PurchaseOrderModal";
@@ -14,6 +14,7 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import SerialNumberModal from "./SerialNumberModal";
 import ReturnModal from "./ReturnModal";
+import PaymentModal from "./PaymentModal";
 
 const OrderPurchase: React.FC = () => {
 
@@ -48,6 +49,7 @@ const OrderPurchase: React.FC = () => {
         Number(selectedPO?.total_paid || 0);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
     const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -64,6 +66,7 @@ const OrderPurchase: React.FC = () => {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+    
     const [dateFilter, setDateFilter] = useState({
         start_date: "",
         end_date: "",
@@ -85,6 +88,7 @@ const OrderPurchase: React.FC = () => {
         }
 
     }, [selectedGRNData]);
+
     const handleView = (item: any) => {
         setViewData(item);
         setShowViewModal(true);
@@ -398,16 +402,27 @@ const OrderPurchase: React.FC = () => {
                     <h1 className="text-xl font-bold">Purchase Orders</h1>
                     {/* <p className="text-sm text-gray-500 font-medium">Manage and track your inventory procurements</p> */}
                 </div>
-
-                <button
-                    onClick={() => {
-                        setEditData(null);
-                        setShowModal(true);
-                    }}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-gray-200 active:scale-95"
-                >
-                    <Plus size={18} strokeWidth={3} /> Purchase Order
-                </button>
+                <div className="flex justify-between gap-4">
+                    <button
+                        onClick={() => {
+                            setEditData(null);
+                            setShowModal(true);
+                        }}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-gray-200 active:scale-95"
+                    >
+                        <Plus size={18} strokeWidth={3} /> Purchase Order
+                    </button>
+                    <button
+                        onClick={() => {
+                            setShowPaymentModal(!showPaymentModal)
+                        }}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-gray-200 active:scale-95"
+                    >
+                        <CreditCard size={18} strokeWidth={3} />
+                        {/* <Plus size={18} strokeWidth={3} /> */}
+                        Add Payment
+                    </button>
+                </div>
             </div>
 
             {/* FILTERS */}
@@ -836,7 +851,6 @@ const OrderPurchase: React.FC = () => {
                 />
             )}
 
-
             {showViewModal && viewData && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex justify-center items-center z-[100] p-4">
                     <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-300">
@@ -856,7 +870,7 @@ const OrderPurchase: React.FC = () => {
                                             {viewData.po_number}
                                         </span>
                                         <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
-                                            Created on: {new Date(viewData.created_at).toLocaleString()}
+                                            Created on: {new Date(viewData?.order_date)?.toLocaleString()}
                                         </span>
                                     </div>
                                 </div>
@@ -879,10 +893,10 @@ const OrderPurchase: React.FC = () => {
                                 </h3>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
                                     <DetailItem label="Vendor Name" value={viewData.vendor_name} />
-                                    <DetailItem label="Vendor ID" value={`#${viewData.vendor_id}`} isCode />
+                                    {/* <DetailItem label="Vendor ID" value={`#${viewData.vendor_id}`} isCode /> */}
                                     <DetailItem label="Hub Name" value={viewData.hub_name} />
-                                    <DetailItem label="Hub ID" value={`#${viewData.hub_id}`} isCode />
-                                    <DetailItem label="Reference No" value={viewData.reference_number || "N/A"} />
+                                    {/* <DetailItem label="Hub ID" value={`#${viewData.hub_id}`} isCode /> */}
+                                    {/* <DetailItem label="Reference No" value={viewData.reference_number || "N/A"} /> */}
                                     <DetailItem label="Order Date" value={new Date(viewData.order_date).toLocaleDateString()} />
                                     <DetailItem
                                         label="Status"
@@ -890,7 +904,7 @@ const OrderPurchase: React.FC = () => {
                                         isStatus
                                         statusType={Number(viewData.grand_total) <= Number(viewData.total_paid) ? "success" : "warning"}
                                     />
-                                    <DetailItem label="Last Updated" value={new Date(viewData.updated_at).toLocaleDateString()} />
+                                    {/* <DetailItem label="Last Updated" value={new Date(viewData.updated_at).toLocaleDateString()} /> */}
                                 </div>
                             </section>
 
@@ -996,7 +1010,7 @@ const OrderPurchase: React.FC = () => {
 
             {showPayModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[100] p-4">
-                    <div className="bg-white w-full max-w-md max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-gray-100 animate-in fade-in zoom-in duration-200">
+                    <div className="bg-white w-full max-w-md max-h-[90vh] no-scrollbar overflow-y-auto rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-gray-100 animate-in fade-in zoom-in duration-200">
 
                         {/* Header */}
                         <div className="bg-gray-900 p-5 flex items-center gap-3">
@@ -1196,6 +1210,14 @@ const OrderPurchase: React.FC = () => {
                 onClose={() => setShowRefundModal(false)}
                 grnData={selectedGRNsForRefund}
             />
+
+            {showPaymentModal && (
+                <PaymentModal
+                    open={showPaymentModal}
+                    setOpen={setShowPaymentModal}
+                // onSubmit={handleSubmit}
+                />
+            )}
         </div>
     );
 };
