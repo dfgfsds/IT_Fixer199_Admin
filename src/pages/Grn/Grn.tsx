@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { CreditCard, Edit3, Eye, Loader2, Plus, Printer, Search, Undo2 } from "lucide-react";
+import { CreditCard, Edit3, Eye, Loader2, MoreVertical, Plus, Printer, Search, Undo2 } from "lucide-react";
 import axiosInstance from "../../configs/axios-middleware";
 import Pagination from "../../components/Pagination";
 // import PurchaseOrderModal from "./PurchaseOrderModal";
@@ -11,6 +11,7 @@ import { saveAs } from "file-saver";
 import GrnOrderModal from "./GrnOrderModal";
 import Logo from "../../../public/images/logo.webp";
 import GrnInvoicePrint from "./GrnInvoicePrint";
+import SerialNumberModal from "./SerialNumberModal";
 
 const Grn: React.FC = () => {
 
@@ -29,6 +30,11 @@ const Grn: React.FC = () => {
     const [showModal, setShowModal] = useState(false);
     const [selectedGRNData, setSelectedGRNData] = useState<any[]>([]);
 
+    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+    const [showSerialModal, setShowSerialModal] = useState(false);
+
+    console.log(selectedGRNData)
     const [dateFilter, setDateFilter] = useState({
         start_date: "",
         end_date: "",
@@ -771,6 +777,38 @@ const Grn: React.FC = () => {
                                                         <Eye size={16} />
                                                     </button>
 
+                                                    <div
+                                                        className="relative"
+                                                        // 🔥 Inga thaan ref assign pannanum
+                                                        ref={(el) => (dropdownRefs.current[item.id] = el)}
+                                                    >
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setOpenDropdown(openDropdown === item.id ? null : item.id);
+                                                            }}
+                                                            className="text-gray-600 hover:text-black"
+                                                        >
+                                                            <MoreVertical className="w-4 h-4" />
+                                                        </button>
+
+                                                        {openDropdown === item.id && (
+                                                            <div className="absolute right-0 top-8 bg-white border rounded-lg shadow-lg w-40 z-10 overflow-hidden">
+                                                                <button
+                                                                    onClick={async (e) => {
+                                                                        e.stopPropagation(); // Parent row click aagama irukka
+
+                                                                        setSelectedGRNData(item);
+                                                                        setShowSerialModal(true);
+                                                                        setOpenDropdown(null);
+                                                                    }}
+                                                                    className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                                                >
+                                                                    Add Serial number
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </td>
 
@@ -1043,7 +1081,7 @@ const Grn: React.FC = () => {
                                                 return;
                                             }
 
-                                            let num:any = Number(val);
+                                            let num: any = Number(val);
 
                                             // ❌ prevent invalid
                                             if (isNaN(num)) return;
@@ -1126,6 +1164,15 @@ const Grn: React.FC = () => {
                 onClose={() => setShowModal(false)}
                 onSuccess={() => fetchData(page, pageSize)}
             // editData={editData}
+            />
+
+
+            <SerialNumberModal
+                show={showSerialModal}
+                onClose={() => setShowSerialModal(false)}
+                grnData={selectedGRNData}
+            // serialData={serialData}
+            // setSerialData={setSerialData}
             />
 
         </div>

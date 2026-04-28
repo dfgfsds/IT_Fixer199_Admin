@@ -678,7 +678,7 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                                         />
                                                     </div>
                                                     {/* Serial List Display */}
-                                                    {it.serial_numbers?.length > 0 && (
+                                                    {/* {it.serial_numbers?.length > 0 && (
                                                         <div className="bg-white border border-gray-100 rounded-xl p-2 max-h-32 overflow-y-auto space-y-1 shadow-inner">
                                                             {it.serial_numbers.map((sn: string, snIdx: number) => (
                                                                 <div key={snIdx} className="flex items-center gap-2 bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100">
@@ -691,7 +691,7 @@ const GrnOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                                                 </div>
                                                             ))}
                                                         </div>
-                                                    )}
+                                                    )} */}
                                                 </div>
 
                                                 <div className="flex-[2]">

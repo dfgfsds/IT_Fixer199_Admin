@@ -52,7 +52,7 @@ const Header: React.FC = () => {
 
       const res = await fetch(
         // "https://api-test.itfixer199.com/api/notifications/",
-        "https://api.itfixer199.com/api/notifications/",
+        Api?.notifications,
 
         {
           headers: {
@@ -126,7 +126,7 @@ const Header: React.FC = () => {
         if (token) {
           await fetch(
             // "https://api-test.itfixer199.com/api/notifications/register-fcm/"
-            "https://api.itfixer199.com/api/notifications/register-fcm/"
+            Api?.NotificationRegisterFcm
             , {
               method: "POST",
               headers: {
