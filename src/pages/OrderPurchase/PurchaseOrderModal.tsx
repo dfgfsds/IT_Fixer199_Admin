@@ -14,6 +14,26 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
     const [products, setProducts] = useState([]);
     const [apiErrors, setApiErrors] = useState<string>("");
     const [search, setSearch] = useState("");
+    // const [balanceAmount, setBalanceAmount] = useState('')
+    const [grnList, setGrnList] = useState<any[]>([]);
+    const [selectedGRNs, setSelectedGRNs] = useState<any[]>([]);
+    const [totalAmount, setTotalAmount] = useState(0);
+    const [grandTotal, setGrandTotal] = useState(0); // API இருந்து
+    const [amountType, setAmountType] = useState<"full" | "custom">("custom");
+    const [selectedGRN, setSelectedGRN] = useState<any>("");
+    const [paymentAmount, setPaymentAmount] = useState(0); // Initial Payment
+    const walletUsed = Number(amountType === "full" ? selectedGRN?.excess_amount : selectedGRN?.used_amount);
+
+    const handlePaymentChange = (val: string) => {
+        const num = Number(val);
+
+        if (num > afterWalletTotal) {
+            alert("Cannot pay more than payable amount ❌");
+            return;
+        }
+
+        setPaymentAmount(num);
+    };
 
     const initialState = {
         vendor: "",
@@ -62,6 +82,74 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
         };
         fetchData();
     }, []);
+
+    useEffect(() => {
+        if (form?.vendor) {
+            fetchPurchaseExcessCreditEntities();
+        }
+    }, [form?.vendor])
+
+    const fetchPurchaseExcessCreditEntities = async () => {
+        try {
+            const updatedAPi = await axiosInstance.get(`${Api?.purchaseExcessCreditEntities}?vendor_id=${form?.vendor}`)
+            if (updatedAPi) {
+                const list = updatedAPi?.data?.grns?.items || [];
+
+                const formatted = list.map((g: any) => ({
+                    id: g.id,
+                    grn_number: g.grn_number,
+                    excess_amount: Number(g.excess_amount || 0),
+                    used_amount: 0
+                }));
+
+                setGrnList(formatted);
+                // setBalanceAmount(updatedAPi?.data?.grns?.items)
+            }
+        } catch (error) {
+
+        }
+    };
+
+    const handleSelectGRN = (grn: any) => {
+        const exists = selectedGRNs.find(i => i.id === grn.id);
+
+        if (exists) {
+            setSelectedGRNs(prev => prev.filter(i => i.id !== grn.id));
+        } else {
+            setSelectedGRNs(prev => [...prev, { ...grn }]);
+        }
+    };
+
+    const handleAmountChange = (id: string, value: string) => {
+        const amount = Number(value);
+
+        setSelectedGRNs(prev =>
+            prev.map(item => {
+                if (item.id === id) {
+                    if (amount > item.excess_amount) {
+                        alert("Amount exceeds available balance ❌");
+                        return item;
+                    }
+
+                    return {
+                        ...item,
+                        used_amount: amount
+                    };
+                }
+                return item;
+            })
+        );
+    };
+
+    useEffect(() => {
+        const totalUsed = selectedGRNs.reduce(
+            (sum, item) => sum + Number(item.used_amount || 0),
+            0
+        );
+        setTotalAmount(totalUsed);
+    }, [selectedGRNs]);
+
+
 
     // useEffect(() => {
     //     if (search) {
@@ -156,6 +244,51 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
         }
     };
 
+    // const handleExcelUpload = async (e: any) => {
+    //     const file = e.target.files[0];
+    //     if (!file) return;
+
+    //     const data = await file.arrayBuffer();
+    //     const workbook = XLSX.read(data);
+    //     const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    //     const jsonData: any[] = XLSX.utils.sheet_to_json(sheet);
+
+    //     // 🔥 LOOP EACH ROW
+    //     const items = await Promise.all(
+    //         jsonData.map(async (row) => {
+    //             try {
+    //                 const res = await axiosInstance.get(
+    //                     `${Api.products}?barcode=${row?.barcode}`
+    //                 );
+
+    //                 const product = res?.data?.products?.[0];
+
+    //                 return {
+    //                     product: product?.id || "",
+    //                     products: [product], // 🔥 important
+    //                     item_name: product?.name || "",
+    //                     quantity: Number(row.qty || 1),
+    //                     rate: Number(product?.price || 0),
+    //                     discount_type: row.discount_type || "PERCENT",
+    //                     discount_value: Number(row.discount_value || 0),
+    //                     tax_percentage: Number(row.tax || 0),
+    //                     serial_numbers: [],
+    //                     amount: 0,
+    //                 };
+    //             } catch {
+    //                 return null;
+    //             }
+    //         })
+    //     );
+
+    //     const filtered = items.filter(Boolean);
+
+    //     setForm({
+    //         ...form,
+    //         items: filtered,
+    //     });
+    // };
+
     const handleExcelUpload = async (e: any) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -165,29 +298,43 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData: any[] = XLSX.utils.sheet_to_json(sheet);
 
-        // 🔥 LOOP EACH ROW
         const items = await Promise.all(
             jsonData.map(async (row) => {
                 try {
+                    // ✅ normalize keys (important)
+                    const barcode = row.Barcode || row.barcode;
+                    const qty = Number(row.Qty || row.qty || 1);
+                    const price = Number(row.Price || row.price || 0);
+                    const tax = Number(row.Tax || row.tax || 0);
+
+                    if (!barcode) return null;
+
+                    // 🔥 fetch product using barcode
                     const res = await axiosInstance.get(
-                        `${Api.products}?barcode=${row?.barcode}`
+                        `${Api.products}?barcode=${barcode}`
                     );
 
                     const product = res?.data?.products?.[0];
+                    if (!product) return null;
 
                     return {
-                        product: product?.id || "",
-                        products: [product], // 🔥 important
-                        item_name: product?.name || "",
-                        quantity: Number(row.qty || 1),
-                        rate: Number(product?.price || 0),
-                        discount_type: row.discount_type || "PERCENT",
-                        discount_value: Number(row.discount_value || 0),
-                        tax_percentage: Number(row.tax || 0),
+                        product: product.id,
+                        products: [product],
+                        item_name: product.name,
+
+                        // ✅ FROM EXCEL (NOT API)
+                        quantity: qty,
+                        rate: price,
+                        tax_percentage: tax,
+
+                        discount_type: "PERCENT",
+                        discount_value: 0,
+
                         serial_numbers: [],
-                        amount: 0,
+                        amount: qty * price,
                     };
-                } catch {
+                } catch (err) {
+                    console.error("Row failed:", row);
                     return null;
                 }
             })
@@ -293,6 +440,8 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
     };
 
     const total = form.items.reduce((sum: number, i: any) => sum + Number(i.amount || 0), 0);
+    const afterWalletTotal = Math.max(total - walletUsed, 0);
+    const balanceAmount = Math.max(afterWalletTotal - paymentAmount, 0);
 
     const handleSubmit = async () => {
         try {
@@ -306,6 +455,16 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
             // 1. Build initial payload
             const payload: any = {
                 ...form,
+                // previous_po_id:"kjkjhg",
+                previous_grn_id: selectedGRN?.id,
+                ...(amountType === "full"
+                    ? {
+                        payment_amount: selectedGRN?.excess_amount,
+                    }
+                    : {
+                        payment_amount: selectedGRN?.used_amount,
+                    }),
+
                 items: form.items.map((i: any) => ({
                     product: i.product,
                     item_name: i.item_name,
@@ -366,6 +525,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
         setForm(initialState);
         setApiErrors("");
         onClose();
+        setSelectedGRN("");
     };
 
     if (!show) return null;
@@ -405,7 +565,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                             <label className={labelClass}>Dispatch Hub</label>
                             <select className={inputClass} value={form.hub} onChange={(e) => setForm({ ...form, hub: e.target.value })}>
                                 <option value="">Select Hub</option>
-                                {hubs.map((h: any) => (<option key={h.id} value={h.id}>{h.name}</option>))}
+                                {hubs?.map((h: any) => (<option key={h.id} value={h.id}>{h.name}</option>))}
                             </select>
                         </div>
                         <div>
@@ -594,6 +754,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                                     <Trash2 size={20} strokeWidth={2.5} />
                                                 </button>
                                             </td>
+
                                         </tr>
                                     ))}
                                 </tbody>
@@ -602,6 +763,123 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
 
                     </div>
 
+                    <div className="space-y-3">
+
+                        {/* WALLET SELECT */}
+                        {grnList?.length ? (
+                            <div>
+                                <label className="text-xs font-semibold text-gray-500">
+                                    Apply Wallet
+                                </label>
+
+                                <select
+                                    className="w-full border rounded px-3 py-2 mt-1 text-sm"
+                                    value={selectedGRN?.id || ""}
+                                    onChange={(e) => {
+                                        const grn = grnList.find(i => i.id === e.target.value);
+
+                                        setSelectedGRN({
+                                            ...grn,
+                                            used_amount: 0
+                                        });
+                                        setAmountType("custom");
+                                    }}
+                                >
+                                    <option value="">Select Wallet</option>
+                                    {grnList.map(grn => (
+                                        <option key={grn.id} value={grn.id}>
+                                            {grn.grn_number} (₹{grn.excess_amount})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        ) : ''}
+
+
+                        {selectedGRN && (
+                            <>
+
+                                {/* BALANCE */}
+                                {selectedGRN && (
+                                    <div className="text-xs text-gray-500">
+                                        Wallet Balance:
+                                        <span className="ml-1 font-semibold text-gray-800">
+                                            ₹{selectedGRN.excess_amount}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* RADIO OPTIONS */}
+                                {selectedGRN && (
+                                    <div className="flex gap-4 text-sm">
+                                        <label className="flex items-center gap-1">
+                                            <input
+                                                type="radio"
+                                                name="amountType"
+                                                value="full"
+                                                disabled={!selectedGRN}
+                                                checked={amountType === "full"}
+                                                onChange={() => {
+                                                    setAmountType("full");
+
+                                                    setSelectedGRN((prev: any) => ({
+                                                        ...prev,
+                                                        used_amount: Math.min(
+                                                            prev.excess_amount,
+                                                            grandTotal
+                                                        )
+                                                    }));
+                                                }}
+                                            />
+                                            Full Amount
+                                        </label>
+
+                                        <label className="flex items-center gap-1">
+                                            <input
+                                                type="radio"
+                                                name="amountType"
+                                                value="custom"
+                                                disabled={!selectedGRN}
+                                                checked={amountType === "custom"}
+                                                onChange={() => {
+                                                    setAmountType("custom");
+
+                                                    setSelectedGRN((prev: any) => ({
+                                                        ...prev,
+                                                        used_amount: 0
+                                                    }));
+                                                }}
+                                            />
+                                            Custom
+                                        </label>
+                                    </div>
+                                )}
+
+                                {/* INPUT */}
+                                {selectedGRN && (
+                                    <input
+                                        type="number"
+                                        disabled={amountType === "full"}
+                                        className="w-full border rounded px-3 py-2 text-sm"
+                                        placeholder="Enter amount"
+                                        value={selectedGRN.used_amount || ""}
+                                        max={selectedGRN.excess_amount}
+                                        onChange={(e) => {
+                                            const val = Number(e.target.value);
+
+                                            if (val > selectedGRN.excess_amount) return;
+
+                                            setSelectedGRN((prev: any) => ({
+                                                ...prev,
+                                                used_amount: val
+                                            }));
+                                        }}
+                                    />
+                                )}
+                            </>
+                        )}
+
+                    </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t">
                         <div className="space-y-4">
@@ -675,20 +953,33 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
 
 
                                 <div className="col-span-2">
-                                    <label className={labelClass}>Amount</label>
+                                    <label className={labelClass}>
+                                        Amount (Max: ₹{afterWalletTotal ? afterWalletTotal : 0})
+                                    </label>
+
                                     <input
                                         type="number"
                                         className={inputClass}
-                                        value={form?.initial_payment?.amount_paid}
-                                        onChange={(e) =>
+                                        value={form?.initial_payment?.amount_paid || ""}
+                                        onChange={(e) => {
+                                            const val = Number(e.target.value);
+
+                                            // ❌ prevent negative
+                                            if (val < 0) return;
+
+                                            // ❌ prevent greater than payable
+                                            if (val > afterWalletTotal) {
+                                                return; // silently block
+                                            }
+
                                             setForm({
                                                 ...form,
                                                 initial_payment: {
                                                     ...form?.initial_payment,
-                                                    amount_paid: e.target.value,
+                                                    amount_paid: val,
                                                 },
-                                            })
-                                        }
+                                            });
+                                        }}
                                     />
                                 </div>
 
@@ -701,12 +992,45 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                                 <textarea rows={3} className={inputClass} placeholder="Notes for internal use..." value={form.internal_notes} onChange={(e) => setForm({ ...form, internal_notes: e.target.value })} />
                             </div>
 
-                            <div className="bg-gray-900 text-white p-5 rounded-2xl mt-6 flex justify-between items-center shadow-lg">
+                            {/* <div className="bg-gray-900 text-white p-5 rounded-2xl mt-6 flex justify-between items-center shadow-lg">
                                 <span className="text-gray-400 font-medium">Grand Total</span>
                                 <div className="text-2xl font-bold flex items-center gap-1 text-orange-400">
-                                    <IndianRupee size={24} /> {total.toLocaleString('en-IN')}
+                                    <IndianRupee size={24} /> 
                                 </div>
+                            </div> */}
+
+                            <div className="bg-gray-900 text-white px-6 py-4 rounded-lg">
+
+                                {/* ORIGINAL */}
+                                <div className="flex justify-between text-xs text-gray-400">
+                                    <span>Grand Total</span>
+                                    <span>₹ {total.toLocaleString('en-IN')}</span>
+                                </div>
+
+                                {/* WALLET */}
+                                {walletUsed > 0 && (
+                                    <div className="flex justify-between text-xs text-green-400">
+                                        <span>Wallet Applied</span>
+                                        <span>- ₹ {walletUsed}</span>
+                                    </div>
+                                )}
+
+                                {/* PAYABLE */}
+                                <div className="flex justify-between text-sm font-bold mt-1">
+                                    <span>Payable</span>
+                                    <span>₹ {afterWalletTotal ? afterWalletTotal : '0'}</span>
+                                </div>
+
+                                {/* BALANCE */}
+                                {paymentAmount > 0 && (
+                                    <div className="flex justify-between text-xs text-red-400 mt-1">
+                                        <span>Balance</span>
+                                        <span>₹ {balanceAmount}</span>
+                                    </div>
+                                )}
+
                             </div>
+
                         </div>
                     </div>
                 </div>

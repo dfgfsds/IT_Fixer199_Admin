@@ -10,6 +10,12 @@ const baseUrl =
   import.meta.env.VITE_API_BASE_URL ||
   "https://api-test.itfixer199.com";
 
+
+  // 🔥 WS URL
+const wsBaseUrl = baseUrl
+  .replace("https://", "wss://")
+  .replace("http://", "ws://");
+
 const login = `${baseUrl}/api/login`;
 const allUsers = `${baseUrl}/api/user/all`;
 const allStols = `${baseUrl}/api/slot/all`;
@@ -209,7 +215,7 @@ const purchaseOrderAddSerial = `${baseUrl}/api/product-inventory/movement/purcha
 // purchasePayment
 const purchasePayment = `${baseUrl}/api/purchase/payment/`;
 
-// ACCOUNTS 
+// ACCOUNTS   
 const monthlyComparison = `${baseUrl}/api/stats/reports/finance/monthly-comparison`;
 
 // supplierOutstanding
@@ -235,6 +241,29 @@ const salesReturns = `${baseUrl}/api/sales-returns/`;
 // createOrderPayment
 const createOrderPayment = `${baseUrl}/api/order/public/order/`;
 
+
+// purchaseExcessCreditEntities
+
+const purchaseExcessCreditEntities = `${baseUrl}/api/purchase/excess-credit-entities/`;
+
+
+// vendorPurchaseSummary
+const vendorPurchaseSummary =`${baseUrl}/api/stats/reports/finance/vendor-purchase-summary`;
+
+// salesPaymentModeWise
+const salesPaymentModeWise =`${baseUrl}/api/stats/reports/sales/payment-mode-wise`;
+
+// salesProductWise
+const salesProductWise =`${baseUrl}/api/stats/reports/sales/product-wise`;
+
+// Customer Outstanding
+const customerOutstanding=`${baseUrl}/api/stats/reports/finance/order-amount-details`;
+
+// purchasePendingPayment
+const purchasePendingPayment=`${baseUrl}/api/purchase/pending-payment-entities/`;
+
+// notifications/register-fcm
+const NotificationRegisterFcm = `${baseUrl}/api/notifications/register-fcm/`;
 export default {
   login,
   allUsers,
@@ -327,7 +356,22 @@ export default {
   consolidatedStock,
   salesReturns,
   createOrderPayment,
-  consolidatedInventoryLog
+  consolidatedInventoryLog,
+  purchaseExcessCreditEntities,
+  vendorPurchaseSummary,
+  salesPaymentModeWise,
+  salesProductWise,
+  customerOutstanding,
+  purchasePendingPayment,
+  NotificationRegisterFcm,
+  wsBaseUrl,
 };
+
+
+
+
+
+
+
 
 

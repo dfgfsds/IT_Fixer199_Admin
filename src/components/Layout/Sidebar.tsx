@@ -197,20 +197,9 @@ const Sidebar: React.FC = () => {
           name: 'GRN', path: '/grn'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
-        {
-          name: 'Payment mode wise', path: '/paymentModeWise'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
-        },
-        {
-          name: 'Product Wise', path: '/productWise'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
-        },
+
         {
           name: 'Purchase Return ', path: '/purchaseReturn'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
-        },
-        {
-          name: 'Stocks ', path: '/stocks'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
         // {
@@ -284,10 +273,15 @@ const Sidebar: React.FC = () => {
           name: 'Sales Return', path: '/salesReturn'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
+        // { name: 'Refund Orders', path: '/refunds' },
+        // { name: 'Tickets & Escalations', path: '/tickets' },
+        // { name: 'Coupons & Promotions', path: '/coupons' },
+        // { name: 'Payments & Settlements', path: '/payments' },
+
       ],
     },
     {
-      name: 'Accounts',
+      name: 'Reports',
       icon: Calculator,
       children: [
         //  {
@@ -295,11 +289,39 @@ const Sidebar: React.FC = () => {
         //   , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         // },
         {
+          name: 'Stocks ', path: '/stocks'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Product Wise', path: '/productWise'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Payment mode wise', path: '/paymentModeWise'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
           name: 'Monthly Comparison', path: '/monthlyComparison'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
         {
           name: 'Supplier Outstanding', path: '/supplierOutstanding'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Vendor Purchase', path: '/vendorPurchase'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Sales Payment Mode Wise', path: '/salesPaymentModeWise'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+        {
+          name: 'Sales Product Wise', path: '/salesProductWise'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+        },
+         {
+          name: 'Customer Outstanding', path: '/customerOutstanding'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
         },
         // {
