@@ -23,6 +23,8 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
     const [selectedGRN, setSelectedGRN] = useState<any>("");
     const [paymentAmount, setPaymentAmount] = useState(0); // Initial Payment
     const walletUsed = Number(amountType === "full" ? selectedGRN?.excess_amount : selectedGRN?.used_amount);
+    const [isTaxInclusive, setIsTaxInclusive] = useState(false);
+    const [items, setItems] = useState<any[]>([]);
 
     const handlePaymentChange = (val: string) => {
         const num = Number(val);
@@ -476,6 +478,7 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                     discount_value: Number(i.discount_value),
                     tax_percentage: Number(i.tax_percentage),
                     serial_numbers: (i.serial_numbers || []).filter((sn: string) => sn),
+                    is_tax_inclusive: isTaxInclusive,
                 })),
             };
 
@@ -599,6 +602,31 @@ const PurchaseOrderModal = ({ show, onClose, onSuccess, editData }: any) => {
                             <label className={labelClass}>Ship To</label>
                             <textarea rows={2} className={inputClass} placeholder="Shipping Address..." value={form.ship_to} onChange={(e) => setForm({ ...form, ship_to: e.target.value })} />
                         </div>
+                    </div>
+
+                    <div className="flex gap-4 items-center mb-3">
+                        <label className="font-semibold">Tax Type:</label>
+
+                        <select
+                            value={isTaxInclusive ? "inclusive" : "exclusive"}
+                            onChange={(e) => {
+                                const value = e.target.value === "inclusive";
+
+                                setIsTaxInclusive(value);
+
+                                // 🔥 update all items
+                                const updatedItems = items.map((item) => ({
+                                    ...item,
+                                    is_tax_inclusive: value,
+                                }));
+
+                                setItems(updatedItems);
+                            }}
+                            className="border p-2 rounded"
+                        >
+                            <option value="exclusive">Tax Exclusive</option>
+                            <option value="inclusive">Tax Inclusive</option>
+                        </select>
                     </div>
 
                     {/* ITEMS TABLE */}
