@@ -63,6 +63,8 @@ const Login: React.FC = () => {
                 <option value="ADMIN">ADMIN</option>
                 <option value="MANAGER">MANAGER</option>
                 <option value="HUB_MANAGER">HUB MANAGER</option>
+                  <option value="ASSISTANT_MANAGER">ASSISTANT MANAGER</option>
+                    <option value="COORDINATOR">COORDINATOR</option>
               </select>
             </div>
             <div>
