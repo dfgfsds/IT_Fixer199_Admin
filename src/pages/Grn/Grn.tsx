@@ -283,6 +283,201 @@ const Grn: React.FC = () => {
         }
     };
 
+    //     const handlePrintGRN = (data: any) => {
+    //         const printWindow = window.open("", "_blank");
+
+    //         if (!printWindow) {
+    //             alert("Popup blocked! Allow popups.");
+    //             return;
+    //         }
+
+    //         const html = `
+    //     <html>
+    //     <head>
+    //       <title>GRN Print</title>
+    //       <style>
+    //         body {
+    //           font-family: 'Segoe UI', Arial;
+    //           padding: 20px;
+    //           color: #333;
+    //         }
+
+    //         .header {
+    //           display: flex;
+    //           justify-content: space-between;
+    //           align-items: center;
+    //           border-bottom: 2px solid #eee;
+    //           padding-bottom: 15px;
+    //           margin-bottom: 20px;
+    //         }
+
+    //         .company {
+    //           display: flex;
+    //           align-items: center;
+    //           gap: 12px;
+    //         }
+
+    //         .logo {
+    //           width: 60px;
+    //           height: 60px;
+    //           object-fit: contain;
+    //         }
+
+    //         .company-details h2 {
+    //           margin: 0;
+    //           font-size: 18px;
+    //         }
+
+    //         .company-details p {
+    //           margin: 2px 0;
+    //           font-size: 12px;
+    //           color: #666;
+    //         }
+
+    //         .invoice-title {
+    //           text-align: right;
+    //         }
+
+    //         .invoice-title h1 {
+    //           margin: 0;
+    //           font-size: 22px;
+    //         }
+
+    //         .info {
+    //           margin-bottom: 20px;
+    //           font-size: 13px;
+    //         }
+
+    //         table {
+    //           width: 100%;
+    //           border-collapse: collapse;
+    //           margin-top: 10px;
+    //         }
+
+    //         th {
+    //           background: #f4f6f8;
+    //           text-align: left;
+    //           font-size: 12px;
+    //         }
+
+    //         th, td {
+    //           border: 1px solid #ddd;
+    //           padding: 10px;
+    //           font-size: 12px;
+    //         }
+
+    //         .right {
+    //           text-align: right;
+    //         }
+
+    //         .totals {
+    //           margin-top: 20px;
+    //           width: 300px;
+    //           margin-left: auto;
+    //         }
+
+    //         .totals div {
+    //           display: flex;
+    //           justify-content: space-between;
+    //           margin: 5px 0;
+    //           font-size: 13px;
+    //         }
+
+    //         .grand {
+    //           font-weight: bold;
+    //           font-size: 16px;
+    //           border-top: 2px solid #000;
+    //           padding-top: 5px;
+    //         }
+
+    //       </style>
+    //     </head>
+
+    //     <body>
+
+    //       <!-- 🔥 HEADER -->
+    //       <div class="header">
+
+    //         <div class="company">
+    //         <img src="${Logo}" class="logo"/>
+
+    //           <div class="company-details">
+    //             <h2>ITFixer Pvt Ltd</h2>
+    //             <p>No.91, Ground Floor,</p>
+    // <p>Kothari Nagar 2nd Main Road</p>
+    //             <p>Ramapuram, Chennai - 600089</p>
+    //             <p>Phone: +91 9385939985</p>
+    //             <p>Email: info@itfixer199.com</p>
+    //           </div>
+    //         </div>
+
+    //         <div class="invoice-title">
+    //           <h1>GRN</h1>
+    //           <p><b>No:</b> ${data.grn_number}</p>
+    //         </div>
+
+    //       </div>
+
+    //       <!-- 🔥 INFO -->
+    //       <div class="info">
+    //         <p><b>Invoice No:</b> ${data.invoice_number}</p>
+    //         <p><b>Vendor:</b> ${data.vendor_name}</p>
+    //       </div>
+
+    //       <!-- 🔥 TABLE -->
+    //       <table>
+    //         <thead>
+    //           <tr>
+    //             <th>Product</th>
+    //             <th>Qty</th>
+    //             <th>Rate</th>
+    //             <th>Tax %</th>
+    //             <th class="right">Amount</th>
+    //           </tr>
+    //         </thead>
+    //         <tbody>
+    //           ${data.items
+    //                 ?.map(
+    //                     (item: any) => `
+    //             <tr>
+    //               <td>${item.product_name}</td>
+    //               <td>${item.received_quantity}</td>
+    //               <td>₹${item.rate}</td>
+    //               <td>${item.tax_percentage}%</td>
+    //               <td class="right">₹${item.net_amount}</td>
+    //             </tr>
+    //           `
+    //                 )
+    //                 .join("")}
+    //         </tbody>
+    //       </table>
+
+    //       <!-- 🔥 TOTALS -->
+    //       <div class="totals">
+    //         <div><span>Subtotal</span><span>₹${data.subtotal_amount}</span></div>
+    //         <div><span>Tax</span><span>₹${data.total_tax_amount}</span></div>
+    //         <div class="grand"><span>Grand Total</span><span>₹${data.grand_total_amount}</span></div>
+    //         <div class="grand"><span>Paid Amount</span><span>₹${Number(viewData?.total_paid).toLocaleString('en-IN')}</span></div>
+    //         <div class="grand"><span>Balance Amount</span><span>₹${(Number(viewData?.grand_total_amount) - Number(viewData.total_paid)).toLocaleString('en-IN')}</span></div>
+    //       </div>
+    //     </body>
+    //     </html>
+    //     `;
+
+    //         printWindow.document.open();
+    //         printWindow.document.write(html);
+    //         printWindow.document.close();
+
+    //         printWindow.onload = () => {
+    //             setTimeout(() => {
+    //                 printWindow.print();
+    //                 printWindow.close();
+    //             }, 500);
+    //         };
+    //     };
+
+
+
     const handlePrintGRN = (data: any) => {
         const printWindow = window.open("", "_blank");
 
@@ -291,179 +486,255 @@ const Grn: React.FC = () => {
             return;
         }
 
+        // Function to convert number to words (for Amount in Words section)
+        const numberToWords = (num: any) => {
+            const a: any = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+            const b: any = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+            if ((num = num.toString()).length > 9) return 'overflow';
+            let n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+            if (!n) return '';
+            let str: any = '';
+            str += (Number(n[1]) != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
+            str += (Number(n[2]) != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
+            str += (Number(n[3]) != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
+            str += (Number(n[4]) != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
+            str += (Number(n[5]) != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) + 'Rs. Only' : '';
+            return str;
+        };
+
         const html = `
     <html>
     <head>
-      <title>GRN Print</title>
+      <title>GRN Print - ITFixer</title>
       <style>
+        @page { size: A4; margin: 10mm; }
         body {
-          font-family: 'Segoe UI', Arial;
-          padding: 20px;
-          color: #333;
-        }
-
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          border-bottom: 2px solid #eee;
-          padding-bottom: 15px;
-          margin-bottom: 20px;
-        }
-
-        .company {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .logo {
-          width: 60px;
-          height: 60px;
-          object-fit: contain;
-        }
-
-        .company-details h2 {
+          font-family: Arial, sans-serif;
           margin: 0;
-          font-size: 18px;
+          padding: 0;
+          font-size: 11px;
+          color: #000;
         }
-
-        .company-details p {
-          margin: 2px 0;
-          font-size: 12px;
-          color: #666;
+        .main-container {
+          border: 1px solid #000;
+          padding: 0;
+          min-height: 280mm;
+          display: flex;
+          flex-direction: column;
         }
-
-        .invoice-title {
-          text-align: right;
+        /* Top Header Section */
+        .top-header {
+          display: flex;
+          border-bottom: 1px solid #000;
         }
-
-        .invoice-title h1 {
-          margin: 0;
-          font-size: 22px;
+        .logo-box {
+          width: 150px;
+          padding: 10px;
+          border-right: 1px solid #000;
+          display: flex;
+          justify-content: center;
+          align-items: center;
         }
-
-        .info {
-          margin-bottom: 20px;
-          font-size: 13px;
+        .logo-box img { max-width: 100%; max-height: 80px; }
+        .company-info {
+          flex-grow: 1;
+          text-align: center;
+          padding: 10px;
         }
+        .company-info h1 { margin: 0; font-size: 18px; text-transform: uppercase; }
+        .company-info p { margin: 2px 0; font-size: 11px; }
 
+        /* Billing Info Section */
+        .bill-info {
+          display: flex;
+          border-bottom: 1px solid #000;
+        }
+        .to-section {
+          width: 60%;
+          padding: 8px;
+          border-right: 1px solid #000;
+        }
+        .no-section {
+          width: 40%;
+          padding: 8px;
+        }
+        .info-row { display: flex; margin-bottom: 4px; }
+        .info-label { width: 80px; font-weight: bold; }
+
+        /* Table Section */
         table {
           width: 100%;
           border-collapse: collapse;
-          margin-top: 10px;
+          flex-grow: 1;
         }
-
         th {
-          background: #f4f6f8;
-          text-align: left;
-          font-size: 12px;
+          border-bottom: 1px solid #000;
+          border-right: 1px solid #000;
+          padding: 5px;
+          background: #f2f2f2;
+          font-size: 11px;
         }
+        td {
+          border-right: 1px solid #000;
+          padding: 5px;
+          vertical-align: top;
+          height: 20px;
+        }
+        th:last-child, td:last-child { border-right: none; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
 
-        th, td {
-          border: 1px solid #ddd;
+        /* Footer Sections */
+        .summary-row {
+          border-top: 1px solid #000;
+          border-bottom: 1px solid #000;
+          display: flex;
+          background: #f2f2f2;
+          font-weight: bold;
+        }
+        .summary-col { padding: 5px; border-right: 1px solid #000; }
+
+        .footer-bottom {
+          display: flex;
+          border-top: 1px solid #000;
+        }
+        .terms-section {
+          width: 60%;
           padding: 10px;
-          font-size: 12px;
+          border-right: 1px solid #000;
         }
-
-        .right {
-          text-align: right;
+        .totals-section {
+          width: 40%;
         }
-
-        .totals {
-          margin-top: 20px;
-          width: 300px;
-          margin-left: auto;
-        }
-
-        .totals div {
+        .total-item {
           display: flex;
           justify-content: space-between;
-          margin: 5px 0;
-          font-size: 13px;
+          padding: 4px 8px;
+          border-bottom: 0.5px solid #ccc;
         }
-
-        .grand {
+        .net-amount-box {
+          background: #eee;
           font-weight: bold;
-          font-size: 16px;
-          border-top: 2px solid #000;
-          padding-top: 5px;
+          font-size: 14px;
+          border-top: 1px solid #000;
         }
-
+        .signature-area {
+          display: flex;
+          justify-content: space-between;
+          padding: 30px 10px 10px 10px;
+          margin-top: auto;
+        }
       </style>
     </head>
-
     <body>
-
-      <!-- 🔥 HEADER -->
-      <div class="header">
-        
-        <div class="company">
-        <img src="${Logo}" class="logo"/>
-          
-          <div class="company-details">
-            <h2>ITFixer Pvt Ltd</h2>
-            <p>No.91, Ground Floor,</p>
-<p>Kothari Nagar 2nd Main Road</p>
+      <div class="main-container">
+        <!-- HEADER -->
+        <div class="top-header">
+          <div class="logo-box">
+             <img src=${Logo} alt="Logo" />
+          </div>
+          <div class="company-info">
+            <h1>ITFixer Pvt Ltd</h1>
+            <p>No.91, Ground Floor, Kothari Nagar 2nd Main Road</p>
             <p>Ramapuram, Chennai - 600089</p>
-            <p>Phone: +91 9385939985</p>
-            <p>Email: info@itfixer199.com</p>
+            <p>PH: 9385939985 | GST No: 33XXXXXXXXXXXXX</p>
           </div>
         </div>
 
-        <div class="invoice-title">
-          <h1>GRN</h1>
-          <p><b>No:</b> ${data.grn_number}</p>
+        <!-- BILLING DETAILS -->
+        <div class="bill-info">
+          <div class="to-section">
+            <p style="margin:0"><b>From:</b></p>
+            <p style="font-size:12px;"><b>${data.vendor_name.toUpperCase()}</b></p>
+            <p>Hub: ${data.hub_name}</p>
+          </div>
+          <div class="no-section">
+            <div class="info-row"><span class="info-label">GRN No</span>: ${data.grn_number}</div>
+            <div class="info-row"><span class="info-label">Date</span>: ${new Date(data.received_date).toLocaleDateString('en-GB')}</div>
+            <div class="info-row"><span class="info-label">Inv No</span>: ${data.invoice_number || '-'}</div>
+            <div class="info-row"><span class="info-label">Gate Pass</span>: ${data.gate_pass_number || '-'}</div>
+          </div>
         </div>
 
-      </div>
-
-      <!-- 🔥 INFO -->
-      <div class="info">
-        <p><b>Invoice No:</b> ${data.invoice_number}</p>
-        <p><b>Vendor:</b> ${data.vendor_name}</p>
-      </div>
-
-      <!-- 🔥 TABLE -->
-      <table>
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Qty</th>
-            <th>Rate</th>
-            <th>Tax %</th>
-            <th class="right">Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${data.items
-                ?.map(
-                    (item: any) => `
+        <!-- TABLE -->
+        <table>
+          <thead>
             <tr>
-              <td>${item.product_name}</td>
-              <td>${item.received_quantity}</td>
-              <td>₹${item.rate}</td>
-              <td>${item.tax_percentage}%</td>
-              <td class="right">₹${item.net_amount}</td>
+              <th width="40">S.No</th>
+              <th>Items</th>
+              <th width="70">Hsn Code</th>
+              <th width="40">Qty</th>
+              <th width="80">Rate</th>
+              <th width="50">Sgst%</th>
+              <th width="50">Cgst%</th>
+              <th width="90">Amount</th>
             </tr>
-          `
-                )
-                .join("")}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            ${data.items?.map((item: any, index: number) => `
+              <tr>
+                <td class="text-center">${index + 1}</td>
+                <td>
+                    <b>${item.product_name}</b><br/>
+                </td>
+                <td class="text-center">${item.hsn_code || '-'}</td>
+                <td class="text-center">${parseInt(item.received_quantity)}</td>
+                <td class="text-right">${parseFloat(item.rate).toFixed(2)}</td>
+                <td class="text-center">${(parseFloat(item.tax_percentage) / 2).toFixed(2)}</td>
+                <td class="text-center">${(parseFloat(item.tax_percentage) / 2).toFixed(2)}</td>
+                <td class="text-right">${parseFloat(item.net_amount).toFixed(2)}</td>
+              </tr>
+            `).join("")}
+            <!-- Empty rows to maintain height -->
+            ${Array(10 - (data.items?.length || 0)).fill(0).map(() => `
+              <tr>
+                <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
 
-      <!-- 🔥 TOTALS -->
-      <div class="totals">
-        <div><span>Subtotal</span><span>₹${data.subtotal_amount}</span></div>
-        <div><span>Tax</span><span>₹${data.total_tax_amount}</span></div>
-        <div class="grand"><span>Grand Total</span><span>₹${data.grand_total_amount}</span></div>
-        <div class="grand"><span>Paid Amount</span><span>₹${Number(viewData?.total_paid).toLocaleString('en-IN')}</span></div>
-        <div class="grand"><span>Balance Amount</span><span>₹${(Number(viewData?.grand_total_amount) - Number(viewData.total_paid)).toLocaleString('en-IN')}</span></div>
+        <!-- TOTALS SUMMARY BAR -->
+        <div class="summary-row">
+          <div class="summary-col" style="flex-grow: 1;">Total Items: ${data.items.length}</div>
+          <div class="summary-col" style="width: 150px;">Total Quantity: ${data.items.reduce((acc: any, curr: any) => acc + parseInt(curr.received_quantity), 0)}</div>
+        </div>
+
+        <!-- BOTTOM FOOTER -->
+        <div class="footer-bottom">
+          <div class="terms-section">
+            <p><b>Amount In Words :</b><br/> ${numberToWords(data.grand_total_amount)}</p>
+            <div style="margin-top:15px;">
+              <p><b>Terms & Conditions</b></p>
+              <p>1. Our responsibility ceases on the delivery of the materials.</p>
+              <p>2. Goods once delivered cannot be taken back on any account.</p>
+              <p>3. We reserve the right to demand payment at any time before due date.</p>
+            </div>
+            <p style="margin-top:10px;"><b>Remarks:</b> ${data.notes || '-'}</p>
+          </div>
+          <div class="totals-section">
+            <div class="total-item"><span>Gross Amount :</span><span>${parseFloat(data.subtotal_amount).toFixed(2)}</span></div>
+            <div class="total-item"><span>Total GST Amt :</span><span>${parseFloat(data.total_tax_amount).toFixed(2)}</span></div>
+            <div class="total-item"><span>Discount Amt :</span><span>${parseFloat(data.total_discount_amount || 0).toFixed(2)}</span></div>
+            <div class="total-item net-amount-box"><span>Net Amount :</span><span>₹ ${parseFloat(data.grand_total_amount).toFixed(2)}</span></div>
+          </div>
+          
+        </div>
+
+        <!-- SIGNATURE -->
+        <div class="signature-area">
+          <div style="text-align: center; border-top: 1px solid #000; width: 150px; padding-top: 5px;">
+            Customer Signature
+          </div>
+          <div style="text-align: center;">
+            <p style="margin-bottom: 40px;">For <b>ITFixer Pvt Ltd</b></p>
+            <p style="border-top: 1px solid #000; width: 180px; padding-top: 5px;">Authorised Signatory</p>
+          </div>
+        </div>
       </div>
     </body>
     </html>
     `;
-
         printWindow.document.open();
         printWindow.document.write(html);
         printWindow.document.close();
@@ -475,6 +746,7 @@ const Grn: React.FC = () => {
             }, 500);
         };
     };
+
 
     const maxAmount =
         Number(selectedPO?.grand_total_amount || 0) -

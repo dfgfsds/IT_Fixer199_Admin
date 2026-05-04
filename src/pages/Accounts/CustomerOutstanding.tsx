@@ -99,7 +99,7 @@ const CustomerOutstanding: React.FC = () => {
 
         const rows = data?.map((item: any, index: number) => ({
             "S.No": index + 1,
-            "Order ID": item.order_id,
+            // "Order ID": item.order_id,
             "Customer Name": item.customer_name,
             "Mobile": item.customer_mobile,
             "Order Type": item.order_type,
@@ -159,7 +159,7 @@ const CustomerOutstanding: React.FC = () => {
                 </div>
 
                 {/* Order ID */}
-                <div className="flex flex-col gap-1">
+                {/* <div className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-gray-500">Order ID</label>
                     <input
                         type="text"
@@ -169,7 +169,7 @@ const CustomerOutstanding: React.FC = () => {
                             setFilters({ ...filters, order_id: e.target.value })
                         }
                     />
-                </div>
+                </div> */}
 
                 {/* User ID */}
                 {/* <div className="flex flex-col gap-1">
@@ -298,9 +298,9 @@ const CustomerOutstanding: React.FC = () => {
                     <thead className="bg-gray-100">
                         <tr>
                             <th className="p-3">S.No</th>
-                            <th className="p-3">Order ID</th>
-                            <th className="p-3">Date</th>
+                            {/* <th className="p-3">Order ID</th> */}
                             <th className="p-3">Customer</th>
+                            <th className="p-3">Date</th>
                             {/* <th className="p-3">Mobile</th> */}
                             <th className="p-3">Type</th>
                             <th className="p-3">Platform</th>
@@ -322,16 +322,17 @@ const CustomerOutstanding: React.FC = () => {
                             data.map((item, index) => (
                                 <tr key={item.order_id} className="border-t hover:bg-gray-50">
                                     <td className="p-3">{index + 1}</td>
-                                    <td className="p-3 text-xs">{item.order_id}</td>
-                                    <td className="p-3">
-                                        {new Date(item.created_at).toLocaleDateString("en-IN")}
-                                    </td>
+                                    {/* <td className="p-3 text-xs">{item.order_id}</td> */}
                                     <td className="p-3 font-semibold flex justify-center">
                                         <div>
                                             <p className="text-gray-900 capitalize">{item.customer_name}</p>
                                             <p className="text-gray-400 text-xs">{item.customer_mobile}</p>
                                         </div>
                                     </td>
+                                    <td className="p-3">
+                                        {new Date(item.created_at).toLocaleDateString("en-IN")}
+                                    </td>
+
                                     {/* <td className="p-3">
                                         {item.customer_mobile}
                                         </td> */}

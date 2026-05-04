@@ -15,7 +15,8 @@ import { saveAs } from "file-saver";
 import SerialNumberModal from "./SerialNumberModal";
 import ReturnModal from "./ReturnModal";
 import PaymentModal from "./PaymentModal";
-
+// import Logo from "../../../public/images/logo.webp";
+import Logo from "../../../public/images/logo.webp"
 const OrderPurchase: React.FC = () => {
 
     const [data, setData] = useState<any[]>([]);
@@ -392,6 +393,273 @@ const OrderPurchase: React.FC = () => {
         }
     };
 
+    const handlePrintGRN = (data: any) => {
+        console.log(data)
+        const printWindow = window.open("", "_blank");
+
+        if (!printWindow) {
+            alert("Popup blocked! Allow popups.");
+            return;
+        }
+
+        // Function to convert number to words (for Amount in Words section)
+        const numberToWords = (num: any) => {
+            const a: any = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+            const b: any = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+            if ((num = num?.toString())?.length > 9) return 'overflow';
+            let n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+            if (!n) return '';
+            let str: any = '';
+            str += (Number(n[1]) != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
+            str += (Number(n[2]) != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
+            str += (Number(n[3]) != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
+            str += (Number(n[4]) != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
+            str += (Number(n[5]) != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) + 'Rs. Only' : '';
+            return str;
+        };
+
+        const html = `
+    <html>
+    <head>
+      <title>GRN Print - ITFixer</title>
+      <style>
+        @page { size: A4; margin: 10mm; }
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 0;
+          font-size: 11px;
+          color: #000;
+        }
+        .main-container {
+          border: 1px solid #000;
+          padding: 0;
+          min-height: 280mm;
+          display: flex;
+          flex-direction: column;
+        }
+        /* Top Header Section */
+        .top-header {
+          display: flex;
+          border-bottom: 1px solid #000;
+        }
+        .logo-box {
+          width: 150px;
+          padding: 10px;
+          border-right: 1px solid #000;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        .logo-box img { max-width: 100%; max-height: 80px; }
+        .company-info {
+          flex-grow: 1;
+          text-align: center;
+          padding: 10px;
+        }
+        .company-info h1 { margin: 0; font-size: 18px; text-transform: uppercase; }
+        .company-info p { margin: 2px 0; font-size: 11px; }
+
+        /* Billing Info Section */
+        .bill-info {
+          display: flex;
+          border-bottom: 1px solid #000;
+        }
+        .to-section {
+          width: 60%;
+          padding: 8px;
+          border-right: 1px solid #000;
+        }
+        .no-section {
+          width: 40%;
+          padding: 8px;
+        }
+        .info-row { display: flex; margin-bottom: 4px; }
+        .info-label { width: 80px; font-weight: bold; }
+
+        /* Table Section */
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          flex-grow: 1;
+        }
+        th {
+          border-bottom: 1px solid #000;
+          border-right: 1px solid #000;
+          padding: 5px;
+          background: #f2f2f2;
+          font-size: 11px;
+        }
+        td {
+          border-right: 1px solid #000;
+          padding: 5px;
+          vertical-align: top;
+          height: 20px;
+        }
+        th:last-child, td:last-child { border-right: none; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+
+        /* Footer Sections */
+        .summary-row {
+          border-top: 1px solid #000;
+          border-bottom: 1px solid #000;
+          display: flex;
+          background: #f2f2f2;
+          font-weight: bold;
+        }
+        .summary-col { padding: 5px; border-right: 1px solid #000; }
+
+        .footer-bottom {
+          display: flex;
+          border-top: 1px solid #000;
+        }
+        .terms-section {
+          width: 60%;
+          padding: 10px;
+          border-right: 1px solid #000;
+        }
+        .totals-section {
+          width: 40%;
+        }
+        .total-item {
+          display: flex;
+          justify-content: space-between;
+          padding: 4px 8px;
+          border-bottom: 0.5px solid #ccc;
+        }
+        .net-amount-box {
+          background: #eee;
+          font-weight: bold;
+          font-size: 14px;
+          border-top: 1px solid #000;
+        }
+        .signature-area {
+          display: flex;
+          justify-content: space-between;
+          padding: 30px 10px 10px 10px;
+          margin-top: auto;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="main-container">
+        <!-- HEADER -->
+        <div class="top-header">
+          <div class="logo-box">
+             <img src=${Logo} alt="Logo" />
+          </div>
+          <div class="company-info">
+            <h1>ITFixer Pvt Ltd</h1>
+            <p>No.91, Ground Floor, Kothari Nagar 2nd Main Road</p>
+            <p>Ramapuram, Chennai - 600089</p>
+            <p>PH: 9385939985 | GST No: 33XXXXXXXXXXXXX</p>
+          </div>
+        </div>
+
+        <!-- BILLING DETAILS -->
+        <div class="bill-info">
+          <div class="to-section">
+            <p style="margin:0"><b>From:</b></p>
+            <p style="font-size:12px;"><b>${data.vendor_name.toUpperCase()}</b></p>
+            <p>Hub: ${data.hub_name}</p>
+          </div>
+          <div class="no-section">
+            <div class="info-row"><span class="info-label">Inv No</span>: ${data.invoice_number || '-'}</div>
+            <div class="info-row"><span class="info-label">Date</span>: ${new Date(data?.invoice_date).toLocaleDateString('en-GB')}</div>
+          </div>
+        </div>
+
+        <!-- TABLE -->
+        <table>
+          <thead>
+            <tr>
+              <th width="40">S.No</th>
+              <th>Items</th>
+              <th width="70">Hsn Code</th>
+              <th width="40">Qty</th>
+              <th width="80">Rate</th>
+              <th width="50">Sgst%</th>
+              <th width="50">Cgst%</th>
+              <th width="90">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.items?.map((item: any, index: number) => `
+              <tr>
+                <td class="text-center">${index + 1}</td>
+                <td>
+                    <b>${item.product_name}</b><br/>
+                </td>
+                <td class="text-center">${item.hsn_code || '-'}</td>
+                <td class="text-center">${parseInt(item.quantity)}</td>
+                <td class="text-right">${parseFloat(item.rate).toFixed(2)}</td>
+                <td class="text-center">${(parseFloat(item.tax_percentage) / 2).toFixed(2)}</td>
+                <td class="text-center">${(parseFloat(item.tax_percentage) / 2).toFixed(2)}</td>
+        <td class="text-right">{(parseFloat(item.amount) / 1.18).toFixed(2)}</td>
+              </tr>
+            `).join("")}
+            <!-- Empty rows to maintain height -->
+            ${Array(10 - (data.items?.length || 0)).fill(0).map(() => `
+              <tr>
+                <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+
+        <!-- TOTALS SUMMARY BAR -->
+        <div class="summary-row">
+          <div class="summary-col" style="flex-grow: 1;">Total Items: ${data.items.length}</div>
+          <div class="summary-col" style="width: 150px;">Total Quantity: ${data.items.reduce((acc: any, curr: any) => acc + parseInt(curr.received_quantity), 0)}</div>
+        </div>
+
+        <!-- BOTTOM FOOTER -->
+        <div class="footer-bottom">
+          <div class="terms-section">
+            <p><b>Amount In Words :</b><br/> ${numberToWords(data.grand_total_amount)}</p>
+            <div style="margin-top:15px;">
+              <p><b>Terms & Conditions</b></p>
+              <p>1. Our responsibility ceases on the delivery of the materials.</p>
+              <p>2. Goods once delivered cannot be taken back on any account.</p>
+              <p>3. We reserve the right to demand payment at any time before due date.</p>
+            </div>
+            <p style="margin-top:10px;"><b>Remarks:</b> ${data.notes || '-'}</p>
+          </div>
+          <div class="totals-section">
+            <div class="total-item"><span>Gross Amount :</span><span>${parseFloat(data.subtotal_amount).toFixed(2)}</span></div>
+            <div class="total-item"><span>Total GST Amt :</span><span>${parseFloat(data.total_tax_amount).toFixed(2)}</span></div>
+            <div class="total-item"><span>Discount Amt :</span><span>${parseFloat(data.total_discount_amount || 0).toFixed(2)}</span></div>
+            <div class="total-item net-amount-box"><span>Net Amount :</span><span>₹ ${parseFloat(data.grand_total_amount).toFixed(2)}</span></div>
+          </div>
+          
+        </div>
+
+        <!-- SIGNATURE -->
+        <div class="signature-area">
+          <div style="text-align: center; border-top: 1px solid #000; width: 150px; padding-top: 5px;">
+            Customer Signature
+          </div>
+          <div style="text-align: center;">
+            <p style="margin-bottom: 40px;">For <b>ITFixer Pvt Ltd</b></p>
+            <p style="border-top: 1px solid #000; width: 180px; padding-top: 5px;">Authorised Signatory</p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+
+        printWindow.onload = () => {
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+        };
+    };
 
     return (
         <div className="space-y-6">
@@ -739,7 +1007,8 @@ const OrderPurchase: React.FC = () => {
                                                     </button>
 
                                                     <button
-                                                        onClick={() => triggerPrint(item)}
+                                                        // onClick={() => triggerPrint(item)}
+                                                          onClick={() => handlePrintGRN(item)}
                                                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                         title="Print Invoice"
                                                     >
