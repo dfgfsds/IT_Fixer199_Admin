@@ -187,8 +187,14 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                                 <option value="ADMIN">ADMIN</option>
                                 <option value="MANAGER">MANAGER</option>
                                 <option value="HUB_MANAGER">HUB MANAGER</option>
+                                <option value="ASSISTANT_MANAGER">ASSISTANT_MANAGER</option>
+                                <option value="COORDINATOR">COORDINATOR</option>
+                                <option value="ACCOUNTANT">ACCOUNTANT</option>
+                                 
+                                {/* <option value="CUSTOMER">CUSTOMER</option> */}
+
                                 {/* <option value="AGENT">AGENT</option> */}
-                                <option value="CUSTOMER">CUSTOMER</option>
+                                {/* <option value="CUSTOMER">CUSTOMER</option> */}
 
                             </select>
                         </div>

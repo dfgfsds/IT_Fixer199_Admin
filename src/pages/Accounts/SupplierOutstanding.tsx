@@ -290,7 +290,7 @@ const SupplierOutstanding: React.FC = () => {
   useEffect(() => {
     fetchVendors();
     fetchReport();
-  }, [startDate,endDate]);
+  }, [startDate, endDate]);
 
   // Filter Trigger on Date change
   const handleFilter = () => {
@@ -310,8 +310,8 @@ const SupplierOutstanding: React.FC = () => {
       "Vendor Name": item.vendor_name,
       "Total Purchase": item.total_purchase_value,
       "Total Paid": item.total_amount_paid,
-      "Balance": item.total_amount_to_be_paid,
-      "Return Credit": item.total_return_value,
+      // "Balance": item.total_amount_to_be_paid,
+      // "Return Credit": item.total_return_value,
       "Outstanding Balance": item.suppliers_outstanding_credit,
     }));
 
@@ -395,8 +395,8 @@ const SupplierOutstanding: React.FC = () => {
                 <th className="p-4">Vendor Name</th>
                 <th className="p-4">Total Purchase</th>
                 <th className="p-4">Total Paid</th>
-                <th className="p-4">Balance</th>
-                <th className="p-4">Return Credit</th>
+                {/* <th className="p-4">Balance</th> */}
+                {/* <th className="p-4">Return Credit</th> */}
                 <th className="p-4">Outstanding</th>
               </tr>
             </thead>
@@ -412,8 +412,8 @@ const SupplierOutstanding: React.FC = () => {
                     <td className="p-4 font-bold text-gray-800">{item.vendor_name}</td>
                     <td className="p-4 text-green-600 font-semibold">₹ {item.total_purchase_value?.toLocaleString()}</td>
                     <td className="p-4 text-blue-600 font-semibold">₹ {item.total_amount_paid?.toLocaleString()}</td>
-                    <td className="p-4 text-indigo-600 font-semibold">₹ {item.total_amount_to_be_paid?.toLocaleString()}</td>
-                    <td className="p-4 text-yellow-600 font-semibold">₹ {item.total_return_value?.toLocaleString()}</td>
+                    {/* <td className="p-4 text-indigo-600 font-semibold">₹ {item.total_amount_to_be_paid?.toLocaleString()}</td> */}
+                    {/* <td className="p-4 text-yellow-600 font-semibold">₹ {item.total_return_value?.toLocaleString()}</td> */}
                     <td className="p-4 text-red-600 font-bold">₹ {item.suppliers_outstanding_credit?.toLocaleString()}</td>
                   </tr>
                 ))

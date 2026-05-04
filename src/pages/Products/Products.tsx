@@ -68,9 +68,12 @@ const Products: React.FC = () => {
 
     useEffect(() => {
         fetchProducts();
-        fetchBrands();
+    }, [barcodeSearch]);
+
+    useEffect(()=>{
+                fetchBrands();
         fetchCategories();
-    }, []);
+    },[])
 
     const fetchBrands = async () => {
         const res = await axiosInstance.get(Api?.allBrands);
@@ -171,7 +174,7 @@ const Products: React.FC = () => {
             params.append("include_brand", "true");
             params.append("include_pricing", "true");
 
-            if (search) params.append("barcode", barcodeSearch);
+            if (barcodeSearch) params.append("barcode", barcodeSearch);
             if (search) params.append("search", search);
             if (selectedBrand) params.append("brand_id", selectedBrand);
             if (selectedCategory) params.append("category_id", selectedCategory);
