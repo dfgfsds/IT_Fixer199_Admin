@@ -133,15 +133,15 @@ const Sidebar: React.FC = () => {
         // { name: 'Services', path: '/servicesRequest' },
         {
           name: 'Requests', path: '/requestsLive'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR"]
         },
         {
           name: 'Tools Inventory Movement', path: '/toolsInventoryMovementLive'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR"]
         },
         {
           name: 'Product Inventory Movement', path: '/productInventoryMovementLive'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR"]
         }
       ],
     },
@@ -152,7 +152,7 @@ const Sidebar: React.FC = () => {
       children: [
         {
           name: 'Customers', path: '/customers'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR"]
         },
         {
           name: 'Users', path: '/users'
@@ -171,36 +171,36 @@ const Sidebar: React.FC = () => {
       children: [
         {
           name: 'Categories', path: '/categories'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR", "ACCOUNTANT"]
         },
         {
           name: 'Brands', path: '/brands'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR", "ACCOUNTANT"]
         },
         {
           name: 'Attribute', path: '/attribute'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR", "ACCOUNTANT"]
         },
         {
           name: 'Products', path: '/products'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR", "ACCOUNTANT"]
         },
         {
           name: 'Products Inventory', path: '/productsInventory'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR"]
         },
         {
           name: 'Order Purchase', path: '/orderPurchase'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR", "ACCOUNTANT"]
         },
         {
           name: 'GRN', path: '/grn'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR", "ACCOUNTANT"]
         },
 
         {
           name: 'Purchase Return ', path: '/purchaseReturn'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR"]
         },
         // {
         //   name: 'Order Purchase', path: '/orderPurchase'
@@ -216,15 +216,15 @@ const Sidebar: React.FC = () => {
         // { name: 'Services', path: '/services-Request' },
         {
           name: 'Requests', path: '/requests'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR"]
         },
         {
           name: 'Tools Inventory Movement', path: '/toolsInventoryMovement'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR"]
         },
         {
           name: 'Product Inventory Movement', path: '/productInventoryMovement'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR"]
         }
       ],
     },
@@ -238,19 +238,19 @@ const Sidebar: React.FC = () => {
     },
     {
       name: 'Supplier', icon: Users, path: '/vendors'
-      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR", "ACCOUNTANT"]
     },
     {
       name: 'Tools', icon: Wrench, path: '/tools'
-      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR"]
     },
     {
       name: 'Tools Inventory', icon: Store, path: '/toolsInventory'
-      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR"]
     },
     {
       name: 'Services', icon: UserCog, path: '/services'
-      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER"]
     },
     {
       name: 'Zonal Manager Panel', icon: MapPin, path: '/zones'
@@ -263,15 +263,19 @@ const Sidebar: React.FC = () => {
       children: [
         {
           name: 'All Orders', path: '/orders'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR"]
         },
         {
           name: 'Order modify', path: '/OrderModify'
-          , roles: ["SUPER_ADMIN"]
+          , roles: ["SUPER_ADMIN", "ASSISTANT_MANAGER", "ADMIN", "HUB_MANAGER", "MANAGER",]
+        },
+        {
+          name: 'Sales', path: '/sales'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR", "ACCOUNTANT"]
         },
         {
           name: 'Sales Return', path: '/salesReturn'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR"]
         },
         // { name: 'Refund Orders', path: '/refunds' },
         // { name: 'Tickets & Escalations', path: '/tickets' },
@@ -290,40 +294,43 @@ const Sidebar: React.FC = () => {
         // },
         {
           name: 'Stocks ', path: '/stocks'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR", "ACCOUNTANT"]
         },
         {
-          name: 'Product Wise', path: '/productWise'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
-        },
-        {
-          name: 'Payment mode wise', path: '/paymentModeWise'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
-        },
-        {
-          name: 'Monthly Comparison', path: '/monthlyComparison'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          name: 'Customer Outstanding', path: '/customerOutstanding'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ACCOUNTANT"]
         },
         {
           name: 'Supplier Outstanding', path: '/supplierOutstanding'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ACCOUNTANT"]
         },
         {
           name: 'Vendor Purchase', path: '/vendorPurchase'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ACCOUNTANT"]
         },
         {
+          name: 'Product Wise', path: '/productWise'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "ACCOUNTANT"]
+        },
+        {
+          name: 'Payment mode wise', path: '/paymentModeWise'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "ACCOUNTANT"]
+        },
+        {
+          name: 'Monthly Comparison', path: '/monthlyComparison'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "ACCOUNTANT"]
+        },
+
+
+        {
           name: 'Sales Payment Mode Wise', path: '/salesPaymentModeWise'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "ACCOUNTANT"]
         },
         {
           name: 'Sales Product Wise', path: '/salesProductWise'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "ACCOUNTANT"]
         },
-         {
-          name: 'Customer Outstanding', path: '/customerOutstanding'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
-        },
+
         // {
         //   name: 'Payment mode wise', path: '/paymentModeWise'
         //   , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
@@ -350,7 +357,7 @@ const Sidebar: React.FC = () => {
     // { name: 'Reports', icon: BarChart3, path: '/reports' },
     {
       name: 'Rating Questions', icon: FileQuestion, path: '/ratingQuestions'
-      , roles: ["SUPER_ADMIN", "ADMIN"]
+      , roles: ["SUPER_ADMIN", "ADMIN", "ASSISTANT_MANAGER", "HUB_MANAGER", "MANAGER"]
     },
     {
       name: 'Settings', icon: Settings, path: '/settings'
