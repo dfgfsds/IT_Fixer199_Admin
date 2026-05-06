@@ -41,7 +41,7 @@ const Stocks: React.FC = () => {
   const [searchSerial, setSearchSerial] = useState("");
   const [activeTab, setActiveTab] = useState<"opening" | "purchased" | "sales" | "closing">("opening");
 
-  const fetchStocks = async () => {
+  const fetchStocks = async (pageNumber = page, size = pageSize) => {
     if (!filters.hub_id) {
       setData([]);
       return;
@@ -51,16 +51,18 @@ const Stocks: React.FC = () => {
       setLoading(true);
       const res = await axiosInstance.get(Api.consolidatedInventoryLog, {
         params: {
+          page: pageNumber,
+          size: size,
           hub_id: filters.hub_id,
           start_date: filters.startDate,
           end_date: filters.endDate,
-          barcode: filters.search
+          barcode: filters.search,
+          category_id: filters.category_id,
         },
       });
 
       // The data is coming under a key named "null" based on your response
-      const items = res.data?.null || [];
-
+      const items = res.data?.log || [];
       const formattedData = items.map((item: any) => {
         // Handle if 'product' is an object or just a string/ID
         const product = item.product;
@@ -83,9 +85,18 @@ const Stocks: React.FC = () => {
         };
       });
 
+      // setData(formattedData);
+      // setPagination({ total_elements: formattedData.length });
+      // setTotalPages(1);
       setData(formattedData);
-      setPagination({ total_elements: formattedData.length });
-      setTotalPages(1);
+
+      const p = res.data?.pagination;
+
+      if (p) {
+        setPagination(p);
+        setPage(p.page);
+        setTotalPages(p.total_pages);
+      }
     } catch (err) {
       console.error(err);
       toast.error("Failed to fetch inventory log");
@@ -93,6 +104,23 @@ const Stocks: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    fetchStocks(newPage, pageSize);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setPage(1);
+    fetchStocks(1, size);
+  };
+
+  useEffect(() => {
+    if (filters.hub_id) {
+      fetchStocks(page, pageSize);
+    }
+  }, [filters, page, pageSize]);
 
   const fetchVendors = async () => {
     const res = await axiosInstance.get(`${Api.vendor}?size=10000`);
@@ -293,6 +321,21 @@ const Stocks: React.FC = () => {
             </div>
           )}
           <div className="space-y-1">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1">
+              Category
+            </label>
+
+            <Select
+              options={categories}
+              styles={customSelectStyles}
+              placeholder="Select Category"
+              isClearable={true}
+              value={categories.find((c) => c.value === filters.category_id) || null}
+              onChange={(v: any) => handleFilterChange("category_id", v?.value)}
+            />
+          </div>
+
+          <div className="space-y-1">
             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1">Start Date</label>
             <input
               type="date"
@@ -329,6 +372,7 @@ const Stocks: React.FC = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-50/80 text-slate-500 border-b border-slate-100">
+                <th className="px-6 py-5 text-left font-bold uppercase tracking-widest text-[10px]">S.No</th>
                 <th className="px-6 py-5 text-left font-bold uppercase tracking-widest text-[10px]">Product Name</th>
                 <th className="px-6 py-5 text-center font-bold uppercase tracking-widest text-[10px]">Opening Stock</th>
                 <th className="px-6 py-5 text-center font-bold uppercase tracking-widest text-[10px]">Purchased</th>
@@ -357,6 +401,11 @@ const Stocks: React.FC = () => {
               ) : (
                 data.map((item, index) => (
                   <tr key={index} className="hover:bg-slate-50/50 transition-all group border-b border-slate-50">
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-slate-800 text-base">{index + 1}</span>
+                      </div>
+                    </td>
                     <td className="px-6 py-5">
                       <div className="flex flex-col">
                         <span className="font-bold text-slate-800 text-base">{item.name}</span>
@@ -420,6 +469,21 @@ const Stocks: React.FC = () => {
         )} 
          */}
       </div>
+
+      {/* PAGINATION */}
+      {!loading && pagination && (
+        <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100">
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={pagination?.total_elements || 0}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+          />
+        </div>
+      )}
+
 
       {/* SERIAL MODAL */}
       {showModal && selectedProduct && (() => {
