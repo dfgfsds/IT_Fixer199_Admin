@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout/Layout';
 import Login from './pages/Login';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Orders from './pages/Orders';
 import Customers from './pages/Customers';
@@ -55,6 +56,8 @@ import SalesPaymentModeWise from './pages/SalesPaymentModeWise/SalesPaymentModeW
 import SalesProductWise from './pages/SalesProductWise/SalesProductWise';
 import CustomerOutstanding from './pages/Accounts/CustomerOutstanding';
 import Sales from './pages/Sales/Sales';
+import StocksPrices from './pages/Accounts/StocksPrices';
+import Blog from './pages/Blog/Blog';
 
 
 const queryClient = new QueryClient();
@@ -81,8 +84,9 @@ const AppRoutes: React.FC = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route
-        path="/*"
+        path="/"
         element={
           <ProtectedRoute>
             <Layout />
@@ -140,9 +144,11 @@ const AppRoutes: React.FC = () => {
         <Route path="salesProductWise" element={<SalesProductWise />} />
         <Route path="customerOutstanding" element={<CustomerOutstanding />} />
         <Route path="sales" element={<Sales />} />
-
-
+        <Route path="stocksPrices" element={<StocksPrices />} />
+        <Route path="blog" element={<Blog />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 };

@@ -11,12 +11,14 @@ const baseUrl =
 //   "https://api-test.itfixer199.com";
 
 
-  // 🔥 WS URL
+// 🔥 WS URL
 const wsBaseUrl = baseUrl
   .replace("https://", "wss://")
   .replace("http://", "ws://");
 
 const login = `${baseUrl}/api/login`;
+const forgotPassword = `${baseUrl}/api/forgot-password`;
+const resetPassword = `${baseUrl}/api/reset-password`;
 const allUsers = `${baseUrl}/api/user/all`;
 const allStols = `${baseUrl}/api/slot/all`;
 const createUser = `${baseUrl}/api/user`;
@@ -248,24 +250,36 @@ const purchaseExcessCreditEntities = `${baseUrl}/api/purchase/excess-credit-enti
 
 
 // vendorPurchaseSummary
-const vendorPurchaseSummary =`${baseUrl}/api/stats/reports/finance/vendor-purchase-summary`;
+const vendorPurchaseSummary = `${baseUrl}/api/stats/reports/finance/vendor-purchase-summary`;
 
 // salesPaymentModeWise
-const salesPaymentModeWise =`${baseUrl}/api/stats/reports/sales/payment-mode-wise`;
+const salesPaymentModeWise = `${baseUrl}/api/stats/reports/sales/payment-mode-wise`;
 
 // salesProductWise
-const salesProductWise =`${baseUrl}/api/stats/reports/sales/product-wise`;
+const salesProductWise = `${baseUrl}/api/stats/reports/sales/product-wise`;
 
 // Customer Outstanding
-const customerOutstanding=`${baseUrl}/api/stats/reports/finance/order-amount-details`;
+const customerOutstanding = `${baseUrl}/api/stats/reports/finance/order-amount-details`;
 
 // purchasePendingPayment
-const purchasePendingPayment=`${baseUrl}/api/purchase/pending-payment-entities/`;
+const purchasePendingPayment = `${baseUrl}/api/purchase/pending-payment-entities/`;
 
 // notifications/register-fcm
 const NotificationRegisterFcm = `${baseUrl}/api/notifications/register-fcm/`;
+const inventoryConsolidated = `${baseUrl}/api/stats/inventory/consolidated`;
+
+// Blog
+const blog = `${baseUrl}/api/blog/`;
+
+// Media
+const media = `${baseUrl}/api/media/`;
+
 export default {
+  blog,
+  media,
   login,
+  forgotPassword,
+  resetPassword,
   allUsers,
   allStols,
   createUser,
@@ -365,6 +379,7 @@ export default {
   purchasePendingPayment,
   NotificationRegisterFcm,
   wsBaseUrl,
+  inventoryConsolidated,
 };
 
 

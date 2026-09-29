@@ -9,6 +9,10 @@ import OrderDetailsTabsModal from "../../components/Orders/OrderViewModal";
 import { useReactToPrint } from "react-to-print";
 import SalesInvoicePrint from "./SalesInvoicePrint";
 import Logo from "../../../public/images/logo.webp";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import { Download } from "lucide-react";
+
 const Sales: React.FC = () => {
     const [orders, setOrders] = useState<any[]>([]);
     const getToday = () => {
@@ -319,6 +323,107 @@ const Sales: React.FC = () => {
         printWindow.onload = () => { setTimeout(() => { printWindow.print(); printWindow.close(); }, 500); };
     };
 
+    const handleExportExcel = () => {
+
+        const data = orders.map((order: any) => {
+            console.log(order)
+            const totalGST = Number(order?.total_price || 0) * 18 / 118;
+            const cgst = totalGST / 2;
+            const sgst = totalGST / 2;
+            const beforeGST = Number(order?.total_price || 0) - totalGST;
+
+            return {
+                "Company Name": "IT Fixer",
+                "Bill No": order?.invoice_number || "-",
+                "Bill type code": "SALES",
+                "Bill Date": new Date(order?.created_at).toLocaleDateString("en-GB"),
+                "Customer Name": order?.customer_name || "-",
+                "Address": order?.address || "-",
+                "CGST Amount": cgst.toFixed(2),
+                "IGST Amount": "0.00",
+                "SGST Amount": sgst.toFixed(2),
+                "Item Discount Amount": "0.00",
+                "Bill Amount Before GST": beforeGST.toFixed(2),
+                "GST Amount": totalGST.toFixed(2),
+                "ROUNDING": "0.00",
+                "Bill Amount": Number(order?.total_price || 0).toFixed(2),
+                "Mobile No": order?.customer_number || "-",
+                "Customer GST Number": order?.customer_gst || "-"
+            };
+        });
+
+        // workbook
+        const wb = XLSX.utils.book_new();
+
+        // header rows
+        const wsData = [
+            ["ITDS INDIA PRIVATE LIMITED (IT Fixer @199)"],
+            ["Sales Register"],
+            [`DATE : ${filters.startDate || ""} ${filters.endDate ? " TO " + filters.endDate : ""}`],
+            [],
+            [
+                "Company Name",
+                "Bill No",
+                "Bill type code",
+                "Bill Date",
+                "Customer Name",
+                "Address",
+                "CGST Amount",
+                "IGST Amount",
+                "SGST Amount",
+                "Item Discount Amount",
+                "Bill Amount Before GST",
+                "GST Amount",
+                "ROUNDING",
+                "Bill Amount",
+                "Mobile No",
+                "Customer GST Number"
+            ]
+        ];
+
+        data.forEach((row) => {
+            wsData.push(Object.values(row));
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // column width
+        ws["!cols"] = [
+            { wch: 20 },
+            { wch: 15 },
+            { wch: 18 },
+            { wch: 15 },
+            { wch: 30 },
+            { wch: 30 },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 20 },
+            { wch: 20 },
+            { wch: 15 },
+            { wch: 12 },
+            { wch: 15 },
+            { wch: 18 },
+            { wch: 22 },
+        ];
+
+        XLSX.utils.book_append_sheet(wb, ws, "Sales Register");
+
+        const excelBuffer = XLSX.write(wb, {
+            bookType: "xlsx",
+            type: "array",
+        });
+
+        const fileData = new Blob(
+            [excelBuffer],
+            {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            }
+        );
+
+        saveAs(fileData, `Sales_Register_${new Date().getTime()}.xlsx`);
+
+    };
     return (
         <>
             <div className="space-y-6">
@@ -359,7 +464,7 @@ const Sales: React.FC = () => {
                     </div>
 
                     {/* FILTER GRID */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
                         {/* SEARCH */}
                         <div className="relative">
@@ -402,7 +507,15 @@ const Sales: React.FC = () => {
                                 />
                             </div>
                         </div>
-
+                        <div className="sm:col-span-2 lg:col-span-2">
+                            <button
+                                onClick={handleExportExcel}
+                                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+                            >
+                                <Download size={18} />
+                                Export Excel
+                            </button>
+                        </div>
                         {/* SORT */}
                         {/* <div>
                             <label className="text-xs text-gray-500 mb-1 block">

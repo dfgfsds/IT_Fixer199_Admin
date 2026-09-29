@@ -116,7 +116,8 @@ import {
   Wrench,
   UserCog,
   FileQuestion,
-  Calculator
+  Calculator,
+  Newspaper
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -250,11 +251,11 @@ const Sidebar: React.FC = () => {
     },
     {
       name: 'Services', icon: UserCog, path: '/services'
-      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER"]
+      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR"]
     },
     {
       name: 'Zonal Manager Panel', icon: MapPin, path: '/zones'
-      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER"]
+      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "COORDINATOR"]
     },
     // { name: 'Slots', icon: Users, path: '/slots' },
     {
@@ -296,39 +297,43 @@ const Sidebar: React.FC = () => {
           name: 'Stocks ', path: '/stocks'
           , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR", "ACCOUNTANT"]
         },
+         {
+          name: 'Stocks Prices ', path: '/stocksPrices'
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR", "ACCOUNTANT"]
+        },
         {
           name: 'Customer Outstanding', path: '/customerOutstanding'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ACCOUNTANT"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ACCOUNTANT", "COORDINATOR"]
         },
         {
           name: 'Supplier Outstanding', path: '/supplierOutstanding'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ACCOUNTANT"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ACCOUNTANT", "COORDINATOR"]
         },
         {
           name: 'Vendor Purchase', path: '/vendorPurchase'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ACCOUNTANT"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ACCOUNTANT", "COORDINATOR"]
         },
         {
           name: 'Product Wise', path: '/productWise'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "ACCOUNTANT"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "ACCOUNTANT", "COORDINATOR"]
         },
         {
           name: 'Payment mode wise', path: '/paymentModeWise'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "ACCOUNTANT"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "ACCOUNTANT", "COORDINATOR"]
         },
         {
           name: 'Monthly Comparison', path: '/monthlyComparison'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "ACCOUNTANT"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "ACCOUNTANT", "COORDINATOR"]
         },
 
 
         {
           name: 'Sales Payment Mode Wise', path: '/salesPaymentModeWise'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "ACCOUNTANT"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "ACCOUNTANT", "COORDINATOR"]
         },
         {
           name: 'Sales Product Wise', path: '/salesProductWise'
-          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "ACCOUNTANT"]
+          , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "ACCOUNTANT", "COORDINATOR"]
         },
 
         // {
@@ -357,7 +362,11 @@ const Sidebar: React.FC = () => {
     // { name: 'Reports', icon: BarChart3, path: '/reports' },
     {
       name: 'Rating Questions', icon: FileQuestion, path: '/ratingQuestions'
-      , roles: ["SUPER_ADMIN", "ADMIN", "ASSISTANT_MANAGER", "HUB_MANAGER", "MANAGER"]
+      , roles: ["SUPER_ADMIN", "ADMIN", "ASSISTANT_MANAGER", "HUB_MANAGER", "MANAGER", "COORDINATOR"]
+    },
+    {
+      name: 'Blog', icon: Newspaper, path: '/blog'
+      , roles: ["SUPER_ADMIN", "ADMIN", "HUB_MANAGER", "MANAGER", "ASSISTANT_MANAGER", "COORDINATOR", "ACCOUNTANT"]
     },
     {
       name: 'Settings', icon: Settings, path: '/settings'

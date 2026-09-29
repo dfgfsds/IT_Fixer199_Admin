@@ -19,7 +19,7 @@ const Pagination: React.FC<Props> = ({
   onPageSizeChange
 }) => {
 
-  const pageSizes = [10, 25, 50, 100];
+  const pageSizes = [10, 25, 50, 100,500,1000];
 
   const getPages = () => {
     const pages: (number | string)[] = [];

@@ -12,7 +12,7 @@ import GrnOrderModal from "./GrnOrderModal";
 import Logo from "../../../public/images/logo.webp";
 import GrnInvoicePrint from "./GrnInvoicePrint";
 import SerialNumberModal from "./SerialNumberModal";
-
+    
 const Grn: React.FC = () => {
 
     const [data, setData] = useState<any[]>([]);
